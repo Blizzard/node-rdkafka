@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Tutorial: consumer</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="toolkit/css/toolkit/bnet-responsive.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/main.css">
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="navbar-static">
+  <header class="navbar header">
+    <div class="grid-container">
+      <div class="grid-25">
+        <a class="brand mark" href="index.html">
+          Tutorial: consumer
+          <span class="tag">3.4.0</span>
+        </a>
+      </div>
+      <div class="grid-75">
+        <ul class="nav navbar-nav navbar-right">
+          <li class="dropdown"><a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#" onclick="return false;">Classes</a><ul class="dropdown-menu" role="menu"><li><a href="Client.html">Client</a></li><li><a href="KafkaConsumer.html">KafkaConsumer</a></li><li><a href="LibrdKafkaError.html">LibrdKafkaError</a></li><li><a href="Producer.html">Producer</a></li><li><a href="TopicReadable.html">TopicReadable</a></li><li><a href="TopicWritable.html">TopicWritable</a></li></ul></li><li class="dropdown"><a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#" onclick="return false;">Events</a><ul class="dropdown-menu" role="menu"><li><a href="Client.html#event:disconnected">disconnected</a></li><li><a href="Client.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:data">data</a></li><li><a href="KafkaConsumer.html#event:disconnected">disconnected</a></li><li><a href="KafkaConsumer.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:rebalance">rebalance</a></li><li><a href="Producer.html#event:disconnected">disconnected</a></li><li><a href="Producer.html#event:ready">ready</a></li></ul></li><li class="dropdown"><a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#" onclick="return false;">Tutorials</a><ul class="dropdown-menu" role="menu"><li><a href="tutorial-consumer.html">consumer</a></li><li><a href="tutorial-metadata.html">metadata</a></li><li><a href="tutorial-producer-cluster.html">producer-cluster</a></li><li><a href="tutorial-producer-multiple.html">producer-multiple</a></li><li><a href="tutorial-producer_.html">producer</a></li></ul></li>
+        </ul>
+      </div>
+    </div>
+  </header>
+</div>
+<!-- /HEADER -->
+
+<div class="body-content">
+  <div class="grid-container project-container">
+
+    <div class="grid-75 push-25">
+      <h1>Tutorial: consumer</h1>
+
+      <section>
+
+<header>
+    
+
+    <h2>consumer</h2>
+</header>
+
+<article>
+    <p>Connecting to a Kafka Consumer is easy. Let's try to connect to one using
+the Stream implementation</p>
+<pre class="prettyprint source lang-js"><code>/*
+ * node-rdkafka - Node.js wrapper for RdKafka C/C++ library
+ *
+ * Copyright (c) 2016 Blizzard Entertainment
+ *
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE.txt file for details.
+ */
+
+var Transform = require('stream').Transform;
+
+var Kafka = require('../');
+
+var consumer = new Kafka.KafkaConsumer({
+  'metadata.broker.list': 'localhost:9092',
+  'group.id': 'librd-test',
+  'socket.keepalive.enable': true,
+  'enable.auto.commit': false
+});
+
+var stream = consumer.getReadStream('test', {
+  waitInterval: 0
+});
+
+stream.on('error', function() {
+  process.exit(1);
+});
+
+consumer.on('rebalance', function(e) {
+
+  if (e.code === Kafka.CODES.REBALANCE.PARTITION_ASSIGNMENT) {
+    console.log('Partition assignment');
+  } else {
+    console.log('Partition unassignment');
+  }
+});
+
+stream
+  .pipe(new Transform({
+    objectMode: true,
+    transform: function(data, encoding, callback) {
+      // consumer.commit(data, function(err) {});
+      // We want to force it to run async
+      callback(null, data.message);
+    }
+  }))
+  .pipe(process.stdout);
+
+consumer.on('error', function(err) {
+  console.log(err);
+});</code></pre>
+</article>
+
+</section>
+
+    </div>
+    <div class="grid-25 pull-75">
+      <div class="navigation-sidebar">
+        <ul class="nav nav-list">
+          <li><a href="javascript: void(0);">Classes</a><ul class="nav nav-list" role="menu"><li><a href="Client.html">Client</a></li><li><a href="KafkaConsumer.html">KafkaConsumer</a></li><li><a href="LibrdKafkaError.html">LibrdKafkaError</a></li><li><a href="Producer.html">Producer</a></li><li><a href="TopicReadable.html">TopicReadable</a></li><li><a href="TopicWritable.html">TopicWritable</a></li></ul></li><li><a href="javascript: void(0);">Events</a><ul class="nav nav-list" role="menu"><li><a href="Client.html#event:disconnected">disconnected</a></li><li><a href="Client.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:data">data</a></li><li><a href="KafkaConsumer.html#event:disconnected">disconnected</a></li><li><a href="KafkaConsumer.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:rebalance">rebalance</a></li><li><a href="Producer.html#event:disconnected">disconnected</a></li><li><a href="Producer.html#event:ready">ready</a></li></ul></li><li><a href="javascript: void(0);">Tutorials</a><ul class="nav nav-list" role="menu"><li><a href="tutorial-consumer.html">consumer</a></li><li><a href="tutorial-metadata.html">metadata</a></li><li><a href="tutorial-producer-cluster.html">producer-cluster</a></li><li><a href="tutorial-producer-multiple.html">producer-multiple</a></li><li><a href="tutorial-producer_.html">producer</a></li></ul></li>
+        </ul>
+        <!-- <ul class="nav nav-list collapse"> -->
+      </div>
+    </div>
+</div>
+
+  </div>
+</div> <!-- /.body-content -->
+
+<br class="clear">
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="grid-container">
+    <div class="footer-content">
+      <div class="grid-75">
+        <div class="legal">
+            Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc </a> on Thu Aug 11 2016 10:58:53 GMT-0700 (PDT)
+        </div>
+      </div>
+      <div class="grid-25">
+        <span class="blizzard">Blizzard® Entertainment</span>
+      </div>
+    </div>
+  </div>
+</footer>
+<!-- /FOOTER -->
+
+<script> prettyPrint(); </script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<script src="toolkit/js/toolkit/toolkit.min.js"> </script>
+</body>
+</html>

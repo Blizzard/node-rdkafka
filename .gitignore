@@ -6,4 +6,6 @@ npm-debug.log
 deps/*
 !deps/*.gyp
 
+docs
+
 .DS_Store

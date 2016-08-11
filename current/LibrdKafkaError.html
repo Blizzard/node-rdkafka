@@ -1,0 +1,2133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Class: LibrdKafkaError</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="toolkit/css/toolkit/bnet-responsive.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/main.css">
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="navbar-static">
+  <header class="navbar header">
+    <div class="grid-container">
+      <div class="grid-25">
+        <a class="brand mark" href="index.html">
+          Class: LibrdKafkaError
+          <span class="tag">3.4.0</span>
+        </a>
+      </div>
+      <div class="grid-75">
+        <ul class="nav navbar-nav navbar-right">
+          <li class="dropdown"><a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#" onclick="return false;">Classes</a><ul class="dropdown-menu" role="menu"><li><a href="Client.html">Client</a></li><li><a href="KafkaConsumer.html">KafkaConsumer</a></li><li><a href="LibrdKafkaError.html">LibrdKafkaError</a></li><li><a href="Producer.html">Producer</a></li><li><a href="TopicReadable.html">TopicReadable</a></li><li><a href="TopicWritable.html">TopicWritable</a></li></ul></li><li class="dropdown"><a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#" onclick="return false;">Events</a><ul class="dropdown-menu" role="menu"><li><a href="Client.html#event:disconnected">disconnected</a></li><li><a href="Client.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:data">data</a></li><li><a href="KafkaConsumer.html#event:disconnected">disconnected</a></li><li><a href="KafkaConsumer.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:rebalance">rebalance</a></li><li><a href="Producer.html#event:disconnected">disconnected</a></li><li><a href="Producer.html#event:ready">ready</a></li></ul></li><li class="dropdown"><a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#" onclick="return false;">Tutorials</a><ul class="dropdown-menu" role="menu"><li><a href="tutorial-consumer.html">consumer</a></li><li><a href="tutorial-metadata.html">metadata</a></li><li><a href="tutorial-producer-cluster.html">producer-cluster</a></li><li><a href="tutorial-producer-multiple.html">producer-multiple</a></li><li><a href="tutorial-producer_.html">producer</a></li></ul></li>
+        </ul>
+      </div>
+    </div>
+  </header>
+</div>
+<!-- /HEADER -->
+
+<div class="body-content">
+  <div class="grid-container project-container">
+
+    <div class="grid-75 push-25">
+      <h1>Class: LibrdKafkaError</h1>
+
+      
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>LibrdKafkaError</h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+
+    
+
+    <h4 class="name" id="LibrdKafkaError">
+        <span class="type-signature"></span>new LibrdKafkaError<span class="signature">(e)</span><span class="type-signature"></span>
+    </h4>
+
+    
+
+
+
+<div class="description">
+    <p>Representation of a librdkafka error
+
+This can be created by giving either another error
+to piggy-back on. In this situation it tries to parse
+the error string to figure out the intent. However, more usually,
+it is constructed by an error object created by a C++ Baton.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <div class="clearfix">
+  <div class="grid-75">
+    <h4 class="heading-3">Parameters:</h4>
+  </div>
+</div>
+
+    
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">e</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+|
+
+<span class="param-type">error</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">An object or error to wrap</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">message</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The error message</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">code</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The error code.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">origin</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The origin, whether it is local or remote</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source">
+        <ul class="pager"><li>
+        <a href="error.js.html#line183">error.js, line 183</a>
+        </li></ul>
+    </dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    </div>
+
+    
+
+    
+
+    
+
+     
+
+    
+
+    
+        <div class="clearfix">
+  <div class="grid-75">
+    <h3 class="heading-2">Members:</h3>
+  </div>
+  <div class="grid-25 top-link">
+    <small>
+      <a href="#top" class="inverse">
+        <i class="icon-chevron-up"></i>
+        &nbsp;Back to top.
+      </a>
+    </small>
+  </div>
+</div>
+
+
+        
+            
+<h4 class="name" id=".codes"><span class="type-signature">(static, constant) </span>codes<span class="type-signature"> :number</span></h4>
+
+
+
+
+<div class="description">
+  <p>
+    Enum for identifying errors reported by the library
+
+You can find this list in the C++ code at
+https://github.com/edenhill/librdkafka/blob/master/src-cpp/rdkafkacpp.h#L148
+  </p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">number</span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">ERR__BEGIN</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Begin internal error codes</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__BAD_MSG</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Received message is incorrect</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__BAD_COMPRESSION</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Bad/unknown compression</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__DESTROY</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Broker is going away</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__FAIL</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Generic failure</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__TRANSPORT</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Broker transport failure</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__CRIT_SYS_RESOURCE</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Critical system resource</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__RESOLVE</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Failed to resolve broker</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__MSG_TIMED_OUT</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Produced message timed out</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__PARTITION_EOF</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Reached the end of the topic+partition queue on the broker. Not really an error.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__UNKNOWN_PARTITION</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Permanent: Partition does not exist in cluster.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__FS</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">File or filesystem error</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__UNKNOWN_TOPIC</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Permanent: Topic does not exist in cluster.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__ALL_BROKERS_DOWN</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">All broker connections are down.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__INVALID_ARG</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Invalid argument, or invalid configuration</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__TIMED_OUT</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Operation timed out</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__QUEUE_FULL</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Queue is full</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__ISR_INSUFF</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">ISR count < required.acks</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__NODE_UPDATE</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Broker node update</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__SSL</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">SSL error</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__WAIT_COORD</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Waiting for coordinator to become available.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__UNKNOWN_GROUP</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Unknown client group</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__IN_PROGRESS</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Operation in progress</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__PREV_IN_PROGRESS</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Previous operation in progress, wait for it to finish.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__EXISTING_SUBSCRIPTION</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">This operation would interfere with an existing subscription</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__ASSIGN_PARTITIONS</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Assigned partitions (rebalance_cb)</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__REVOKE_PARTITIONS</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Revoked partitions (rebalance_cb)</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__CONFLICT</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Conflicting use</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__STATE</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Wrong state</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__UNKNOWN_PROTOCOL</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Unknown protocol</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__NOT_IMPLEMENTED</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Not implemented</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__AUTHENTICATION</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Authentication failure</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__NO_OFFSET</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">No stored offset</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__OUTDATED</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Outdated</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR__END</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">End internal error codes</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_UNKNOWN</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Unknown broker error</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_NO_ERROR</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Success</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_OFFSET_OUT_OF_RANGE</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Offset out of range</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_INVALID_MSG</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Invalid message</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_UNKNOWN_TOPIC_OR_PART</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Unknown topic or partition</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_INVALID_MSG_SIZE</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Invalid message size</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_LEADER_NOT_AVAILABLE</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Leader not available</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_NOT_LEADER_FOR_PARTITION</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Not leader for partition</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_REQUEST_TIMED_OUT</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Request timed out</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_BROKER_NOT_AVAILABLE</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Broker not available</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_REPLICA_NOT_AVAILABLE</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Replica not available</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_MSG_SIZE_TOO_LARGE</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Message size too large</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_STALE_CTRL_EPOCH</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">StaleControllerEpochCode</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_OFFSET_METADATA_TOO_LARGE</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Offset metadata string too large</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_NETWORK_EXCEPTION</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Broker disconnected before response received</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_GROUP_LOAD_IN_PROGRESS</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Group coordinator load in progress</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_GROUP_COORDINATOR_NOT_AVAILABLE</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Group coordinator not available</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_NOT_COORDINATOR_FOR_GROUP</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Not coordinator for group</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_TOPIC_EXCEPTION</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Invalid topic</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_RECORD_LIST_TOO_LARGE</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Message batch larger than configured server segment size</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_NOT_ENOUGH_REPLICAS</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Not enough in-sync replicas</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_NOT_ENOUGH_REPLICAS_AFTER_APPEND</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Message(s) written to insufficient number of in-sync replicas</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_INVALID_REQUIRED_ACKS</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Invalid required acks value</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_ILLEGAL_GENERATION</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Specified group generation id is not valid</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_INCONSISTENT_GROUP_PROTOCOL</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Inconsistent group protocol</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_INVALID_GROUP_ID</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Invalid group.id</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_UNKNOWN_MEMBER_ID</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Unknown member</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_INVALID_SESSION_TIMEOUT</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Invalid session timeout</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_REBALANCE_IN_PROGRESS</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Group rebalance in progress</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_INVALID_COMMIT_OFFSET_SIZE</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Commit offset data size is not valid</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_TOPIC_AUTHORIZATION_FAILED</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Topic authorization failed</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_GROUP_AUTHORIZATION_FAILED</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Group authorization failed</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">ERR_CLUSTER_AUTHORIZATION_FAILED</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Cluster authorization failed</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source">
+        <ul class="pager"><li>
+        <a href="error.js.html#line28">error.js, line 28</a>
+        </li></ul>
+    </dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+    </div>
+    <div class="grid-25 pull-75">
+      <div class="navigation-sidebar">
+        <ul class="nav nav-list">
+          <li><a href="javascript: void(0);">Classes</a><ul class="nav nav-list" role="menu"><li><a href="Client.html">Client</a></li><li><a href="KafkaConsumer.html">KafkaConsumer</a></li><li><a href="LibrdKafkaError.html">LibrdKafkaError</a></li><li><a href="Producer.html">Producer</a></li><li><a href="TopicReadable.html">TopicReadable</a></li><li><a href="TopicWritable.html">TopicWritable</a></li></ul></li><li><a href="javascript: void(0);">Events</a><ul class="nav nav-list" role="menu"><li><a href="Client.html#event:disconnected">disconnected</a></li><li><a href="Client.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:data">data</a></li><li><a href="KafkaConsumer.html#event:disconnected">disconnected</a></li><li><a href="KafkaConsumer.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:rebalance">rebalance</a></li><li><a href="Producer.html#event:disconnected">disconnected</a></li><li><a href="Producer.html#event:ready">ready</a></li></ul></li><li><a href="javascript: void(0);">Tutorials</a><ul class="nav nav-list" role="menu"><li><a href="tutorial-consumer.html">consumer</a></li><li><a href="tutorial-metadata.html">metadata</a></li><li><a href="tutorial-producer-cluster.html">producer-cluster</a></li><li><a href="tutorial-producer-multiple.html">producer-multiple</a></li><li><a href="tutorial-producer_.html">producer</a></li></ul></li>
+        </ul>
+        <!-- <ul class="nav nav-list collapse"> -->
+      </div>
+    </div>
+</div>
+
+  </div>
+</div> <!-- /.body-content -->
+
+<br class="clear">
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="grid-container">
+    <div class="footer-content">
+      <div class="grid-75">
+        <div class="legal">
+            Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc </a> on Thu Aug 11 2016 10:58:53 GMT-0700 (PDT)
+        </div>
+      </div>
+      <div class="grid-25">
+        <span class="blizzard">Blizzard® Entertainment</span>
+      </div>
+    </div>
+  </div>
+</footer>
+<!-- /FOOTER -->
+
+<script> prettyPrint(); </script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<script src="toolkit/js/toolkit/toolkit.min.js"> </script>
+</body>
+</html>

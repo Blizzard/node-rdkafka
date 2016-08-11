@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: client.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="toolkit/css/toolkit/bnet-responsive.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/main.css">
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="navbar-static">
+  <header class="navbar header">
+    <div class="grid-container">
+      <div class="grid-25">
+        <a class="brand mark" href="index.html">
+          Source: client.js
+          <span class="tag">3.4.0</span>
+        </a>
+      </div>
+      <div class="grid-75">
+        <ul class="nav navbar-nav navbar-right">
+          <li class="dropdown"><a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#" onclick="return false;">Classes</a><ul class="dropdown-menu" role="menu"><li><a href="Client.html">Client</a></li><li><a href="KafkaConsumer.html">KafkaConsumer</a></li><li><a href="LibrdKafkaError.html">LibrdKafkaError</a></li><li><a href="Producer.html">Producer</a></li><li><a href="TopicReadable.html">TopicReadable</a></li><li><a href="TopicWritable.html">TopicWritable</a></li></ul></li><li class="dropdown"><a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#" onclick="return false;">Events</a><ul class="dropdown-menu" role="menu"><li><a href="Client.html#event:disconnected">disconnected</a></li><li><a href="Client.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:data">data</a></li><li><a href="KafkaConsumer.html#event:disconnected">disconnected</a></li><li><a href="KafkaConsumer.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:rebalance">rebalance</a></li><li><a href="Producer.html#event:disconnected">disconnected</a></li><li><a href="Producer.html#event:ready">ready</a></li></ul></li><li class="dropdown"><a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#" onclick="return false;">Tutorials</a><ul class="dropdown-menu" role="menu"><li><a href="tutorial-consumer.html">consumer</a></li><li><a href="tutorial-metadata.html">metadata</a></li><li><a href="tutorial-producer-cluster.html">producer-cluster</a></li><li><a href="tutorial-producer-multiple.html">producer-multiple</a></li><li><a href="tutorial-producer_.html">producer</a></li></ul></li>
+        </ul>
+      </div>
+    </div>
+  </header>
+</div>
+<!-- /HEADER -->
+
+<div class="body-content">
+  <div class="grid-container project-container">
+
+    <div class="grid-75 push-25">
+      <h1>Source: client.js</h1>
+
+      
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
+ * node-rdkafka - Node.js wrapper for RdKafka C/C++ library
+ *
+ * Copyright (c) 2016 Blizzard Entertainment
+ *
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE.txt file for details.
+ */
+
+module.exports = Client;
+
+var Emitter = require('events').EventEmitter;
+var util = require('util');
+var Kafka = require('../kafka-native.js');
+var assert = require('assert');
+
+var LibrdKafkaError = require('./error');
+
+util.inherits(Client, Emitter);
+
+/**
+ * Base class for Consumer and Producer
+ *
+ * This should not be created independently, but rather is
+ * the base class on which both producer and consumer
+ * get their common functionality.
+ *
+ * @param {object} globalConf - Global configuration in key value pairs.
+ * @param {function} SubClientType - The function representing the subclient
+ * type. In C++ land this needs to be a class that inherits from Connection.
+ * @param {object} topicConf - Topic configuration in key value pairs
+ * @constructor
+ * @extends Emitter
+ */
+function Client(globalConf, SubClientType, topicConf) {
+  if (!(this instanceof Client)) {
+    return new Client(globalConf, SubClientType, topicConf);
+  }
+
+  Emitter.call(this);
+
+  // This superclass must be initialized with the Kafka.{Producer,Consumer}
+  // @example var client = new Client({}, Kafka.Producer);
+  // remember this is a superclass so this will get taken care of in
+  // the producer and consumer main wrappers
+
+  var no_event_cb = globalConf.event_cb === false;
+  topicConf = topicConf || {};
+
+  // delete this because librdkafka will complain since this particular
+  // key is a real conf value
+  delete globalConf.event_cb;
+
+  // Enforce a default timeout
+  if (!globalConf.hasOwnProperty('socket.timeout.ms')) {
+    globalConf['socket.timeout.ms'] = 250;
+  }
+
+  this._client = new SubClientType(globalConf, topicConf);
+
+  // primitive callbacks from c++ wrapper
+  // need binds on them if we want to broadcast the event via the emitter
+
+  // However, the C++ wrapper lazy processes callbacks.
+  // If we want to improve performance, removing this line is a good way to do it.
+  // we need to do this on creation of the object
+  // thats why we did some processing on config
+
+  // Self required because we are inside an async callback function scope
+  if (!no_event_cb) {
+    this._client.onEvent(function eventHandler(eventType, eventData) {
+      switch (eventType) {
+        case 'error':
+          self.emit('error', LibrdKafkaError.create(eventData));
+          break;
+        case 'stats':
+          self.emit('event.stats', eventData);
+          break;
+        case 'log':
+          self.emit('event.log', eventData);
+          break;
+        default:
+          self.emit('event.event', eventData);
+          self.emit('event.' + eventType, eventData);
+      }
+    });
+  }
+
+  this.metrics = {};
+  this._isConnected = false;
+  this.errorCounter = 0;
+
+  /**
+   * Metadata object. Starts out empty but will be filled with information after
+   * the initial connect.
+   *
+   * @type {Client~Metadata}
+   */
+  this._metadata = {};
+
+  var self = this;
+
+  this.on('ready', function(info) {
+    self.metrics.connectionOpened = Date.now();
+    self._isConnected = true;
+    self.name = info.name;
+  })
+  .on('disconnected', function() {
+    // reset metrics
+    self.metrics = {};
+    self._isConnected = false;
+    // keep the metadata. it still may be useful
+  })
+  .on('error', function(err) {
+    self.lastError = err;
+    ++self.errorCounter;
+  });
+
+}
+
+/**
+ * Connect to the broker and receive its metadata.
+ *
+ * Connects to a broker by establishing the client and fetches its metadata.
+ *
+ * @param {object} metadataOptions - Options to be sent to the metadata.
+ * @param  {Client~connectionCallback} cb - Callback that indicates we are
+ * done connecting.
+ * @return {Client} - Returns itself.
+ */
+Client.prototype.connect = function(metadataOptions, cb) {
+  var self = this;
+
+  var next = function(err, data) {
+    self._isConnecting = false;
+    if (cb) {
+      cb(err, data);
+    }
+  };
+
+  if (this._isConnected) {
+    setImmediate(next);
+    return self;
+  }
+
+  if (this._isConnecting) {
+    this.once('ready', function() {
+      next(null, this._metadata);
+    });
+    return self;
+  }
+
+  this._isConnecting = true;
+
+  var fail = function(err, emit) {
+    if (emit) {
+      self.emit('error', LibrdKafkaError.create(err));
+    }
+    self._isConnected = false;
+    next(err); return;
+  };
+
+  this._client.connect(function(err, info) {
+    if (err) {
+      fail(err, true); return;
+    }
+
+    self._isConnected = true;
+
+    // Otherwise we are successful
+    self.getMetadata(metadataOptions || {}, function(err, metadata) {
+      if (err) {
+        fail(LibrdKafkaError.create(err)); return;
+      }
+
+      self._isConnecting = false;
+      // We got the metadata otherwise. It is set according to above param
+
+      /**
+       * Ready event. Called when the Client connects successfully
+       *
+       * @event Client#ready
+       * @type {object}
+       * @property {string} name - the name of the broker.
+       */
+      self.emit('ready', info);
+      next(null, metadata); return;
+
+    });
+
+  });
+
+  return self;
+
+};
+
+/**
+ * Get the native Kafka client.
+ *
+ * You probably shouldn't use this, but if you want to execute methods directly
+ * on the c++ wrapper you can do it here.
+ *
+ * @see connection.cc
+ * @return {Conection} - The native Kafka client.
+ */
+Client.prototype.getClient = function() {
+  return this._client;
+};
+
+/**
+ * Find out how long we have been connected to Kafka.
+ *
+ * @return {number} - Milliseconds since the connection has been established.
+ */
+Client.prototype.connectedTime = function() {
+  if (!this.isConnected()) {
+    return 0;
+  }
+  return Date.now() - this.metrics.connectionOpened();
+};
+
+/**
+ * Whether or not we are connected to Kafka.
+ *
+ * @return {boolean} - Whether we are connected.
+ */
+Client.prototype.isConnected = function() {
+  return this._isConnected &amp;&amp; this._client;
+};
+
+/**
+ * Get the last error emitted if it exists.
+ *
+ * @return {LibrdKafkaError} - Returns the LibrdKafkaError or null if
+ * one hasn't been thrown.
+ */
+Client.prototype.getLastError = function() {
+  return this.lastError || null;
+};
+
+/**
+ * Disconnect from the Kafka client.
+ *
+ * This method will disconnect us from Kafka unless we are already in a
+ * disconnecting state. Use this when you're done reading or producing messages
+ * on a given client.
+ *
+ * It will also emit the disconnected event.
+ *
+ * @fires Client#disconnected
+ * @return {function} - Callback to call when disconnection is complete.
+ */
+Client.prototype.disconnect = function(cb) {
+  var self = this;
+
+  if (!this._isDisconnecting &amp;&amp; this._client) {
+    this._isDisconnecting = true;
+    this._client.disconnect(function() {
+      // this take 5000 milliseconds. Librdkafka needs to make sure the memory
+      // has been cleaned up before we delete things. @see RdKafka::wait_destroyed
+
+      // Broadcast metrics. Gives people one last chance to do something with them
+      self._isDisconnecting = false;
+      /**
+       * Disconnect event. Called after disconnection is finished.
+       *
+       * @event Client#disconnected
+       * @type {object}
+       * @property {date} connectionOpened - when the connection was opened.
+       */
+      self.emit('disconnected', self.metrics);
+      if (cb) {
+        cb(self.metrics);
+      }
+
+    });
+
+  }
+
+  return self;
+};
+
+/**
+ * Get client metadata.
+ *
+ * @param {object} metadataOptions - Metadata options to pass to the client.
+ * @param {string} metadataOptions.topic - Topic string for which to fetch
+ * metadata
+ * @param {number} metadataOptions.timeout - Max time, in ms, to try to fetch
+ * metadata before timing out. Defaults to 3000.
+ * @param {Client~metadataCallback} cb - Callback to fire with the metadata.
+ */
+Client.prototype.getMetadata = function(metadataOptions, cb) {
+  if (!this.isConnected()) {
+    return cb(new Error('Client is disconnected'));
+  }
+
+  var self = this;
+
+  this._client.getMetadata(metadataOptions || {}, function(err, metadata) {
+    if (err) {
+      self.emit('error', LibrdKafkaError.create(err));
+      if (cb) {
+        cb(err);
+      }
+      return;
+    }
+
+    // No error otherwise
+    self._metadata = metadata;
+
+    if (cb) {
+      cb(null, metadata);
+    }
+
+  });
+
+};
+
+/**
+ * This callback is used to pass metadata or an error after a successful
+ * connection
+ *
+ * @callback Client~connectionCallback
+ * @param {Error} err - An error, if one occurred while connecting.
+ * @param {Client~Metadata} metadata - Metadata object.
+ */
+
+/**
+ * @typedef {object} Client~MetadataBroker
+ * @property {number} id - Broker ID
+ * @property {string} host - Broker host
+ * @property {number} port - Broker port.
+ */
+
+/**
+ * @typedef {object} Client~MetadataTopic
+ * @property {string} name - Topic name
+ * @property {Client~MetadataPartition[]} partitions - Array of partitions
+ */
+
+/**
+ * @typedef {object} Client~MetadataPartition
+ * @property {number} id - Partition id
+ * @property {number} leader - Broker ID for the partition leader
+ * @property {number[]} replicas - Array of replica IDs
+ * @property {number[]} isrs - Arrqay of ISRS ids
+*/
+
+/**
+ * Metadata object.
+ *
+ * This is the representation of Kafka metadata in JavaScript.
+ *
+ * @typedef {object} Client~Metadata
+ * @property {number} orig_broker_id - The broker ID of the original bootstrap
+ * broker.
+ * @property {string} orig_broker_name - The name of the original bootstrap
+ * broker.
+ * @property {Client~MetadataBroker[]} brokers - An array of broker objects
+ * @property {Client~MetadataTopic[]} topics - An array of topics.
+ */
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+
+    </div>
+    <div class="grid-25 pull-75">
+      <div class="navigation-sidebar">
+        <ul class="nav nav-list">
+          <li><a href="javascript: void(0);">Classes</a><ul class="nav nav-list" role="menu"><li><a href="Client.html">Client</a></li><li><a href="KafkaConsumer.html">KafkaConsumer</a></li><li><a href="LibrdKafkaError.html">LibrdKafkaError</a></li><li><a href="Producer.html">Producer</a></li><li><a href="TopicReadable.html">TopicReadable</a></li><li><a href="TopicWritable.html">TopicWritable</a></li></ul></li><li><a href="javascript: void(0);">Events</a><ul class="nav nav-list" role="menu"><li><a href="Client.html#event:disconnected">disconnected</a></li><li><a href="Client.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:data">data</a></li><li><a href="KafkaConsumer.html#event:disconnected">disconnected</a></li><li><a href="KafkaConsumer.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:rebalance">rebalance</a></li><li><a href="Producer.html#event:disconnected">disconnected</a></li><li><a href="Producer.html#event:ready">ready</a></li></ul></li><li><a href="javascript: void(0);">Tutorials</a><ul class="nav nav-list" role="menu"><li><a href="tutorial-consumer.html">consumer</a></li><li><a href="tutorial-metadata.html">metadata</a></li><li><a href="tutorial-producer-cluster.html">producer-cluster</a></li><li><a href="tutorial-producer-multiple.html">producer-multiple</a></li><li><a href="tutorial-producer_.html">producer</a></li></ul></li>
+        </ul>
+        <!-- <ul class="nav nav-list collapse"> -->
+      </div>
+    </div>
+</div>
+
+  </div>
+</div> <!-- /.body-content -->
+
+<br class="clear">
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="grid-container">
+    <div class="footer-content">
+      <div class="grid-75">
+        <div class="legal">
+            Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc </a> on Thu Aug 11 2016 10:58:53 GMT-0700 (PDT)
+        </div>
+      </div>
+      <div class="grid-25">
+        <span class="blizzard">Blizzard® Entertainment</span>
+      </div>
+    </div>
+  </div>
+</footer>
+<!-- /FOOTER -->
+
+<script> prettyPrint(); </script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<script src="toolkit/js/toolkit/toolkit.min.js"> </script>
+</body>
+</html>

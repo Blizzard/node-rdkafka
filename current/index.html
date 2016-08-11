@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Home</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="toolkit/css/toolkit/bnet-responsive.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/main.css">
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="navbar-static">
+  <header class="navbar header">
+    <div class="grid-container">
+      <div class="grid-25">
+        <a class="brand mark" href="index.html">
+          Home
+          <span class="tag">3.4.0</span>
+        </a>
+      </div>
+      <div class="grid-75">
+        <ul class="nav navbar-nav navbar-right">
+          <li class="dropdown"><a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#" onclick="return false;">Classes</a><ul class="dropdown-menu" role="menu"><li><a href="Client.html">Client</a></li><li><a href="KafkaConsumer.html">KafkaConsumer</a></li><li><a href="LibrdKafkaError.html">LibrdKafkaError</a></li><li><a href="Producer.html">Producer</a></li><li><a href="TopicReadable.html">TopicReadable</a></li><li><a href="TopicWritable.html">TopicWritable</a></li></ul></li><li class="dropdown"><a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#" onclick="return false;">Events</a><ul class="dropdown-menu" role="menu"><li><a href="Client.html#event:disconnected">disconnected</a></li><li><a href="Client.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:data">data</a></li><li><a href="KafkaConsumer.html#event:disconnected">disconnected</a></li><li><a href="KafkaConsumer.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:rebalance">rebalance</a></li><li><a href="Producer.html#event:disconnected">disconnected</a></li><li><a href="Producer.html#event:ready">ready</a></li></ul></li><li class="dropdown"><a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#" onclick="return false;">Tutorials</a><ul class="dropdown-menu" role="menu"><li><a href="tutorial-consumer.html">consumer</a></li><li><a href="tutorial-metadata.html">metadata</a></li><li><a href="tutorial-producer-cluster.html">producer-cluster</a></li><li><a href="tutorial-producer-multiple.html">producer-multiple</a></li><li><a href="tutorial-producer_.html">producer</a></li></ul></li>
+        </ul>
+      </div>
+    </div>
+  </header>
+</div>
+<!-- /HEADER -->
+
+<div class="body-content">
+  <div class="grid-container project-container">
+
+    <div class="grid-75 push-25">
+      <h1>Home</h1>
+
+      
+
+
+
+    
+
+
+    <h3> </h3>
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+    <section>
+        <article><h1>node-rdkafka - Node.js wrapper for Kafka C/C++ library</h1><p>Copyright (c) 2016 Blizzard Entertainment.</p>
+<p><a href="https://github.com/blizzard/node-rdkafka">https://github.com/blizzard/node-rdkafka</a></p>
+<p><a href="https://travis-ci.org/Blizzard/node-rdkafka"><img src="https://travis-ci.org/Blizzard/node-rdkafka.svg?branch=master" alt="Build Status"></a></p>
+<h1>Overview</h1><p>The <code>node-rdkafka</code> library is a high-performance NodeJS client for <a href="http://kafka.apache.org/">Apache Kafka</a> that wraps the native  <a href="https://github.com/edenhill/librdkafka">librdkafka</a> library.  All the complexity of balancing writes across partitions and managing (possibly ever-changing) brokers should be encapsulated in the library.</p>
+<h2>Reference Docs</h2><p>To view the reference docs for the current version, go <a href="https://blizzard.github.io/node-rdkafka/current/">here</a></p>
+<h2>Tests</h2><p>This project includes two types of unit tests in this project:</p>
+<ul>
+<li>end-to-end integration tests</li>
+<li>unit tests</li>
+</ul>
+<p>You can run both types of tests by using <code>Makefile</code>. Doing so calls <code>mocha</code> in your locally installed <code>node_modules</code> directory.</p>
+<ul>
+<li>To run the unit tests, you can run <code>make lint</code> or <code>make test</code>.</li>
+<li>To run the integration tests, you must have a running Kafka installation available. By default, the test tries to connect to <code>localhost:9092</code>; however, you can supply the <code>KAFKA_HOST</code> environment variable to override this default behavior.</li>
+</ul>
+<h2>Contributing</h2><p>For guidelines on contributing please see <a href="https://github.com/blizzard/node-rdkafka/blob/master/CONTRIBUTING.md">CONTRIBUTING.md</a></p>
+<h1>Usage</h1><p>You can install the <code>node-rdkafka</code> module like any other module:</p>
+<pre class="prettyprint source"><code>npm install node-rdkafka</code></pre><p>To use the module, you must <code>require</code> it.</p>
+<pre class="prettyprint source lang-js"><code>var Kafka = require('node-rdkafka');</code></pre><h2>Configuration</h2><p>You can pass many configuration options to <code>librdkafka</code>.  A full list can be found at https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md.</p>
+<p>Configuration keys that have the suffix <code>_cb</code> are designated as callbacks. Some
+of these keys are informational and you can choose to opt-in (for example, <code>dr_cb</code>). Others are callbacks designed to
+return a value, such as <code>partitioner_cb</code>.</p>
+<p>Not all of these options are supported.
+The library will throw an error if the value you send in is invalid.</p>
+<p>The library currently supports the following callbacks:</p>
+<ul>
+<li><code>partitioner_cb</code></li>
+<li><code>dr_cb</code></li>
+<li><code>event_cb</code></li>
+</ul>
+<h2>Sending Messages</h2><p>A <code>Producer</code> sends messages to Kafka.  The <code>Producer</code> constructor takes a configuration object, as shown in the following example:</p>
+<pre class="prettyprint source lang-js"><code>var producer = new Kafka.Producer({
+  'metadata.broker.list': 'kafka-host1:9092,kafka-host2:9092'
+});</code></pre><p>A <code>Producer</code> requires only <code>metadata.broker.list</code> (the Kafka brokers) to be created.  The values in this list are separated by commas.  For other configuration options, see the <a href="https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md">Configuration.md</a> file described previously.  </p>
+<p>The following example illustrates a list with several <code>librdkafka</code> options set.</p>
+<pre class="prettyprint source lang-js"><code>var producer = new Kafka.Producer({
+  'client.id': 'kafka',
+  'metadata.broker.list': 'localhost:9092',
+  'compression.codec': 'gzip',
+  'retry.backoff.ms': 200,
+  'message.send.max.retries': 10,
+  'socket.keepalive.enable': true,
+  'queue.buffering.max.messages': 100000,
+  'queue.buffering.max.ms': 1000,
+  'batch.num.messages': 1000000,
+  'dr_cb': true
+});</code></pre><h4>Stream API</h4><p>You can easily use the <code>Producer</code> as a writable stream immediately after creation (as shown in the following example):</p>
+<pre class="prettyprint source lang-js"><code>// Our producer with its Kafka brokers
+var producer = new Kafka.Producer({
+  'metadata.broker.list': 'kafka-host1:9092,kafka-host2:9092'
+});
+
+// This call returns a new writable stream to our topic 'topic-name'
+var stream = producer.getWriteStream('topic-name');
+
+// Writes a message to the stream
+var queuedSuccess = stream.write(new Buffer('Awesome message'));
+
+if (queuedSuccess) {
+  console.log('We queued our message!');
+} else {
+  // Note that this only tells us if the stream's queue is full,
+  // it does NOT tell us if the message got to Kafka!  See below...
+  console.log('Too many messages in our queue already');
+}
+
+stream.on('error', function (err) {
+  // Here's where we'll know if something went wrong sending to Kafka
+  console.error('Error in our kafka stream');
+  console.error(err);
+})</code></pre><p>Note that <code>getWriteStream</code> will create a new stream on every call.  You should try to cache the returned stream for a topic after the first call.</p>
+<h4>Standard API</h4><p>The Standard API is more performant, particularly when handling high volumes of messages.
+However, it requires more manual setup to use. The following example illustrates its use:</p>
+<pre class="prettyprint source lang-js"><code>var producer = new Kafka.Producer({
+  'metadata.broker.list': 'localhost:9092',
+  'dr_cb': true
+});
+
+// Connect to the broker manually
+producer.connect();
+
+// Wait for the ready event before proceeding
+producer.on('ready', function() {
+  // Create a Topic object with any options our Producer
+  // should use when writing to that topic.
+  var topic = producer.Topic('topic', {
+    // Make the Kafka broker acknowledge our message (optional)
+    'request.required.acks': 1
+  });
+
+  producer.produce({
+    // Message to send. If a string is supplied, it will be
+    // converted to a Buffer automatically, but we're being
+    // explicit here for the sake of example.
+    message: new Buffer('Awesome message'),
+
+    // The topic object we created above
+    topic: topic
+  }, function(err) {
+    // Called after the message is queued
+    if (err) {
+      console.error('A problem occurred when sending our message');
+      console.error(err);
+    } else {
+      console.log('Message produced successfully!');
+    }
+  });
+});
+
+// Any errors we encounter, including connection errors
+producer.on('error', function(err) {
+  console.error('Error from producer');
+  console.error(err);
+})</code></pre><p>To see the configuration options available to you, see the <a href="#configuration">Configuration</a> section.</p>
+<h5>Methods</h5><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>producer.connect()</code></td>
+<td>Connects to the broker. <br><br> The <code>connect()</code> method emits the <code>ready</code> event when it connects successfully or an <code>error</code> when it does not.</td>
+</tr>
+<tr>
+<td><code>producer.disconnect()</code></td>
+<td>Disconnects from the broker. <br><br>The <code>disconnect()</code> method emits the <code>disconnected</code> event when it has disconnected or <code>error</code> if something went wrong.</td>
+</tr>
+<tr>
+<td><code>producer.poll()</code></td>
+<td>Polls the producer for delivery reports or other events to be transmitted via the emitter. <br><br>This happens automatically on transactions such as <code>produce</code>.</td>
+</tr>
+<tr>
+<td><code>producer.produce(msg)</code></td>
+<td>Sends a message. <br><br>The <code>produce()</code> method takes a JSON object in the format showed above.</td>
+</tr>
+</tbody>
+</table>
+<h5>Events</h5><p>Some configuration properties that end in <code>_cb</code> indicate that an event should be generated for that option.  You can either:</p>
+<ul>
+<li>provide a value of <code>true</code> and react to the event</li>
+<li>provide a callback function directly</li>
+</ul>
+<p>The following example illustrates an event:</p>
+<pre class="prettyprint source lang-js"><code>var producer = new Kafka.Producer({
+  'client.id': 'my-client', // Specifies an identifier to use to help trace activity in Kafka
+  'metadata.broker.list': 'localhost:9092', // Connect to a Kafka instance on localhost
+  'dr_cb': true // Specifies that we want a delivery-report event to be generated
+});
+
+producer.on('delivery-report', function(report) {
+  // Report of delivery statistics here:
+  //
+  console.log(report);
+});</code></pre><p>The following table describes types of events.</p>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>error</code></td>
+<td>Error reporting is handled through this pipeline. <br><br>Most errors will have a value for <code>code</code>, <code>message</code>, and <code>origin</code>. <code>origin</code> will be <code>local</code> or <code>kafka</code> to determine where the error happened.</td>
+</tr>
+<tr>
+<td><code>disconnected</code></td>
+<td>The <code>disconnected</code> event is emitted when the broker has disconnected. <br><br>This event is emitted only when <code>.disconnect</code> is called. The wrapper will always try to reconnect otherwise.</td>
+</tr>
+<tr>
+<td><code>ready</code></td>
+<td>The <code>ready</code> event is emitted when the <code>Producer</code> is ready to send messages.</td>
+</tr>
+<tr>
+<td><code>event</code></td>
+<td>The <code>event</code> event is emitted when <code>librdkafka</code> reports an event (if you opted in via the <code>event_cb</code> option).</td>
+</tr>
+<tr>
+<td><code>event.log</code></td>
+<td>The <code>event.log</code> event is emitted when logging events come in (if you opted into logging via the <code>event_cb</code> option). <br><br>You will need to set a value for <code>debug</code> if you want to send information.</td>
+</tr>
+<tr>
+<td><code>event.status</code></td>
+<td>The  <code>event.status</code> event is emitted when <code>librdkafka</code> reports stats (if you opted in).</td>
+</tr>
+<tr>
+<td><code>event.throttle</code></td>
+<td>The <code>event.throttle</code> event emitted  when <code>librdkafka</code> reports throttling.</td>
+</tr>
+<tr>
+<td><code>delivery-report</code></td>
+<td>The <code>delivery-report</code> event is emitted when a delivery report has been found via polling. <br><br>To use this event, you must set <code>request.required.acks</code> to <code>1</code> or <code>-1</code> in topic configuration and <code>dr_cb</code> to <code>true</code> in the <code>Producer</code> constructor options.</td>
+</tr>
+</tbody>
+</table>
+<h2>Kafka.KafkaConsumer</h2><p>To read messages from Kafka, you use a <code>KafkaConsumer</code>.  You instantiate a <code>KafkaConsumer</code> object as follows:</p>
+<pre class="prettyprint source lang-js"><code>var consumer = new Kafka.KafkaConsumer({
+  'group.id': 'kafka',
+  'metadata.broker.list': 'localhost:9092',
+}, {});</code></pre><p>The first parameter is the global config, while the second parameter is the topic config that gets applied to all subscribed topics. To view a list of all supported configuration properties, see the <a href="https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md">Configuration.md</a> file described previously. Look for the <code>C</code> and <code>*</code> keys.</p>
+<p>The <code>group.id</code> and <code>metadata.broker.list</code> properties are required for a consumer.</p>
+<h3>Message Structure</h3><p>Messages that are returned by the <code>KafkaConsumer</code> have the following structure.</p>
+<pre class="prettyprint source lang-js"><code>{
+  message: new Buffer('hi'), // message contents as a Buffer
+  size: 2, // size of the message, in bytes
+  topic: 'librdtesting-01', // topic the message comes from
+  offset: 1337, // offset the message was read from
+  partition: 1 // partition the message was on
+}</code></pre><h3>Stream API</h3><p>The stream API is the easiest way to consume messages. The following example illustrates the use of the stream API:</p>
+<pre class="prettyprint source lang-js"><code>// Read from the librdtesting-01 topic... note that this creates a new stream on each call!
+var stream = consumer.getReadStream('librdtesting-01');
+
+stream.on('data', function(data) {
+  console.log('Got message');
+  console.log(data.message.toString());
+});</code></pre><h3>Standard API</h3><p>You can also use the Standard API and manage callbacks and events yourself.  You can choose different modes for consuming messages:</p>
+<ul>
+<li><em>Flowing mode</em>. This mode flows all of the messages it can read by maintaining an infinite loop in the event loop. It only stops when it detects the consumer has issued the <code>unsubscribe</code> or <code>disconnect</code> method.</li>
+<li><em>Non-flowing mode</em>. This mode reads a single message from Kafka at a time manually.</li>
+</ul>
+<p>The following example illustrates flowing mode:</p>
+<pre class="prettyprint source lang-js"><code>// Flowing mode
+consumer.connect();
+
+consumer
+  .on('ready', function() {
+    // Consume from the librdtesting-01 topic. This is what determines
+    // the mode we are running in. By consuming an entire topic,
+    // we will get messages from that topic as soon as they are available
+    consumer.consume('librdtesting-01');
+  })
+  .on('data', function(data) {
+    // Output the actual message contents
+    console.log(data.message.toString());
+  });</code></pre><p>The following example illustrates non-flowing mode:</p>
+<pre class="prettyprint source lang-js"><code>// Non-flowing mode
+consumer.connect();
+
+consumer
+  .on('ready', function() {
+    // Subscribe to the librdtesting-01 topic
+    // This makes subsequent consumes read from that topic.
+    consumer.subscribe('librdtesting-01');
+
+    // Read one message every 1000 seconds
+    setInterval(function() {
+      consumer.consume();
+    }, 1000);
+  })
+  .on('data', function(data) {
+    console.log('Message found!  Contents below.');
+    console.log(data.message.toString());
+  });</code></pre><p>The following table lists important methods for this API.</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>consumer.connect()</code></td>
+<td>Connects to the broker. <br><br>The <code>connect()</code> emits the event <code>ready</code> when it has successfully connected, or an <code>error</code> when it has not.</td>
+</tr>
+<tr>
+<td><code>consumer.disconnect()</code></td>
+<td>Disconnects from the broker. <br><br>The <code>disconnect()</code> method emits <code>disconnected</code> when it has disconnected or <code>error</code> if something went wrong.</td>
+</tr>
+<tr>
+<td><code>consumer.subscribe(topics, callback)</code></td>
+<td>Subscribes to an array of topics. <br><br> <code>topics</code> can be either an array or a string for a single topic.</td>
+</tr>
+<tr>
+<td><code>consumer.unsubscribe()</code></td>
+<td>Unsubscribes from the currently subscribed topics. <br><br>You cannot subscribe to different topics without calling the <code>unsubscribe()</code> method first.</td>
+</tr>
+<tr>
+<td><code>consumer.consume(cb)</code></td>
+<td>Gets a message from the existing subscription.</td>
+</tr>
+<tr>
+<td><code>consumer.consume(topics, cb)</code></td>
+<td>Creates a subscription and get messages as they become available.<br><br>The <code>consume()</code> method keeps a background thread running to do the work.</td>
+</tr>
+</tbody>
+</table>
+<p>The following table lists events for this API.</p>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>error</code></td>
+<td>Error reporting is handled through this pipeline. <br><br>Most errors will have a <code>code</code>, <code>message</code>, and <code>origin</code> value. The <code>origin</code> value will be <strong>local</strong> or <strong>remote</strong> to determine where the error happened.</td>
+</tr>
+<tr>
+<td><code>disconnected</code></td>
+<td>The <code>disconnected</code> event is emitted when the broker disconnects. <br><br>This event is only emitted when <code>.disconnect</code> is called. The wrapper will always try to reconnect otherwise.</td>
+</tr>
+<tr>
+<td><code>ready</code></td>
+<td>The <code>ready</code> event is emitted when the <code>Producer</code> is ready to send messages.</td>
+</tr>
+<tr>
+<td><code>event</code></td>
+<td>The <code>event</code> event is emitted when <code>librdkafka</code> reports an event (if you opted in via the <code>event_cb</code> option).</td>
+</tr>
+<tr>
+<td><code>event.log</code></td>
+<td>The <code>event.log</code> event is emitted when logging events occur (if you opted in for logging  via the <code>event_cb</code> option).<br><br> You will need to set a value for <code>debug</code> if you want information to send.</td>
+</tr>
+<tr>
+<td><code>event.status</code></td>
+<td>The <code>event.status</code> event is emitted when <code>librdkafka</code> reports stats (if you opted in).</td>
+</tr>
+<tr>
+<td><code>event.throttle</code></td>
+<td>The <code>event.throttle</code> event is emitted when <code>librdkafka</code> reports throttling.</td>
+</tr>
+</tbody>
+</table>
+<h2>Metadata</h2><p>Both <code>Kafka.Producer</code> and <code>Kafka.KafkaConsumer</code> include a <code>getMetadata</code> method to retrieve metadata from Kafka.</p>
+<p>Getting metadata on any connection returns the following data structure:</p>
+<pre class="prettyprint source lang-js"><code>{
+  orig_broker_id: 1,
+  orig_broker_name: &quot;broker_name&quot;,
+  brokers: [
+    {
+      id: 1,
+      host: 'localhost',
+      port: 40
+    }
+  ],
+  topics: [
+    {
+      name: 'awesome-topic',
+      partitions: [
+        {
+          id: 1,
+          leader: 20,
+          replicas: [1, 2],
+          isrs: [1, 2]
+        }
+      ]
+    }
+  ]
+}</code></pre><p>The following example illustrates how to use the <code>getMetadata</code> method.</p>
+<pre class="prettyprint source lang-js"><code>var opts = {
+  topic: 'librdtesting-01',
+  timeout: 10000
+};
+
+producer.getMetadata(opts, function(err, metadata) {
+  if (err) {
+    console.error('Error getting metadata');
+    console.error(err);
+  } else {
+    console.log('Got metadata');
+    console.log(metadata);
+  }
+});</code></pre></article>
+    </section>
+
+
+
+
+
+
+    </div>
+    <div class="grid-25 pull-75">
+      <div class="navigation-sidebar">
+        <ul class="nav nav-list">
+          <li><a href="javascript: void(0);">Classes</a><ul class="nav nav-list" role="menu"><li><a href="Client.html">Client</a></li><li><a href="KafkaConsumer.html">KafkaConsumer</a></li><li><a href="LibrdKafkaError.html">LibrdKafkaError</a></li><li><a href="Producer.html">Producer</a></li><li><a href="TopicReadable.html">TopicReadable</a></li><li><a href="TopicWritable.html">TopicWritable</a></li></ul></li><li><a href="javascript: void(0);">Events</a><ul class="nav nav-list" role="menu"><li><a href="Client.html#event:disconnected">disconnected</a></li><li><a href="Client.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:data">data</a></li><li><a href="KafkaConsumer.html#event:disconnected">disconnected</a></li><li><a href="KafkaConsumer.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:rebalance">rebalance</a></li><li><a href="Producer.html#event:disconnected">disconnected</a></li><li><a href="Producer.html#event:ready">ready</a></li></ul></li><li><a href="javascript: void(0);">Tutorials</a><ul class="nav nav-list" role="menu"><li><a href="tutorial-consumer.html">consumer</a></li><li><a href="tutorial-metadata.html">metadata</a></li><li><a href="tutorial-producer-cluster.html">producer-cluster</a></li><li><a href="tutorial-producer-multiple.html">producer-multiple</a></li><li><a href="tutorial-producer_.html">producer</a></li></ul></li>
+        </ul>
+        <!-- <ul class="nav nav-list collapse"> -->
+      </div>
+    </div>
+</div>
+
+  </div>
+</div> <!-- /.body-content -->
+
+<br class="clear">
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="grid-container">
+    <div class="footer-content">
+      <div class="grid-75">
+        <div class="legal">
+            Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc </a> on Thu Aug 11 2016 10:58:53 GMT-0700 (PDT)
+        </div>
+      </div>
+      <div class="grid-25">
+        <span class="blizzard">Blizzard® Entertainment</span>
+      </div>
+    </div>
+  </div>
+</footer>
+<!-- /FOOTER -->
+
+<script> prettyPrint(); </script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<script src="toolkit/js/toolkit/toolkit.min.js"> </script>
+</body>
+</html>
