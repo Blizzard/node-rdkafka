@@ -1,0 +1,9 @@
+build/
+node_modules/
+deps/librdkafka
+npm-debug.log
+
+deps/*
+!deps/*.gyp
+
+.DS_Store
