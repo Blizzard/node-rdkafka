@@ -1,0 +1,6 @@
+deps/
+!deps/librdkafka.gyp
+!deps/librdkafka
+.gitmodules
+Dockerfile
+deps/librdkafka/config.h

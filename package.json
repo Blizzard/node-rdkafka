@@ -1,0 +1,44 @@
+{
+  "name": "node-rdkafka",
+  "version": "0.3.0",
+  "description": "Node.js bindings for librdkafka",
+  "main": "lib/index.js",
+  "scripts": {
+    "configure": "node-gyp configure",
+    "build": "node-gyp build",
+    "test": "make test"
+  },
+  "keywords": [
+    "kafka",
+    "librdkafka"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:Blizzard/node-rdkafka.git"
+  },
+  "contributors": [
+    {
+      "name": "Stephen Parente",
+      "email": "webmakersteve@gmail.com"
+    },
+    {
+      "name": "Matt Gollob",
+      "email": "mattness@users.noreply.github.com"
+    }
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "jshint": "2.x",
+    "mocha": "2.x",
+    "node-gyp": "3.x"
+  },
+  "dependencies": {
+    "bindings": "1.x",
+    "jsdoc": "^3.4.0",
+    "nan": "2.x",
+    "toolkit-jsdoc": "^1.0.0"
+  },
+  "engines": {
+    "npm": "^2.7.3"
+  }
+}
