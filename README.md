@@ -26,8 +26,9 @@ Play nice; Play fair.
 
 ## Requirements
 
-* Apache Kafka >0.9
-* Node.js >4
+* Apache Kafka >=0.9
+* Node.js >=4
+* Linux/Mac (Sorry Windows :()
 
 ## Tests
 
