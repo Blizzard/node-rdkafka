@@ -53,6 +53,10 @@ To use the module, you must `require` it.
 var Kafka = require('node-rdkafka');
 ```
 
+## Code of Conduct
+
+Play nice; Play fair.
+
 ## Configuration
 
 You can pass many configuration options to `librdkafka`.  A full list can be found at https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md.
