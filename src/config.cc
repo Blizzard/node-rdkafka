@@ -9,6 +9,7 @@
 
 #include <string>
 #include <vector>
+#include <list>
 
 #include "src/config.h"
 
@@ -24,6 +25,17 @@ using std::endl;
 namespace NodeKafka {
 
 namespace Config {
+
+void DumpConfig(std::list<std::string> *dump) {
+  for (std::list<std::string>::iterator it = dump->begin();
+         it != dump->end(); ) {
+    std::cout << *it << " = ";
+    it++;
+    std::cout << *it << std::endl;
+    it++;
+  }
+  std::cout << std::endl;
+}
 
 template<typename T>
 void LoadParameter(v8::Local<v8::Object> object, std::string field, const T &to) {  // NOLINT

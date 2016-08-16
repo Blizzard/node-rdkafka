@@ -8,7 +8,6 @@
  */
 
 #include <string>
-#include <list>
 
 #include "src/connection.h"
 #include "src/workers.h"
@@ -57,12 +56,13 @@ Connection::Connection(RdKafka::Conf* gconfig, RdKafka::Conf* tconfig):
 
 Connection::~Connection() {
   uv_mutex_destroy(&m_connection_lock);
-  if (m_gconfig) {
-    delete m_gconfig;
-  }
 
   if (m_tconfig) {
     delete m_tconfig;
+  }
+
+  if (m_gconfig) {
+    delete m_gconfig;
   }
 }
 
@@ -76,17 +76,6 @@ RdKafka::TopicPartition* Connection::GetPartition(std::string &topic, int partit
 
 bool Connection::IsConnected() {
   return !m_is_closing && m_client != NULL;
-}
-
-void Connection::DumpConfig(std::list<std::string> *dump) {
-  for (std::list<std::string>::iterator it = dump->begin();
-         it != dump->end(); ) {
-    std::cout << *it << " = ";
-    it++;
-    std::cout << *it << std::endl;
-    it++;
-  }
-  std::cout << std::endl;
 }
 
 RdKafka::Handle* Connection::GetClient() {

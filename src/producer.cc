@@ -34,6 +34,7 @@ Producer::Producer(RdKafka::Conf* gconfig, RdKafka::Conf* tconfig):
   m_partitioner_cb() {
     std::string errstr;
 
+    m_gconfig->set("default_topic_conf", m_tconfig, errstr);
     m_gconfig->set("dr_cb", &m_dr_cb, errstr);
   }
 
@@ -124,7 +125,7 @@ void Producer::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
     return Nan::ThrowError(errstr.c_str());
   }
 
-  Producer* producer = new Producer(gconfig, gconfig);
+  Producer* producer = new Producer(gconfig, tconfig);
 
   // Wrap it
   producer->Wrap(info.This());
@@ -190,30 +191,11 @@ void Producer::Disconnect() {
     delete m_client;
     m_client = NULL;
   }
-
-  RdKafka::wait_destroyed(1000);
 }
 
 Baton Producer::Produce(ProducerMessage* msg) {
   return Produce(msg->Payload(), msg->Size(), msg->GetTopic(),
     msg->partition, msg->key);
-}
-
-Baton Producer::Produce(void* message, size_t size, std::string topic_name,
-  int32_t partition, std::string *key) {
-  std::string errstr;
-
-  RdKafka::Topic* topic =
-    RdKafka::Topic::create(m_client, topic_name, m_tconfig, errstr);
-
-  if (errstr.empty()) {
-    // Cede ownership of the pointer to this function
-    return Produce(message, size, topic, partition, key);
-  }
-
-  // We own the pointer here so we need to free it
-  free(message);
-  return Baton(RdKafka::ERR__INVALID_ARG);
 }
 
 Baton Producer::Produce(void* message, size_t size, RdKafka::Topic* topic,

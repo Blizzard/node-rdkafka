@@ -56,7 +56,6 @@ class Producer : public Connection {
   void Poll();
 
   Baton Produce(ProducerMessage* msg);
-  Baton Produce(void*, size_t, std::string, int32_t, std::string*);
   Baton Produce(void*, size_t, RdKafka::Topic*, int32_t, std::string*);
   std::string Name();
 

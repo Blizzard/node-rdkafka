@@ -95,8 +95,6 @@ Baton Consumer::Disconnect() {
 
       delete m_client;
       m_client = NULL;
-
-      RdKafka::wait_destroyed(1000);
     }
   }
 

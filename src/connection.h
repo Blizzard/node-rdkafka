@@ -13,7 +13,6 @@
 #include <nan.h>
 #include <iostream>
 #include <string>
-#include <list>
 
 #include "deps/librdkafka/src-cpp/rdkafkacpp.h"
 
@@ -66,8 +65,6 @@ class Connection : public Nan::ObjectWrap {
  protected:
   Connection(RdKafka::Conf*, RdKafka::Conf*);
   ~Connection();
-
-  void DumpConfig(std::list<std::string> *);
 
   static Nan::Persistent<v8::Function> constructor;
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
