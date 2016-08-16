@@ -90,7 +90,6 @@ Message::Message(RdKafka::Message *message):
 }
 
 Message::~Message() {
-  // @todo I think I'd rather check if _message is NULL
   if (m_message) {
     delete m_message;
   }

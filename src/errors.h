@@ -24,6 +24,7 @@ class Baton {
  public:
   explicit Baton(const RdKafka::ErrorCode &);
   explicit Baton(void* data);
+  explicit Baton(const RdKafka::ErrorCode &, std::string);
 
   template<typename T> T data() {
     return static_cast<T>(m_data);
@@ -35,6 +36,7 @@ class Baton {
 
  private:
   void* m_data;
+  std::string m_errstr;
   RdKafka::ErrorCode m_err;
 };
 

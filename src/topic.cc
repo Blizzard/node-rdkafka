@@ -30,12 +30,19 @@ namespace NodeKafka {
  */
 
 Topic::Topic(std::string topic_name, RdKafka::Conf* config, Connection * handle) {  // NOLINT
-  m_topic =
-    RdKafka::Topic::create(handle->GetClient(), topic_name, config, errstr);
+  Baton b = handle->CreateTopic(topic_name, config);
+
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    m_topic = NULL;
+  } else {
+    m_topic = b.data<RdKafka::Topic*>();
+  }
 }
 
 Topic::~Topic() {
-  delete m_topic;
+  if (m_topic) {
+    delete m_topic;
+  }
 }
 
 Nan::Persistent<v8::Function> Topic::constructor;
@@ -90,7 +97,12 @@ void Topic::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
 
   Connection* connection = ObjectWrap::Unwrap<Connection>(info[2]->ToObject());
 
+  if (!connection->IsConnected()) {
+    return Nan::ThrowError("Client is not connected");
+  }
+
   Topic* topic = new Topic(topic_name, config, connection);
+
   // Wrap it
   topic->Wrap(info.This());
 
