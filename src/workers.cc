@@ -718,9 +718,9 @@ void ConsumerCommit::Execute() {
   Baton b(NULL);
 
   if (committing_message) {
-    b = consumer->Commit();
-  } else {
     b = consumer->Commit(_conf._topic_name, _conf._partition, _conf._offset);
+  } else {
+    b = consumer->Commit();
   }
 
   if (b.err() != RdKafka::ERR_NO_ERROR) {
