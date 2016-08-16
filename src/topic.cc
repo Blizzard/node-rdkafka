@@ -122,7 +122,8 @@ v8::Local<v8::Object> Topic::NewInstance(v8::Local<v8::Value> arg) {
 
   v8::Local<v8::Value> argv[argc] = { arg };
   v8::Local<v8::Function> cons = Nan::New<v8::Function>(constructor);
-  v8::Local<v8::Object> instance = cons->NewInstance(argc, argv);
+  v8::Local<v8::Object> instance =
+    Nan::NewInstance(cons, argc, argv).ToLocalChecked();
 
   return scope.Escape(instance);
 }
