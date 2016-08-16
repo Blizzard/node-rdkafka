@@ -24,11 +24,7 @@ namespace NodeKafka {
 namespace Callbacks {
 
 Dispatcher::Dispatcher() {
-  async = new uv_async_t;
-  uv_async_init(uv_default_loop(), async, AsyncMessage_);
-
-  async->data = this;
-
+  async = NULL;
   uv_mutex_init(&async_lock);
 }
 
@@ -39,9 +35,25 @@ Dispatcher::~Dispatcher() {
     callbacks[i].Reset();
   }
 
-  // async->data = this;
-
   uv_mutex_destroy(&async_lock);
+}
+
+// Only run this if we aren't already listening
+void Dispatcher::Activate() {
+  if (!async) {
+    async = new uv_async_t;
+    uv_async_init(uv_default_loop(), async, AsyncMessage_);
+
+    async->data = this;
+  }
+}
+
+// Should be able to run this regardless of whether it is active or not
+void Dispatcher::Deactivate() {
+  if (async) {
+    uv_close(reinterpret_cast<uv_handle_t*>(async), NULL);
+    async = NULL;
+  }
 }
 
 bool Dispatcher::HasCallbacks() {
@@ -49,7 +61,9 @@ bool Dispatcher::HasCallbacks() {
 }
 
 void Dispatcher::Execute() {
-  uv_async_send(async);
+  if (async) {
+    uv_async_send(async);
+  }
 }
 
 void Dispatcher::Dispatch(const int _argc, Local<Value> _argv[]) {

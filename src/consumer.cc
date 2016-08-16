@@ -74,6 +74,56 @@ Baton Consumer::Connect() {
   return Baton(RdKafka::ERR_NO_ERROR);
 }
 
+void Consumer::ActivateDispatchers() {
+  m_event_cb.dispatcher.Activate();
+  m_consume_cb.dispatcher.Activate();
+  m_rebalance_cb.dispatcher.Activate();
+}
+
+Baton Consumer::Disconnect() {
+  // Only close client if it is connected
+  RdKafka::ErrorCode err = RdKafka::ERR_NO_ERROR;
+
+  if (IsConnected()) {
+    m_is_closing = true;
+    {
+      scoped_mutex_lock lock(m_connection_lock);
+
+      RdKafka::KafkaConsumer* consumer =
+        dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
+      err = consumer->close();
+
+      delete m_client;
+      m_client = NULL;
+
+      RdKafka::wait_destroyed(1000);
+    }
+  }
+
+  m_is_closing = false;
+
+  return Baton(err);
+}
+
+void Consumer::DeactivateDispatchers() {
+  m_event_cb.dispatcher.Deactivate();
+  m_consume_cb.dispatcher.Deactivate();
+  m_rebalance_cb.dispatcher.Deactivate();
+}
+
+bool Consumer::IsSubscribed() {
+  if (!IsConnected()) {
+    return false;
+  }
+
+  if (!m_is_subscribed) {
+    return false;
+  }
+
+  return true;
+}
+
+
 bool Consumer::HasAssignedPartitions() {
   return !m_partitions.empty();
 }
@@ -347,43 +397,6 @@ v8::Local<v8::Object> Consumer::NewInstance(v8::Local<v8::Value> arg) {
   v8::Local<v8::Object> instance = cons->NewInstance(argc, argv);
 
   return scope.Escape(instance);
-}
-
-Baton Consumer::Disconnect() {
-  // Only close client if it is connected
-  RdKafka::ErrorCode err = RdKafka::ERR_NO_ERROR;
-
-  if (IsConnected()) {
-    m_is_closing = true;
-    {
-      scoped_mutex_lock lock(m_connection_lock);
-
-      RdKafka::KafkaConsumer* consumer =
-        dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
-      err = consumer->close();
-
-      delete m_client;
-      m_client = NULL;
-
-      RdKafka::wait_destroyed(1000);
-    }
-  }
-
-  m_is_closing = false;
-
-  return Baton(err);
-}
-
-bool Consumer::IsSubscribed() {
-  if (!IsConnected()) {
-    return false;
-  }
-
-  if (!m_is_subscribed) {
-    return false;
-  }
-
-  return true;
 }
 
 /* Node exposed methods */

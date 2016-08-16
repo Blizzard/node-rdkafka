@@ -173,6 +173,16 @@ Baton Producer::Connect() {
   return Baton(RdKafka::ERR_NO_ERROR);
 }
 
+void Producer::ActivateDispatchers() {
+  m_event_cb.dispatcher.Activate();  // From connection
+  m_dr_cb.dispatcher.Activate();
+}
+
+void Producer::DeactivateDispatchers() {
+  m_event_cb.dispatcher.Deactivate();  // From connection
+  m_dr_cb.dispatcher.Deactivate();
+}
+
 void Producer::Disconnect() {
   if (IsConnected()) {
     scoped_mutex_lock lock(m_connection_lock);

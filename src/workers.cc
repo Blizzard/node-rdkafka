@@ -213,6 +213,9 @@ void ProducerConnect::HandleOKCallback() {
 
   v8::Local<v8::Value> argv[argc] = { Nan::Null(), obj};
 
+  // Activate the dispatchers
+  producer->ActivateDispatchers();
+
   callback->Call(argc, argv);
 }
 
@@ -242,16 +245,15 @@ void ProducerDisconnect::HandleOKCallback() {
   const unsigned int argc = 2;
   v8::Local<v8::Value> argv[argc] = { Nan::Null(), Nan::True()};
 
+  // Deactivate the dispatchers
+  producer->DeactivateDispatchers();
+
   callback->Call(argc, argv);
 }
 
 void ProducerDisconnect::HandleErrorCallback() {
-  Nan::HandleScope scope;
-
-  const unsigned int argc = 1;
-  v8::Local<v8::Value> argv[argc] = { Nan::Error(ErrorMessage()) };
-
-  callback->Call(argc, argv);
+  // This should never run
+  assert(0);
 }
 
 ProducerProduce::ProducerProduce(
@@ -327,6 +329,7 @@ void ConsumerConnect::HandleOKCallback() {
     Nan::New(consumer->Name()).ToLocalChecked());
 
   v8::Local<v8::Value> argv[argc] = { Nan::Null(), obj };
+  consumer->ActivateDispatchers();
 
   callback->Call(argc, argv);
 }
@@ -370,6 +373,8 @@ void ConsumerDisconnect::HandleOKCallback() {
   const unsigned int argc = 2;
   v8::Local<v8::Value> argv[argc] = { Nan::Null(), Nan::True() };
 
+  consumer->DeactivateDispatchers();
+
   callback->Call(argc, argv);
 }
 
@@ -378,6 +383,8 @@ void ConsumerDisconnect::HandleErrorCallback() {
 
   const unsigned int argc = 1;
   v8::Local<v8::Value> argv[argc] = { GetErrorObject() };
+
+  consumer->DeactivateDispatchers();
 
   callback->Call(argc, argv);
 }

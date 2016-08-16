@@ -74,6 +74,9 @@ class Consumer : public Connection {
   Baton Subscribe(std::vector<std::string>);
   NodeKafka::Message* Consume();
 
+  void ActivateDispatchers();
+  void DeactivateDispatchers();
+
  protected:
   static Nan::Persistent<v8::Function> constructor;
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);

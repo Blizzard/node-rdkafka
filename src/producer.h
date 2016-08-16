@@ -60,6 +60,9 @@ class Producer : public Connection {
   Baton Produce(void*, size_t, RdKafka::Topic*, int32_t, std::string*);
   std::string Name();
 
+  void ActivateDispatchers();
+  void DeactivateDispatchers();
+
  protected:
   static Nan::Persistent<v8::Function> constructor;
   static void New(const Nan::FunctionCallbackInfo<v8::Value>&);
