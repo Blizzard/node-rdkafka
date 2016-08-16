@@ -94,11 +94,27 @@ RdKafka::Handle* Connection::GetClient() {
 }
 
 Baton Connection::CreateTopic(std::string topic_name) {
-  RdKafka::Topic* topic =
-    RdKafka::Topic::create(m_client, topic_name, NULL, m_errstr);
+  return CreateTopic(topic_name, NULL);
+}
 
-  if (!m_errstr.empty()) {
-    return Baton(RdKafka::ErrorCode::ERR_TOPIC_EXCEPTION);
+Baton Connection::CreateTopic(std::string topic_name, RdKafka::Conf* conf) {
+  std::string errstr;
+
+  RdKafka::Topic* topic = NULL;
+
+  if (IsConnected()) {
+    scoped_mutex_lock lock(m_connection_lock);
+    if (IsConnected()) {
+    topic = RdKafka::Topic::create(m_client, topic_name, conf, errstr);
+    } else {
+      return Baton(RdKafka::ErrorCode::ERR__STATE);
+    }
+  } else {
+    return Baton(RdKafka::ErrorCode::ERR__STATE);
+  }
+
+  if (!errstr.empty()) {
+    return Baton(RdKafka::ErrorCode::ERR_TOPIC_EXCEPTION, errstr);
   }
 
   // Maybe do it this way later? Then we don't need to do static_cast

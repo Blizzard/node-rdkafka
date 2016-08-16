@@ -50,6 +50,7 @@ class Connection : public Nan::ObjectWrap {
 
   // Baton<RdKafka::Topic*>
   Baton CreateTopic(std::string);
+  Baton CreateTopic(std::string, RdKafka::Conf*);
   Baton GetMetadata(std::string, int);
 
   RdKafka::Handle* GetClient();

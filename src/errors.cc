@@ -13,22 +13,31 @@
 
 namespace NodeKafka {
 
-v8::Local<v8::Object> RdKafkaError(const RdKafka::ErrorCode &err) {
+v8::Local<v8::Object> RdKafkaError(const RdKafka::ErrorCode &err, std::string errstr) {  // NOLINT
   //
   int code = static_cast<int>(err);
 
   v8::Local<v8::Object> ret = Nan::New<v8::Object>();
 
   ret->Set(Nan::New("message").ToLocalChecked(),
-    Nan::New<v8::String>(RdKafka::err2str(err)).ToLocalChecked());
+    Nan::New<v8::String>(errstr).ToLocalChecked());
   ret->Set(Nan::New("code").ToLocalChecked(),
     Nan::New<v8::Number>(code));
 
   return ret;
 }
 
+v8::Local<v8::Object> RdKafkaError(const RdKafka::ErrorCode &err) {
+  return RdKafkaError(err, RdKafka::err2str(err));
+}
+
 Baton::Baton(const RdKafka::ErrorCode &code) {
   m_err = code;
+}
+
+Baton::Baton(const RdKafka::ErrorCode &code, std::string errstr) {
+  m_err = code;
+  m_errstr = errstr;
 }
 
 Baton::Baton(void* _data) {
@@ -37,7 +46,11 @@ Baton::Baton(void* _data) {
 }
 
 v8::Local<v8::Object> Baton::ToObject() {
-  return RdKafkaError(m_err);
+  if (m_errstr.empty()) {
+    return RdKafkaError(m_err);
+  } else {
+    return RdKafkaError(m_err, m_errstr);
+  }
 }
 
 RdKafka::ErrorCode Baton::err() {
