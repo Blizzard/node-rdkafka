@@ -59,6 +59,9 @@ class Connection : public Nan::ObjectWrap {
 
   Callbacks::Event m_event_cb;
 
+  virtual void ActivateDispatchers() = 0;
+  virtual void DeactivateDispatchers() = 0;
+
  protected:
   Connection(RdKafka::Conf*, RdKafka::Conf*);
   ~Connection();

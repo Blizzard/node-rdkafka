@@ -29,14 +29,14 @@
   "license": "MIT",
   "devDependencies": {
     "jshint": "2.x",
+    "jsdoc": "^3.4.0",
+    "toolkit-jsdoc": "^1.0.0",
     "mocha": "2.x",
     "node-gyp": "3.x"
   },
   "dependencies": {
     "bindings": "1.x",
-    "jsdoc": "^3.4.0",
-    "nan": "2.x",
-    "toolkit-jsdoc": "^1.0.0"
+    "nan": "2.x"
   },
   "engines": {
     "npm": "^2.7.3"

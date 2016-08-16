@@ -37,6 +37,8 @@ class Dispatcher {
   bool HasCallbacks();
   virtual void Flush() = 0;
   void Execute();
+  void Activate();
+  void Deactivate();
  protected:
   std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > > callbacks;  // NOLINT
 
