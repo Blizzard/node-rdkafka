@@ -195,8 +195,13 @@ void Producer::Disconnect() {
 }
 
 Baton Producer::Produce(ProducerMessage* msg) {
-  return Produce(msg->Payload(), msg->Size(), msg->GetTopic(),
-    msg->partition, msg->key);
+  if (msg->m_key.empty()) {
+    return Produce(msg->Payload(), msg->Size(), msg->GetTopic(),
+      msg->m_partition, NULL);
+  } else {
+    return Produce(msg->Payload(), msg->Size(), msg->GetTopic(),
+      msg->m_partition, &msg->m_key);
+    }
 }
 
 Baton Producer::Produce(void* message, size_t size, RdKafka::Topic* topic,
@@ -207,9 +212,8 @@ Baton Producer::Produce(void* message, size_t size, RdKafka::Topic* topic,
     scoped_mutex_lock lock(m_connection_lock);
     if (IsConnected()) {
       RdKafka::Producer* producer = dynamic_cast<RdKafka::Producer*>(m_client);
-
       response_code = producer->produce(topic, partition,
-            RdKafka::Producer::RK_MSG_FREE, message, size, NULL, NULL);
+            RdKafka::Producer::RK_MSG_FREE, message, size, key, NULL);
 
       Poll();
     } else {
@@ -256,10 +260,10 @@ NAN_METHOD(Producer::NodeProduceSync) {
 
   ProducerMessage* message = new ProducerMessage(obj, topic);
   if (message->IsEmpty()) {
-    if (message->errstr.empty()) {
+    if (message->m_errstr.empty()) {
       return Nan::ThrowError("Need to specify a message to send");
     } else {
-      return Nan::ThrowError(message->errstr.c_str());
+      return Nan::ThrowError(message->m_errstr.c_str());
     }
   }
 
@@ -292,10 +296,10 @@ NAN_METHOD(Producer::NodeProduce) {
 
   ProducerMessage* message = new ProducerMessage(obj, topic);
   if (message->IsEmpty()) {
-    if (message->errstr.empty()) {
+    if (message->m_errstr.empty()) {
       return Nan::ThrowError("Need to specify a message to send");
     } else {
-      return Nan::ThrowError(message->errstr.c_str());
+      return Nan::ThrowError(message->m_errstr.c_str());
     }
   }
 
@@ -407,33 +411,21 @@ NAN_METHOD(Producer::NodeDisconnect) {
  */
 
 ProducerMessage::ProducerMessage(v8::Local<v8::Object> obj, Topic * topic):
-  topic_(topic),
-  is_empty(true) {
+  m_topic(topic),
+  m_is_empty(true) {
   // We have this bad boy now
-  v8::Local<v8::String> partitionField = Nan::New("partition").ToLocalChecked();
-  if (Nan::Has(obj, partitionField).FromMaybe(false)) {
-    v8::Local<v8::Value> partitionVal =
-      Nan::Get(obj, partitionField).ToLocalChecked();
 
-    if (!partitionVal->IsNumber()) {
-      partition = -1;
-    } else {
-      partition = Nan::To<int64_t>(partitionVal).FromJust();
-    }
+  m_partition = GetParameter<int64_t>(obj, "partition", 0);
 
-  } else {
-    partition = -1;
-  }
-
-  if (partition < 0) {
-    partition = RdKafka::Topic::PARTITION_UA;  // this is just -1
+  if (m_partition < 0) {
+    m_partition = RdKafka::Topic::PARTITION_UA;  // this is just -1
   }
 
   // This one is a buffer
-  v8::Local<v8::String> field = Nan::New("message").ToLocalChecked();
-  if (Nan::Has(obj, field).FromMaybe(false)) {
+  v8::Local<v8::String> messageField = Nan::New("message").ToLocalChecked();
+  if (Nan::Has(obj, messageField).FromMaybe(false)) {
     Nan::MaybeLocal<v8::Value> buffer_pre_object =
-      Nan::Get(obj, field);
+      Nan::Get(obj, messageField);
 
     if (buffer_pre_object.IsEmpty()) {
       // this is an error object then
@@ -457,36 +449,36 @@ ProducerMessage::ProducerMessage(v8::Local<v8::Object> obj, Topic * topic):
     // which should be more memory-efficient and allow v8 to dispose of the
     // buffer sooner
 
-    buffer_length = node::Buffer::Length(buffer_object);
-    buffer_data = malloc(buffer_length);
-    memcpy(buffer_data, node::Buffer::Data(buffer_object), buffer_length);
+    m_buffer_length = node::Buffer::Length(buffer_object);
+    m_buffer_data = malloc(m_buffer_length);
+    memcpy(m_buffer_data, node::Buffer::Data(buffer_object), m_buffer_length);
   } else {
     return;
   }
 
-  is_empty = false;
+  // Currently a valid message
+  m_is_empty = false;
 
-  // partition = GetParameter<int32_t>(obj, "partition", 0);
-  std::string key_string = GetParameter<std::string>(obj, "key", "");
-  key = &key_string;
+  // Key
+  m_key = GetParameter<std::string>(obj, "key", "");
 }
 
 ProducerMessage::~ProducerMessage() {}
 
 bool ProducerMessage::IsEmpty() {
-  return is_empty;
+  return m_is_empty;
 }
 
 void* ProducerMessage::Payload() {
-  return buffer_data;
+  return m_buffer_data;
 }
 
 RdKafka::Topic* ProducerMessage::GetTopic() {
-  return topic_->toRDKafkaTopic();
+  return m_topic->toRDKafkaTopic();
 }
 
 size_t ProducerMessage::Size() {
-  return buffer_length;
+  return m_buffer_length;
 }
 
 }  // namespace NodeKafka
