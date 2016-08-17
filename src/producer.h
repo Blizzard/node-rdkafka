@@ -34,16 +34,16 @@ class ProducerMessage {
   bool IsEmpty();
   RdKafka::Topic * GetTopic();
 
-  std::string errstr;
+  std::string m_errstr;
 
-  Topic * topic_;
-  int32_t partition;
-  std::string* key;
+  Topic * m_topic;
+  int32_t m_partition;
+  std::string m_key;
 
-  void* buffer_data;
-  size_t buffer_length;
+  void* m_buffer_data;
+  size_t m_buffer_length;
 
-  bool is_empty;
+  bool m_is_empty;
 };
 
 class Producer : public Connection {
