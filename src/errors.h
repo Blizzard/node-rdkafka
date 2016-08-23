@@ -31,6 +31,7 @@ class Baton {
   }
 
   RdKafka::ErrorCode err();
+  std::string errstr();
 
   v8::Local<v8::Object> ToObject();
 
