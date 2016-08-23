@@ -64,7 +64,7 @@ Baton Consumer::Connect() {
   m_client = RdKafka::KafkaConsumer::create(m_gconfig, errstr);
 
   if (!m_client || !errstr.empty()) {
-    return Baton(RdKafka::ERR__STATE);
+    return Baton(RdKafka::ERR__STATE, errstr);
   }
 
   if (m_partitions.size() > 0) {
@@ -136,21 +136,48 @@ void Consumer::part_list_print(const std::vector<RdKafka::TopicPartition*> &part
   std::cerr << std::endl;
 }
 
-void Consumer::Assign(std::vector<RdKafka::TopicPartition*> partitions) {
+Baton Consumer::Assign(std::vector<RdKafka::TopicPartition*> partitions) {
+  if (!IsConnected()) {
+    return Baton(RdKafka::ERR__STATE);
+  }
+
   RdKafka::KafkaConsumer* consumer =
     dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
-  consumer->assign(partitions);
+
+  RdKafka::ErrorCode errcode = consumer->assign(partitions);
+
+  if (errcode != RdKafka::ERR_NO_ERROR) {
+    return Baton(errcode);
+  }
+
   m_partition_cnt = partitions.size();
   m_partitions.swap(partitions);
+
+  m_is_subscribed = true;
+
+  return Baton(RdKafka::ERR_NO_ERROR);
 }
 
-void Consumer::Unassign() {
+Baton Consumer::Unassign() {
+  if (!IsConnected()) {
+    return Baton(RdKafka::ERR__STATE);
+  }
+
   RdKafka::KafkaConsumer* consumer =
     dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
-  consumer->unassign();
+
+  RdKafka::ErrorCode errcode = consumer->unassign();
+
+  if (errcode != RdKafka::ERR_NO_ERROR) {
+    return Baton(errcode);
+  }
+
+  m_is_subscribed = false;
+
   m_partitions.empty();
   m_partition_cnt = 0;
-  // is_connected = false;
+
+  return Baton(RdKafka::ERR_NO_ERROR);
 }
 
 Baton Consumer::Commit(std::string topic_name, int partition, int64_t offset) {
@@ -476,18 +503,25 @@ NAN_METHOD(Consumer::NodeGetAssignments) {
 NAN_METHOD(Consumer::NodeAssign) {
   Nan::HandleScope scope;
 
+  Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
+
+  if (!consumer->IsConnected()) {
+    Nan::ThrowError("Consumer is disconnected");
+    return;
+  }
+
   if (info.Length() < 1 || !info[0]->IsArray()) {
     // Just throw an exception
     return Nan::ThrowError("Need to specify an array of partitions");
   }
 
   v8::Local<v8::Array> partitions = info[0].As<v8::Array>();
-  std::vector<RdKafka::TopicPartition*> _partitions;
+  std::vector<RdKafka::TopicPartition*> topic_partitions;
 
   for (unsigned int i = 0; i < partitions->Length(); ++i) {
     v8::Local<v8::Value> partition_obj_value = partitions->Get(i);
     if (!partition_obj_value->IsObject()) {
-      Nan::ThrowError("Must pass objects");
+      Nan::ThrowError("Must pass topic-partition objects");
     }
 
     v8::Local<v8::Object> partition_obj = partition_obj_value.As<v8::Object>();
@@ -505,20 +539,23 @@ NAN_METHOD(Consumer::NodeAssign) {
         part = Connection::GetPartition(topic, partition);
       }
 
-      _partitions.push_back(part);
+      int64_t offset = GetParameter<int64_t>(partition_obj, "offset", -1);
+      if (offset >= 0) {
+        part->set_offset(offset);
+      }
+
+      topic_partitions.push_back(part);
     }
   }
-  Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
 
-  if (!consumer->IsConnected()) {
-    Nan::ThrowError("Consumer is disconnected");
-    return;
-  }
-
-  consumer->Assign(_partitions);
+  Baton b = consumer->Assign(topic_partitions);
 
   // i dont know who manages the memory at this point
   // i have to assume it does because it is asking for pointers
+
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    Nan::ThrowError(RdKafka::err2str(b.err()).c_str());
+  }
 
   info.GetReturnValue().Set(Nan::True());
 }
@@ -533,7 +570,11 @@ NAN_METHOD(Consumer::NodeUnassign) {
     return;
   }
 
-  consumer->Unassign();
+  Baton b = consumer->Unassign();
+
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    Nan::ThrowError(RdKafka::err2str(b.err()).c_str());
+  }
 
   info.GetReturnValue().Set(Nan::True());
 }

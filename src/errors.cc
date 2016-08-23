@@ -56,4 +56,13 @@ v8::Local<v8::Object> Baton::ToObject() {
 RdKafka::ErrorCode Baton::err() {
   return m_err;
 }
+
+std::string Baton::errstr() {
+  if (m_errstr.empty()) {
+    return RdKafka::err2str(m_err);
+  } else {
+    return m_errstr;
+  }
+}
+
 }  // namespace NodeKafka

@@ -66,8 +66,8 @@ class Consumer : public Connection {
   bool HasAssignedPartitions();
   int AssignedPartitionCount();
 
-  void Assign(std::vector<RdKafka::TopicPartition*>);
-  void Unassign();
+  Baton Assign(std::vector<RdKafka::TopicPartition*>);
+  Baton Unassign();
 
   std::string Name();
 

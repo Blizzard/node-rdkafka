@@ -314,7 +314,7 @@ void ConsumerConnect::Execute() {
   // consumer->Wait();
 
   if (b.err() != RdKafka::ERR_NO_ERROR) {
-    SetErrorCode(b.err());
+    SetErrorBaton(b);
   }
 }
 

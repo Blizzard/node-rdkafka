@@ -25,8 +25,9 @@ namespace Workers {
 
 class ErrorAwareWorker : public Nan::AsyncWorker {
  public:
-  explicit ErrorAwareWorker(Nan::Callback* callback_)
-      : Nan::AsyncWorker(callback_) {}
+  explicit ErrorAwareWorker(Nan::Callback* callback_) :
+    Nan::AsyncWorker(callback_),
+    m_baton(RdKafka::ERR_NO_ERROR) {}
   virtual ~ErrorAwareWorker() {}
 
   virtual void Execute() = 0;
@@ -36,23 +37,25 @@ class ErrorAwareWorker : public Nan::AsyncWorker {
  protected:
   void SetErrorCode(const int & code) {
     RdKafka::ErrorCode rd_err = static_cast<RdKafka::ErrorCode>(code);
-    SetErrorMessage(RdKafka::err2str(rd_err).c_str());
-    m_error_code = code;
+    SetErrorCode(rd_err);
   }
   void SetErrorCode(const RdKafka::ErrorCode & err) {
-    SetErrorCode(static_cast<int>(err));
+    SetErrorBaton(Baton(err));
+  }
+  void SetErrorBaton(const NodeKafka::Baton & baton) {
+    m_baton = baton;
+    SetErrorMessage(m_baton.errstr().c_str());
   }
 
   int GetErrorCode() {
-    return m_error_code;
-  }
-  v8::Local<v8::Object> GetErrorObject() {
-    int code = GetErrorCode();
-    Baton b = Baton(static_cast<RdKafka::ErrorCode>(code));
-    return b.ToObject();
+    return m_baton.err();
   }
 
-  int m_error_code;
+  v8::Local<v8::Object> GetErrorObject() {
+    return m_baton.ToObject();
+  }
+
+  Baton m_baton;
 };
 
 class MessageWorker : public Nan::AsyncWorker {
