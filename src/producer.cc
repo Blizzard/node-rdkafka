@@ -415,7 +415,8 @@ ProducerMessage::ProducerMessage(v8::Local<v8::Object> obj, Topic * topic):
   m_is_empty(true) {
   // We have this bad boy now
 
-  m_partition = GetParameter<int64_t>(obj, "partition", 0);
+  m_partition =
+    GetParameter<int64_t>(obj, "partition", RdKafka::Topic::PARTITION_UA);
 
   if (m_partition < 0) {
     m_partition = RdKafka::Topic::PARTITION_UA;  // this is just -1
