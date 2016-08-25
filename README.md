@@ -164,7 +164,11 @@ producer.on('ready', function() {
     // converted to a Buffer automatically, but we're being
     // explicit here for the sake of example.
     message: new Buffer('Awesome message'),
-
+    // for keyed messages, we also specify the key - note that this field is optional
+    key: 'Stormwind',
+    // optionally we can manually specify a partition for the message
+    // this defaults to -1 - which will use librdkafka's default partitioner (consistent random for keyed messages, random for unkeyed messages)
+    partition: 0,
     // The topic object we created above
     topic: topic
   }, function(err) {
