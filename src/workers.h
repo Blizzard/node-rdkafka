@@ -158,7 +158,7 @@ class ConnectionMetadata : public ErrorAwareWorker {
   std::string topic_;
   int timeout_ms_;
 
-  RdKafka::Metadata* metadata_;
+  RdKafka::Metadata* m_metadata;
 
   // Now this is the data that will get translated in the OK callback
 };

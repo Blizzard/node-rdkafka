@@ -101,7 +101,6 @@ size_t Message::Size() {
 
 void Message::Free(char * data, void * hint) {
   Message* m = static_cast<Message*>(hint);
-  // @note Am I responsible for freeing data as well?
   delete m;
 }
 

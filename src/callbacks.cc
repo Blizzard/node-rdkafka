@@ -425,6 +425,29 @@ void RebalanceDispatcher::Flush() {
       break;
     }
 
+    std::vector<rebalance_topic_partition_t> parts = _events[i].partitions;
+
+    v8::Local<v8::Array> tp_array = Nan::New<v8::Array>();
+
+    for (size_t i = 0; i < parts.size(); i++) {
+      v8::Local<v8::Object> tp_obj = Nan::New<v8::Object>();
+      rebalance_topic_partition_t tp = parts[i];
+
+      Nan::Set(tp_obj, Nan::New("topic").ToLocalChecked(),
+        Nan::New<v8::String>(tp.topic.c_str()).ToLocalChecked());
+      Nan::Set(tp_obj, Nan::New("partition").ToLocalChecked(),
+        Nan::New<v8::Number>(tp.partition));
+
+      if (tp.offset >= 0) {
+        Nan::Set(tp_obj, Nan::New("offset").ToLocalChecked(),
+          Nan::New<v8::Number>(tp.offset));
+      }
+
+      tp_array->Set(i, tp_obj);
+    }
+    // Now convert the TopicPartition list to a JS array
+    Nan::Set(jsobj, Nan::New("assignment").ToLocalChecked(), tp_array);
+
     argv[0] = jsobj;
 
     Dispatch(argc, argv);
