@@ -77,6 +77,8 @@ class Consumer : public Connection {
   void ActivateDispatchers();
   void DeactivateDispatchers();
 
+  Baton UseManualRebalancing(v8::Local<v8::Function>);
+
  protected:
   static Nan::Persistent<v8::Function> constructor;
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
@@ -90,6 +92,7 @@ class Consumer : public Connection {
   std::vector<RdKafka::TopicPartition*> m_partitions;
   int m_partition_cnt;
   bool m_is_subscribed;
+  bool m_is_manually_rebalancing;
 
   Callbacks::Consume m_consume_cb;
   Callbacks::Rebalance m_rebalance_cb;

@@ -42,10 +42,10 @@ Consumer::Consumer(RdKafka::Conf* gconfig, RdKafka::Conf* tconfig):
   m_consume_cb(),
   m_rebalance_cb(this) {
     m_is_subscribed = false;
+    m_is_manually_rebalancing = false;
 
     std::string errstr;
 
-    m_gconfig->set("rebalance_cb", &m_rebalance_cb, errstr);
     m_gconfig->set("default_topic_conf", m_tconfig, errstr);
   }
 
@@ -77,7 +77,9 @@ Baton Consumer::Connect() {
 void Consumer::ActivateDispatchers() {
   m_event_cb.dispatcher.Activate();
   m_consume_cb.dispatcher.Activate();
-  m_rebalance_cb.dispatcher.Activate();
+  if (m_is_manually_rebalancing) {
+    m_rebalance_cb.dispatcher.Activate();
+  }
 }
 
 Baton Consumer::Disconnect() {
@@ -106,7 +108,9 @@ Baton Consumer::Disconnect() {
 void Consumer::DeactivateDispatchers() {
   m_event_cb.dispatcher.Deactivate();
   m_consume_cb.dispatcher.Deactivate();
-  m_rebalance_cb.dispatcher.Deactivate();
+  if (m_is_manually_rebalancing) {
+    m_rebalance_cb.dispatcher.Deactivate();
+  }
 }
 
 bool Consumer::IsSubscribed() {
@@ -421,6 +425,22 @@ v8::Local<v8::Object> Consumer::NewInstance(v8::Local<v8::Value> arg) {
   return scope.Escape(instance);
 }
 
+Baton Consumer::UseManualRebalancing(v8::Local<v8::Function> cb) {
+  m_rebalance_cb.dispatcher.AddCallback(cb);
+
+  std::string errstr;
+  if (!m_is_manually_rebalancing) {
+    // Okay. We want to set the rebalance CB now
+    m_is_manually_rebalancing = true;
+    if (RdKafka::Conf::CONF_OK !=
+      m_gconfig->set("rebalance_cb", &m_rebalance_cb, errstr)) {
+      return Baton(RdKafka::ERR__FAIL, errstr);
+    }
+  }
+
+  return Baton(RdKafka::ERR_NO_ERROR);
+}
+
 /* Node exposed methods */
 
 NAN_METHOD(Consumer::NodeOnConsume) {
@@ -447,7 +467,12 @@ NAN_METHOD(Consumer::NodeOnRebalance) {
 
   v8::Local<v8::Function> cb = info[0].As<v8::Function>();
 
-  consumer->m_rebalance_cb.dispatcher.AddCallback(cb);
+  // Check if we need to put the dispatcher in
+  Baton b = consumer->UseManualRebalancing(cb);
+
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    Nan::ThrowError(b.errstr().c_str());
+  }
 
   info.GetReturnValue().Set(Nan::True());
 }

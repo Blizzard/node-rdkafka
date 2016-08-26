@@ -145,7 +145,7 @@ struct rebalance_topic_partition_t {
   int partition;
   int64_t offset;
 
-  rebalance_topic_partition_t(std::string p_topic, int p_partition, int64_t p_offset):
+  rebalance_topic_partition_t(std::string p_topic, int p_partition, int64_t p_offset):  // NOLINT
     topic(p_topic),
     partition(p_partition),
     offset(p_offset) {}
@@ -167,11 +167,9 @@ struct rebalance_event_t {
       rebalance_topic_partition_t tp(
         topic_partition->topic(),
         topic_partition->partition(),
-        topic_partition->offset()
-      );
+        topic_partition->offset());
 
       partitions.push_back(tp);
-
     }
   }
 };
