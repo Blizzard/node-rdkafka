@@ -40,7 +40,7 @@ This project includes two types of unit tests in this project:
 
 You can run both types of tests by using `Makefile`. Doing so calls `mocha` in your locally installed `node_modules` directory.
 
-* Before you run the tests, be sure to init and update the submodules: 
+* Before you run the tests, be sure to init and update the submodules:
   1. `git submodule init`
   2. `git submodule update`
 * To run the unit tests, you can run `make lint` or `make test`.
@@ -62,7 +62,7 @@ var Kafka = require('node-rdkafka');
 
 ## Configuration
 
-You can pass many configuration options to `librdkafka`.  A full list can be found in `librdkafka`'s [Configuration.md](https://github.com/edenhill/librdkafka/blob/2213fb29f98a7a73f22da21ef85e0783f6fd67c4/CONFIGURATION.md) 
+You can pass many configuration options to `librdkafka`.  A full list can be found in `librdkafka`'s [Configuration.md](https://github.com/edenhill/librdkafka/blob/2213fb29f98a7a73f22da21ef85e0783f6fd67c4/CONFIGURATION.md)
 
 Configuration keys that have the suffix `_cb` are designated as callbacks. Some
 of these keys are informational and you can choose to opt-in (for example, `dr_cb`). Others are callbacks designed to
@@ -75,6 +75,13 @@ The library currently supports the following callbacks:
 * `partitioner_cb`
 * `dr_cb`
 * `event_cb`
+
+### SASL Support
+
+`librdkafka` supports using SASL for authentication and `node-rdkafka` has it turned on by default. If you would like
+disable `sasl` support, export `WITH_SASL=0` before you run `npm install`. (You can also specify it when using `node-gyp`, `node-gyp --WITH_SASL=0 rebuild`)
+
+This means you are required to have `libsasl2` on the machine before you build it.
 
 ## Sending Messages
 
