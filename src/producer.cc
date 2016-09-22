@@ -201,7 +201,7 @@ Baton Producer::Produce(ProducerMessage* msg) {
   } else {
     return Produce(msg->Payload(), msg->Size(), msg->GetTopic(),
       msg->m_partition, &msg->m_key);
-    }
+  }
 }
 
 Baton Producer::Produce(void* message, size_t size, RdKafka::Topic* topic,

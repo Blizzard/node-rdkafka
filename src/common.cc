@@ -1,6 +1,6 @@
 /*
  * node-rdkafka - Node.js wrapper for RdKafka C/C++ library
- * 
+ *
  * Copyright (c) 2016 Blizzard Entertainment
  *
  * This software may be modified and distributed under the terms
@@ -72,10 +72,15 @@ std::string GetParameter<std::string>(v8::Local<v8::Object> object,
       Nan::To<v8::String>(Nan::Get(object, field).ToLocalChecked());
 
     if (!parameter.IsEmpty()) {
-      Nan::Utf8String parameterValue(parameter.ToLocalChecked());
-      std::string parameterString(*parameterValue);
+      v8::Local<v8::String> val = parameter.ToLocalChecked();
 
-      return parameterString;
+      if (!val->IsUndefined() && !val->IsNull()) {
+        Nan::Utf8String parameterValue(val);
+        std::string parameterString(*parameterValue);
+
+        return parameterString;
+
+      }
     }
   }
   return def;
