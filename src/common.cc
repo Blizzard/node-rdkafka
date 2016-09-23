@@ -72,7 +72,7 @@ std::string GetParameter<std::string>(v8::Local<v8::Object> object,
       Nan::Get(object, field).ToLocalChecked();
       // Nan::To<v8::String>();
 
-    if (parameter->IsString()) {
+    if (!parameter->IsUndefined() && !parameter->IsNull()) {
       v8::Local<v8::String> val = parameter->ToString();
 
       if (!val->IsUndefined() && !val->IsNull()) {
