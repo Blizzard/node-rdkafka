@@ -68,11 +68,12 @@ std::string GetParameter<std::string>(v8::Local<v8::Object> object,
                                       std::string def) {
   v8::Local<v8::String> field = Nan::New(field_name.c_str()).ToLocalChecked();
   if (Nan::Has(object, field).FromMaybe(false)) {
-    Nan::MaybeLocal<v8::String> parameter =
-      Nan::To<v8::String>(Nan::Get(object, field).ToLocalChecked());
+    v8::Local<v8::Value> parameter =
+      Nan::Get(object, field).ToLocalChecked();
+      // Nan::To<v8::String>();
 
-    if (!parameter.IsEmpty()) {
-      v8::Local<v8::String> val = parameter.ToLocalChecked();
+    if (parameter->IsString()) {
+      v8::Local<v8::String> val = parameter->ToString();
 
       if (!val->IsUndefined() && !val->IsNull()) {
         Nan::Utf8String parameterValue(val);
@@ -80,6 +81,8 @@ std::string GetParameter<std::string>(v8::Local<v8::Object> object,
 
         return parameterString;
 
+      } else {
+        Log("Value is undefined or null");
       }
     }
   }
