@@ -153,8 +153,6 @@ Baton Consumer::Assign(std::vector<RdKafka::TopicPartition*> partitions) {
   m_partition_cnt = partitions.size();
   m_partitions.swap(partitions);
 
-  m_is_subscribed = true;
-
   return Baton(RdKafka::ERR_NO_ERROR);
 }
 
@@ -171,8 +169,6 @@ Baton Consumer::Unassign() {
   if (errcode != RdKafka::ERR_NO_ERROR) {
     return Baton(errcode);
   }
-
-  m_is_subscribed = false;
 
   m_partitions.empty();
   m_partition_cnt = 0;
@@ -250,9 +246,9 @@ Baton Consumer::Subscribe(std::vector<std::string> topics) {
 NodeKafka::Message* Consumer::Consume() {
   NodeKafka::Message* m;
 
-  if (IsConnected() && IsSubscribed()) {
+  if (IsConnected()) {
     scoped_mutex_lock lock(m_connection_lock);
-    if (!IsConnected() && IsSubscribed()) {
+    if (!IsConnected()) {
       m = new NodeKafka::Message(RdKafka::ERR__STATE);
     } else {
       RdKafka::KafkaConsumer* consumer =

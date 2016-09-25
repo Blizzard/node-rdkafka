@@ -505,7 +505,7 @@ ConsumerConsumeLoop::~ConsumerConsumeLoop() {}
 
 void ConsumerConsumeLoop::Execute(const ExecutionMessageBus& bus) {
   // Do one check here before we move forward
-  while (consumer->IsConnected() && consumer->IsSubscribed()) {
+  while (consumer->IsConnected()) {
     NodeKafka::Message* message = consumer->Consume();
     if (message->errcode() == RdKafka::ERR__PARTITION_EOF) {
       delete message;
