@@ -28,9 +28,11 @@ class Conf : public RdKafka::Conf {
   static Conf* create(RdKafka::Conf::ConfType, v8::Local<v8::Object>, std::string &);  // NOLINT
 
   static void DumpConfig(std::list<std::string> *);
+
+  void listen();
+  void stop();
  protected:
-  bool m_has_rebalance_cb;
-  bool m_has_partitioner_cb;
+  NodeKafka::Callbacks::Rebalance * m_rebalance_cb = NULL;
 };
 
 }  // namespace NodeKafka

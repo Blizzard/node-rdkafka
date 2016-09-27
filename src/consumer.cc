@@ -37,11 +37,8 @@ consumer_commit_t::consumer_commit_t() {
  * @sa NodeKafka::Client
  */
 
-Consumer::Consumer(RdKafka::Conf* gconfig, RdKafka::Conf* tconfig):
+Consumer::Consumer(Conf* gconfig, Conf* tconfig):
   Connection(gconfig, tconfig) {
-    m_is_subscribed = false;
-    m_is_manually_rebalancing = false;
-
     std::string errstr;
 
     m_gconfig->set("default_topic_conf", m_tconfig, errstr);
@@ -73,6 +70,13 @@ Baton Consumer::Connect() {
 }
 
 void Consumer::ActivateDispatchers() {
+  // Listen to global config
+  m_gconfig->listen();
+
+  // Listen to non global config
+  // tconfig->listen();
+
+  // This should be refactored to config based management
   m_event_cb.dispatcher.Activate();
 }
 
@@ -100,6 +104,10 @@ Baton Consumer::Disconnect() {
 }
 
 void Consumer::DeactivateDispatchers() {
+  // Stop listening to the config dispatchers
+  m_gconfig->stop();
+
+  // Also this one
   m_event_cb.dispatcher.Deactivate();
 }
 

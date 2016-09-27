@@ -28,7 +28,7 @@ namespace NodeKafka {
  * @sa NodeKafka::Connection
  */
 
-Producer::Producer(RdKafka::Conf* gconfig, RdKafka::Conf* tconfig):
+Producer::Producer(Conf* gconfig, Conf* tconfig):
   Connection(gconfig, tconfig),
   m_dr_cb(),
   m_partitioner_cb() {
@@ -109,14 +109,14 @@ void Producer::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
 
   std::string errstr;
 
-  RdKafka::Conf* gconfig =
+  Conf* gconfig =
     Conf::create(RdKafka::Conf::CONF_GLOBAL, info[0]->ToObject(), errstr);
 
   if (!gconfig) {
     return Nan::ThrowError(errstr.c_str());
   }
 
-  RdKafka::Conf* tconfig =
+  Conf* tconfig =
     Conf::create(RdKafka::Conf::CONF_TOPIC, info[1]->ToObject(), errstr);
 
   if (!tconfig) {

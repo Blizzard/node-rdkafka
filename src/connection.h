@@ -63,7 +63,7 @@ class Connection : public Nan::ObjectWrap {
   virtual void DeactivateDispatchers() = 0;
 
  protected:
-  Connection(RdKafka::Conf*, RdKafka::Conf*);
+  Connection(Conf*, Conf*);
   ~Connection();
 
   static Nan::Persistent<v8::Function> constructor;
@@ -72,8 +72,8 @@ class Connection : public Nan::ObjectWrap {
   bool m_has_been_disconnected;
   bool m_is_closing;
 
-  RdKafka::Conf* m_gconfig;
-  RdKafka::Conf* m_tconfig;
+  Conf* m_gconfig;
+  Conf* m_tconfig;
   std::string m_errstr;
 
   uv_mutex_t m_connection_lock;

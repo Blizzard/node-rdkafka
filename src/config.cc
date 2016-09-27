@@ -62,11 +62,10 @@ Conf * Conf::create(RdKafka::Conf::ConfType type, v8::Local<v8::Object> object, 
           return NULL;
       }
     } else {
-      Log("Value is a function");
       if (string_key.compare("rebalance_cb") == 0) {
-        Nan::Callback cb(value.As<v8::Function>());
-        NodeKafka::Callbacks::Rebalance rebalance_cb(cb);
-        rdconf->set(string_key, &rebalance_cb, errstr);
+        v8::Local<v8::Function> cb = value.As<v8::Function>();
+        rdconf->m_rebalance_cb = new NodeKafka::Callbacks::Rebalance(cb);
+        rdconf->set(string_key, rdconf->m_rebalance_cb, errstr);
       }
     }
   }
@@ -75,6 +74,22 @@ Conf * Conf::create(RdKafka::Conf::ConfType type, v8::Local<v8::Object> object, 
 
 }
 
-Conf::~Conf() {}
+void Conf::listen() {
+  if (m_rebalance_cb) {
+    m_rebalance_cb->dispatcher.Activate();
+  }
+}
+
+void Conf::stop() {
+  if (m_rebalance_cb) {
+    m_rebalance_cb->dispatcher.Deactivate();
+  }
+}
+
+Conf::~Conf() {
+  if (m_rebalance_cb) {
+    delete m_rebalance_cb;
+  }
+}
 
 }  // namespace NodeKafka

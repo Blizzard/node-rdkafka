@@ -79,7 +79,7 @@ class Consumer : public Connection {
   static Nan::Persistent<v8::Function> constructor;
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
 
-  Consumer(RdKafka::Conf *, RdKafka::Conf *);
+  Consumer(Conf *, Conf *);
   ~Consumer();
 
  private:
@@ -87,8 +87,7 @@ class Consumer : public Connection {
 
   std::vector<RdKafka::TopicPartition*> m_partitions;
   int m_partition_cnt;
-  bool m_is_subscribed;
-  bool m_is_manually_rebalancing;
+  bool m_is_subscribed = false;
 
   // Node methods
   static NAN_METHOD(NodeConnect);
