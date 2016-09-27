@@ -47,8 +47,6 @@ struct consumer_commit_t {
 
 class Consumer : public Connection {
  public:
-  friend class NodeKafka::Callbacks::Rebalance;
-
   static void Init(v8::Local<v8::Object>);
   static v8::Local<v8::Object> NewInstance(v8::Local<v8::Value>);
 
@@ -81,7 +79,7 @@ class Consumer : public Connection {
   static Nan::Persistent<v8::Function> constructor;
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
 
-  Consumer(RdKafka::Conf *, RdKafka::Conf *);
+  Consumer(Conf *, Conf *);
   ~Consumer();
 
  private:
@@ -89,14 +87,9 @@ class Consumer : public Connection {
 
   std::vector<RdKafka::TopicPartition*> m_partitions;
   int m_partition_cnt;
-  bool m_is_subscribed;
-
-  Callbacks::Consume m_consume_cb;
-  Callbacks::Rebalance m_rebalance_cb;
+  bool m_is_subscribed = false;
 
   // Node methods
-  static NAN_METHOD(NodeOnConsume);
-  static NAN_METHOD(NodeOnRebalance);
   static NAN_METHOD(NodeConnect);
   static NAN_METHOD(NodeSubscribe);
   static NAN_METHOD(NodeSubscribeSync);

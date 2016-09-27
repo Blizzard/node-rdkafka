@@ -18,6 +18,10 @@
 
 #include "deps/librdkafka/src-cpp/rdkafkacpp.h"
 
+typedef std::vector<const RdKafka::BrokerMetadata*> BrokerMetadataList;
+typedef std::vector<const RdKafka::PartitionMetadata*> PartitionMetadataList;
+typedef std::vector<const RdKafka::TopicMetadata *> TopicMetadataList;
+
 namespace NodeKafka {
 
 void Log(std::string);
@@ -44,6 +48,18 @@ class scoped_mutex_lock {
  private:
   uv_mutex_t &async_lock;
 };
+
+namespace TopicPartition {
+
+v8::Local<v8::Array> ToV8Array(std::vector<RdKafka::TopicPartition*>);
+
+}
+
+namespace Metadata {
+
+v8::Local<v8::Object> ToV8Object(RdKafka::Metadata*);
+
+}  // namespace Metadata
 
 }  // namespace NodeKafka
 

@@ -13,7 +13,6 @@
 
 #include "src/config.h"
 
-using RdKafka::Conf;
 using Nan::MaybeLocal;
 using Nan::Maybe;
 using v8::Local;
@@ -24,9 +23,7 @@ using std::endl;
 
 namespace NodeKafka {
 
-namespace Config {
-
-void DumpConfig(std::list<std::string> *dump) {
+void Conf::DumpConfig(std::list<std::string> *dump) {
   for (std::list<std::string>::iterator it = dump->begin();
          it != dump->end(); ) {
     std::cout << *it << " = ";
@@ -37,22 +34,8 @@ void DumpConfig(std::list<std::string> *dump) {
   std::cout << std::endl;
 }
 
-template<typename T>
-void LoadParameter(v8::Local<v8::Object> object, std::string field, const T &to) {  // NOLINT
-  to = GetParameter<T>(object, field, to);
-}
-
-std::string GetValue(RdKafka::Conf* rdconf, const std::string name) {
-  std::string value;
-  if (rdconf->get(name, value) == RdKafka::Conf::CONF_UNKNOWN) {
-    return std::string();
-  }
-
-  return value;
-}
-
-RdKafka::Conf* Create(RdKafka::Conf::ConfType type, v8::Local<v8::Object> object, std::string &errstr) {  // NOLINT
-  RdKafka::Conf* rdconf = RdKafka::Conf::create(type);
+Conf * Conf::create(RdKafka::Conf::ConfType type, v8::Local<v8::Object> object, std::string &errstr) {  // NOLINT
+  Conf* rdconf = static_cast<Conf*>(RdKafka::Conf::create(type));
 
   v8::Local<v8::Array> property_names = object->GetOwnPropertyNames();
 
@@ -78,12 +61,34 @@ RdKafka::Conf* Create(RdKafka::Conf::ConfType type, v8::Local<v8::Object> object
           delete rdconf;
           return NULL;
       }
+    } else {
+      if (string_key.compare("rebalance_cb") == 0) {
+        v8::Local<v8::Function> cb = value.As<v8::Function>();
+        rdconf->m_rebalance_cb = new NodeKafka::Callbacks::Rebalance(cb);
+        rdconf->set(string_key, rdconf->m_rebalance_cb, errstr);
+      }
     }
   }
 
   return rdconf;
 }
 
-}  // namespace Config
+void Conf::listen() {
+  if (m_rebalance_cb) {
+    m_rebalance_cb->dispatcher.Activate();
+  }
+}
+
+void Conf::stop() {
+  if (m_rebalance_cb) {
+    m_rebalance_cb->dispatcher.Deactivate();
+  }
+}
+
+Conf::~Conf() {
+  if (m_rebalance_cb) {
+    delete m_rebalance_cb;
+  }
+}
 
 }  // namespace NodeKafka

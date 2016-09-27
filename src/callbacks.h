@@ -140,14 +140,38 @@ class Delivery : public RdKafka::DeliveryReportCb {
 
 // Rebalance dispatcher
 
+struct rebalance_topic_partition_t {
+  std::string topic;
+  int partition;
+  int64_t offset;
+
+  rebalance_topic_partition_t(std::string p_topic, int p_partition, int64_t p_offset):  // NOLINT
+    topic(p_topic),
+    partition(p_partition),
+    offset(p_offset) {}
+};
+
 struct rebalance_event_t {
   RdKafka::ErrorCode err;
-  std::vector<RdKafka::TopicPartition*> partitions;
+  std::vector<rebalance_topic_partition_t> partitions;
 
-  rebalance_event_t(RdKafka::ErrorCode _err,
-        std::vector<RdKafka::TopicPartition*> _partitions):
-        err(_err),
-        partitions(_partitions) {}
+  rebalance_event_t(RdKafka::ErrorCode p_err,
+        std::vector<RdKafka::TopicPartition*> p_partitions):
+        err(p_err) {
+    // Iterate over the topic partitions because we won't have them later
+    for (size_t topic_partition_i = 0;
+      topic_partition_i < p_partitions.size(); topic_partition_i++) {
+      RdKafka::TopicPartition* topic_partition =
+        p_partitions[topic_partition_i];
+
+      rebalance_topic_partition_t tp(
+        topic_partition->topic(),
+        topic_partition->partition(),
+        topic_partition->offset());
+
+      partitions.push_back(tp);
+    }
+  }
 };
 
 class RebalanceDispatcher : public Dispatcher {
@@ -162,16 +186,15 @@ class RebalanceDispatcher : public Dispatcher {
 
 class Rebalance : public RdKafka::RebalanceCb {
  public:
-  explicit Rebalance(NodeKafka::Consumer* that);
+  explicit Rebalance(v8::Local<v8::Function>&);
   ~Rebalance();
-  // NAN_DISALLOW_ASSIGN_COPY_MOVE?
-  NodeKafka::Consumer* const that_;
 
   void rebalance_cb(RdKafka::KafkaConsumer *, RdKafka::ErrorCode,
     std::vector<RdKafka::TopicPartition*> &);
+
   RebalanceDispatcher dispatcher;
  private:
-  int eof_cnt;
+  v8::Persistent<v8::Function> m_cb;
 };
 
 class Partitioner : public RdKafka::PartitionerCb {

@@ -36,7 +36,7 @@ namespace NodeKafka {
  * @sa NodeKafka::Client
  */
 
-Connection::Connection(RdKafka::Conf* gconfig, RdKafka::Conf* tconfig):
+Connection::Connection(Conf* gconfig, Conf* tconfig):
   m_event_cb(),
   m_gconfig(gconfig),
   m_tconfig(tconfig) {

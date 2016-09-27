@@ -75,18 +75,14 @@ var testCase = new TestCase('Interoperability tests', function() {
 
         crypto.randomBytes(4096, function(ex, buffer) {
 
-          consumer.on('rebalance', function(e) {
-            if (e.code === 500) {
-              setTimeout(function() {
-                producer.produce({
-                  message: buffer,
-                  topic: topic
-                }, function(err) {
-                  t.ifError(err);
-                });
-              }, 1000);
-            }
-          });
+          var pT = setInterval(function() {
+            producer.produce({
+              message: buffer,
+              topic: topic
+            }, function(err) {
+              t.ifError(err);
+            });
+          }, 2000);
 
           var tt = setInterval(function() {
             if (!producer.isConnected()) {
@@ -116,6 +112,7 @@ var testCase = new TestCase('Interoperability tests', function() {
               }
 
               clearInterval(tt);
+              clearInterval(pT);
 
               if (err) {
                 return cb(err);

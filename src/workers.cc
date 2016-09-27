@@ -12,10 +12,6 @@
 
 #include "src/workers.h"
 
-typedef std::vector<const RdKafka::BrokerMetadata*> BrokerMetadataList;
-typedef std::vector<const RdKafka::PartitionMetadata*> PartitionMetadataList;
-typedef std::vector<const RdKafka::TopicMetadata *> TopicMetadataList;
-
 using NodeKafka::Producer;
 using NodeKafka::Connection;
 using NodeKafka::Message;
@@ -45,7 +41,7 @@ void ConnectionMetadata::Execute() {
     // No good way to do this except some stupid string delimiting.
     // maybe we'll delimit it by a | or something and just split
     // the string to create the object
-    metadata_ = b.data<RdKafka::Metadata*>();
+    m_metadata = b.data<RdKafka::Metadata*>();
   } else {
     SetErrorCode(b.err());
   }
@@ -57,117 +53,12 @@ void ConnectionMetadata::HandleOKCallback() {
   const unsigned int argc = 2;
 
   // This is a big one!
-
-  v8::Local<v8::Object> obj = Nan::New<v8::Object>();
-
-  v8::Local<v8::Array> broker_data = Nan::New<v8::Array>();
-  v8::Local<v8::Array> topic_data = Nan::New<v8::Array>();
-
-  const BrokerMetadataList* brokers = metadata_->brokers();  // NOLINT
-
-  unsigned int broker_i = 0;
-
-  for (BrokerMetadataList::const_iterator it = brokers->begin();
-    it != brokers->end(); ++it, broker_i++) {
-    // Start iterating over brokers and set the object up
-
-    const RdKafka::BrokerMetadata* x = *it;
-
-    v8::Local<v8::Object> current_broker = Nan::New<v8::Object>();
-
-    Nan::Set(current_broker, Nan::New("id").ToLocalChecked(),
-      Nan::New<v8::Number>(x->id()));
-    Nan::Set(current_broker, Nan::New("host").ToLocalChecked(),
-      Nan::New<v8::String>(x->host().c_str()).ToLocalChecked());
-    Nan::Set(current_broker, Nan::New("port").ToLocalChecked(),
-      Nan::New<v8::Number>(x->port()));
-
-    broker_data->Set(broker_i, current_broker);
-  }
-
-  unsigned int topic_i = 0;
-
-  const TopicMetadataList* topics = metadata_->topics();
-
-  for (TopicMetadataList::const_iterator it = topics->begin();
-    it != topics->end(); ++it, topic_i++) {
-    // Start iterating over topics
-
-    const RdKafka::TopicMetadata* x = *it;
-
-    v8::Local<v8::Object> current_topic = Nan::New<v8::Object>();
-
-    Nan::Set(current_topic, Nan::New("name").ToLocalChecked(),
-      Nan::New<v8::String>(x->topic().c_str()).ToLocalChecked());
-
-    v8::Local<v8::Array> current_topic_partitions = Nan::New<v8::Array>();
-
-    const PartitionMetadataList* current_partition_data = x->partitions();
-
-    unsigned int partition_i = 0;
-    PartitionMetadataList::const_iterator itt;
-
-    for (itt = current_partition_data->begin();
-      itt != current_partition_data->end(); ++itt, partition_i++) {
-      // partition iterate
-      const RdKafka::PartitionMetadata* xx = *itt;
-
-      v8::Local<v8::Object> current_partition = Nan::New<v8::Object>();
-
-      Nan::Set(current_partition, Nan::New("id").ToLocalChecked(),
-        Nan::New<v8::Number>(xx->id()));
-      Nan::Set(current_partition, Nan::New("leader").ToLocalChecked(),
-        Nan::New<v8::Number>(xx->leader()));
-
-      const std::vector<int32_t> * replicas  = xx->replicas();
-      const std::vector<int32_t> * isrs = xx->isrs();
-
-      std::vector<int32_t>::const_iterator r_it;
-      std::vector<int32_t>::const_iterator i_it;
-
-      unsigned int r_i = 0;
-      unsigned int i_i = 0;
-
-      v8::Local<v8::Array> current_replicas = Nan::New<v8::Array>();
-
-      for (r_it = replicas->begin(); r_it != replicas->end(); ++r_it, r_i++) {
-        current_replicas->Set(r_i, Nan::New<v8::Int32>(*r_it));
-      }
-
-      v8::Local<v8::Array> current_isrs = Nan::New<v8::Array>();
-
-      for (i_it = isrs->begin(); i_it != isrs->end(); ++i_it, i_i++) {
-        current_isrs->Set(r_i, Nan::New<v8::Int32>(*i_it));
-      }
-
-      Nan::Set(current_partition, Nan::New("replicas").ToLocalChecked(),
-        current_replicas);
-      Nan::Set(current_partition, Nan::New("isrs").ToLocalChecked(),
-        current_isrs);
-
-      current_topic_partitions->Set(partition_i, current_partition);
-    }  // iterate over partitions
-
-    Nan::Set(current_topic, Nan::New("partitions").ToLocalChecked(),
-      current_topic_partitions);
-
-    topic_data->Set(topic_i, current_topic);
-  }  // End iterating over topics
-
-  Nan::Set(obj, Nan::New("orig_broker_id").ToLocalChecked(),
-    Nan::New<v8::Number>(metadata_->orig_broker_id()));
-
-  Nan::Set(obj, Nan::New("orig_broker_name").ToLocalChecked(),
-    Nan::New<v8::String>(metadata_->orig_broker_name()).ToLocalChecked());
-
-  Nan::Set(obj, Nan::New("topics").ToLocalChecked(), topic_data);
-  Nan::Set(obj, Nan::New("brokers").ToLocalChecked(), broker_data);
-
-  v8::Local<v8::Value> argv[argc] = { Nan::Null(), obj};
+  v8::Local<v8::Value> argv[argc] = { Nan::Null(),
+    NodeKafka::Metadata::ToV8Object(m_metadata)};
 
   callback->Call(argc, argv);
 
-  delete metadata_;
+  delete m_metadata;
 }
 
 void ConnectionMetadata::HandleErrorCallback() {

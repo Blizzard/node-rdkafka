@@ -37,15 +37,10 @@ consumer_commit_t::consumer_commit_t() {
  * @sa NodeKafka::Client
  */
 
-Consumer::Consumer(RdKafka::Conf* gconfig, RdKafka::Conf* tconfig):
-  Connection(gconfig, tconfig),
-  m_consume_cb(),
-  m_rebalance_cb(this) {
-    m_is_subscribed = false;
-
+Consumer::Consumer(Conf* gconfig, Conf* tconfig):
+  Connection(gconfig, tconfig) {
     std::string errstr;
 
-    m_gconfig->set("rebalance_cb", &m_rebalance_cb, errstr);
     m_gconfig->set("default_topic_conf", m_tconfig, errstr);
   }
 
@@ -75,9 +70,14 @@ Baton Consumer::Connect() {
 }
 
 void Consumer::ActivateDispatchers() {
+  // Listen to global config
+  m_gconfig->listen();
+
+  // Listen to non global config
+  // tconfig->listen();
+
+  // This should be refactored to config based management
   m_event_cb.dispatcher.Activate();
-  m_consume_cb.dispatcher.Activate();
-  m_rebalance_cb.dispatcher.Activate();
 }
 
 Baton Consumer::Disconnect() {
@@ -104,9 +104,11 @@ Baton Consumer::Disconnect() {
 }
 
 void Consumer::DeactivateDispatchers() {
+  // Stop listening to the config dispatchers
+  m_gconfig->stop();
+
+  // Also this one
   m_event_cb.dispatcher.Deactivate();
-  m_consume_cb.dispatcher.Deactivate();
-  m_rebalance_cb.dispatcher.Deactivate();
 }
 
 bool Consumer::IsSubscribed() {
@@ -334,9 +336,6 @@ void Consumer::Init(v8::Local<v8::Object> exports) {
    * @sa RdKafka::KafkaConsumer
    */
 
-  Nan::SetPrototypeMethod(tpl, "onConsume", NodeOnConsume);
-  Nan::SetPrototypeMethod(tpl, "onRebalance", NodeOnRebalance);
-
   /*
    * @brief Methods exposed to do with message retrieval
    */
@@ -381,15 +380,15 @@ void Consumer::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
 
   std::string errstr;
 
-  RdKafka::Conf* gconfig =
-    Config::Create(RdKafka::Conf::CONF_GLOBAL, info[0]->ToObject(), errstr);
+  Conf* gconfig =
+    Conf::create(RdKafka::Conf::CONF_GLOBAL, info[0]->ToObject(), errstr);
 
   if (!gconfig) {
     return Nan::ThrowError(errstr.c_str());
   }
 
-  RdKafka::Conf* tconfig =
-    Config::Create(RdKafka::Conf::CONF_TOPIC, info[1]->ToObject(), errstr);
+  Conf* tconfig =
+    Conf::create(RdKafka::Conf::CONF_TOPIC, info[1]->ToObject(), errstr);
 
   if (!tconfig) {
     delete gconfig;
@@ -422,35 +421,6 @@ v8::Local<v8::Object> Consumer::NewInstance(v8::Local<v8::Value> arg) {
 }
 
 /* Node exposed methods */
-
-NAN_METHOD(Consumer::NodeOnConsume) {
-  if (info.Length() < 1 || !info[0]->IsFunction()) {
-    // Just throw an exception
-    return Nan::ThrowError("Need to specify a callback");
-  }
-
-  Consumer* obj = ObjectWrap::Unwrap<Consumer>(info.This());
-
-  v8::Local<v8::Function> cb = info[0].As<v8::Function>();
-  obj->m_consume_cb.dispatcher.AddCallback(cb);
-
-  info.GetReturnValue().Set(Nan::True());
-}
-
-NAN_METHOD(Consumer::NodeOnRebalance) {
-  if (info.Length() < 1 || !info[0]->IsFunction()) {
-    // Just throw an exception
-    return Nan::ThrowError("Need to specify a callback");
-  }
-
-  Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
-
-  v8::Local<v8::Function> cb = info[0].As<v8::Function>();
-
-  consumer->m_rebalance_cb.dispatcher.AddCallback(cb);
-
-  info.GetReturnValue().Set(Nan::True());
-}
 
 NAN_METHOD(Consumer::NodeGetAssignments) {
   Nan::HandleScope scope;

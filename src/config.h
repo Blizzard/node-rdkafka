@@ -14,19 +14,26 @@
 #include <iostream>
 #include <vector>
 #include <list>
+#include <string>
 
 #include "deps/librdkafka/src-cpp/rdkafkacpp.h"
 #include "src/common.h"
+#include "src/callbacks.h"
 
 namespace NodeKafka {
-namespace Config {
 
-void DumpConfig(std::list<std::string> *);
-template<typename T> void LoadParameter(v8::Local<v8::Object>, std::string, T &);  // NOLINT
-std::string GetValue(RdKafka::Conf*, const std::string);
-RdKafka::Conf* Create(RdKafka::Conf::ConfType, v8::Local<v8::Object>, std::string &);  // NOLINT
+class Conf : public RdKafka::Conf {
+ public:
+  ~Conf();
 
-}  // namespace Config
+  static Conf* create(RdKafka::Conf::ConfType, v8::Local<v8::Object>, std::string &);  // NOLINT
+  static void DumpConfig(std::list<std::string> *);
+
+  void listen();
+  void stop();
+ protected:
+  NodeKafka::Callbacks::Rebalance * m_rebalance_cb = NULL;
+};
 
 }  // namespace NodeKafka
 
