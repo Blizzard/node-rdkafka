@@ -110,14 +110,14 @@ void Producer::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
   std::string errstr;
 
   RdKafka::Conf* gconfig =
-    Config::Create(RdKafka::Conf::CONF_GLOBAL, info[0]->ToObject(), errstr);
+    Conf::create(RdKafka::Conf::CONF_GLOBAL, info[0]->ToObject(), errstr);
 
   if (!gconfig) {
     return Nan::ThrowError(errstr.c_str());
   }
 
   RdKafka::Conf* tconfig =
-    Config::Create(RdKafka::Conf::CONF_TOPIC, info[1]->ToObject(), errstr);
+    Conf::create(RdKafka::Conf::CONF_TOPIC, info[1]->ToObject(), errstr);
 
   if (!tconfig) {
     // No longer need this since we aren't instantiating anything

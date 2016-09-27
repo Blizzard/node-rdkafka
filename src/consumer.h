@@ -47,8 +47,6 @@ struct consumer_commit_t {
 
 class Consumer : public Connection {
  public:
-  friend class NodeKafka::Callbacks::Rebalance;
-
   static void Init(v8::Local<v8::Object>);
   static v8::Local<v8::Object> NewInstance(v8::Local<v8::Value>);
 
@@ -77,8 +75,6 @@ class Consumer : public Connection {
   void ActivateDispatchers();
   void DeactivateDispatchers();
 
-  Baton UseManualRebalancing(v8::Local<v8::Function>);
-
  protected:
   static Nan::Persistent<v8::Function> constructor;
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
@@ -94,12 +90,7 @@ class Consumer : public Connection {
   bool m_is_subscribed;
   bool m_is_manually_rebalancing;
 
-  Callbacks::Consume m_consume_cb;
-  Callbacks::Rebalance m_rebalance_cb;
-
   // Node methods
-  static NAN_METHOD(NodeOnConsume);
-  static NAN_METHOD(NodeOnRebalance);
   static NAN_METHOD(NodeConnect);
   static NAN_METHOD(NodeSubscribe);
   static NAN_METHOD(NodeSubscribeSync);

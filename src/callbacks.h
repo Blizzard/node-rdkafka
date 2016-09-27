@@ -174,28 +174,16 @@ struct rebalance_event_t {
   }
 };
 
-class RebalanceDispatcher : public Dispatcher {
- public:
-  RebalanceDispatcher();
-  ~RebalanceDispatcher();
-  void Add(const rebalance_event_t &);
-  void Flush();
- protected:
-  std::vector<rebalance_event_t> events;
-};
 
 class Rebalance : public RdKafka::RebalanceCb {
  public:
-  explicit Rebalance(NodeKafka::Consumer* that);
+  explicit Rebalance(Nan::Callback &);
   ~Rebalance();
-  // NAN_DISALLOW_ASSIGN_COPY_MOVE?
-  NodeKafka::Consumer* const that_;
 
   void rebalance_cb(RdKafka::KafkaConsumer *, RdKafka::ErrorCode,
     std::vector<RdKafka::TopicPartition*> &);
-  RebalanceDispatcher dispatcher;
  private:
-  int eof_cnt;
+  v8::Persistent<v8::Function> m_cb;
 };
 
 class Partitioner : public RdKafka::PartitionerCb {

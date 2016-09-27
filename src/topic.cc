@@ -85,7 +85,7 @@ void Topic::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
   std::string errstr;
 
   RdKafka::Conf* config =
-    Config::Create(RdKafka::Conf::CONF_TOPIC, info[1]->ToObject(), errstr);
+    Conf::create(RdKafka::Conf::CONF_TOPIC, info[1]->ToObject(), errstr);
 
   if (!config) {
     return Nan::ThrowError(errstr.c_str());

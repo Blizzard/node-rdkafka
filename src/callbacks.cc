@@ -386,13 +386,7 @@ void Delivery::dr_cb(RdKafka::Message &message) {
 
 // Rebalance CB
 
-RebalanceDispatcher::RebalanceDispatcher() {}
-RebalanceDispatcher::~RebalanceDispatcher() {}
-
-void RebalanceDispatcher::Add(const rebalance_event_t &e) {
-  scoped_mutex_lock lock(async_lock);
-  events.push_back(e);
-}
+/*
 
 void RebalanceDispatcher::Flush() {
   Nan::HandleScope scope;
@@ -453,26 +447,17 @@ void RebalanceDispatcher::Flush() {
     Dispatch(argc, argv);
   }
 }
-
+*/
+Rebalance::Rebalance(Nan::Callback &cb) {}
 Rebalance::~Rebalance() {}
-Rebalance::Rebalance(NodeKafka::Consumer* that) :
-  that_(that) {
-  eof_cnt = 0;
-}
 
 void Rebalance::rebalance_cb(RdKafka::KafkaConsumer *consumer,
   RdKafka::ErrorCode err,
   std::vector<RdKafka::TopicPartition*> &partitions) {
-  if (err == RdKafka::ERR__ASSIGN_PARTITIONS) {
-    that_->Assign(partitions);
-  } else {
-    that_->Unassign();
-  }
 
-  dispatcher.Add(rebalance_event_t(err, partitions));
-  dispatcher.Execute();
+  // dispatcher.Add(rebalance_event_t(err, partitions));
+  // dispatcher.Execute();
 
-  eof_cnt = 0;
 }
 
 // Partitioner callback
