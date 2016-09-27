@@ -260,6 +260,29 @@ The first parameter is the global config, while the second parameter is the topi
 
 The `group.id` and `metadata.broker.list` properties are required for a consumer.
 
+### Rebalancing
+
+Rebalancing is managed internally by `librdkafka` by default. If you would like to override this functionality, you may provide your own logic as a rebalance callback.
+
+```js
+var consumer = new Kafka.KafkaConsumer({
+  'group.id': 'kafka',
+  'metadata.broker.list': 'localhost:9092',
+  'rebalance_cb': function(event) {
+    var assignment = event.assignment;
+
+    if (event.code === Kafka.CODES.REBALANCE.PARTITION_ASSIGNMENT) {
+      this.assign(assignment);
+    } else {
+      this.unassign();
+    }
+
+  }
+})
+```
+
+`this` is bound to the `KafkaConsumer` you have created. By specifying a `rebalance_cb` you can also listen to the `rebalance` event as an emitted event. This event is not emitted when using the internal `librdkafka` rebalancer.
+
 ### Message Structure
 
 Messages that are returned by the `KafkaConsumer` have the following structure.
