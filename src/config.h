@@ -14,6 +14,7 @@
 #include <iostream>
 #include <vector>
 #include <list>
+#include <string>
 
 #include "deps/librdkafka/src-cpp/rdkafkacpp.h"
 #include "src/common.h"
@@ -26,7 +27,6 @@ class Conf : public RdKafka::Conf {
   ~Conf();
 
   static Conf* create(RdKafka::Conf::ConfType, v8::Local<v8::Object>, std::string &);  // NOLINT
-
   static void DumpConfig(std::list<std::string> *);
 
   void listen();

@@ -71,7 +71,6 @@ Conf * Conf::create(RdKafka::Conf::ConfType type, v8::Local<v8::Object> object, 
   }
 
   return rdconf;
-
 }
 
 void Conf::listen() {

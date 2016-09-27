@@ -460,12 +460,9 @@ Rebalance::Rebalance(v8::Local<v8::Function> &cb) {
 Rebalance::~Rebalance() {}
 
 void Rebalance::rebalance_cb(RdKafka::KafkaConsumer *consumer,
-  RdKafka::ErrorCode err,
-  std::vector<RdKafka::TopicPartition*> &partitions) {
-
+    RdKafka::ErrorCode err, std::vector<RdKafka::TopicPartition*> &partitions) {
   dispatcher.Add(rebalance_event_t(err, partitions));
   dispatcher.Execute();
-
 }
 
 // Partitioner callback
