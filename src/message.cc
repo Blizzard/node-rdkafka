@@ -62,7 +62,8 @@ Message::Message(RdKafka::Message *message):
       size = message->len();
       offset = message->offset();
 
-      key = *message->key();
+      if (message->key())
+        key = *message->key();
       partition = message->partition();
 
       topic_name = message->topic_name();

@@ -31,6 +31,7 @@ module.exports = {
         setImmediate(function() {
           cb(null, {
             message: new Buffer('test'),
+            key: 'testkey',
             offset: 1
           });
         });
@@ -59,6 +60,7 @@ module.exports = {
         t.notEqual(message, null);
         t.ok(Buffer.isBuffer(message.message));
         t.equal('test', message.message.toString());
+        t.equal('testkey', message.key);
         t.equal(typeof message.offset, 'number');
         stream.pause();
         cb();
