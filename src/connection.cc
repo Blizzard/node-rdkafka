@@ -172,7 +172,7 @@ NAN_METHOD(Connection::NodeGetMetadata) {
   v8::Local<v8::Function> cb = info[1].As<v8::Function>();
 
   std::string topic = GetParameter<std::string>(config, "topic", "");
-  int timeout_ms = GetParameter<int64_t>(config, "timeout", 3000);
+  int timeout_ms = GetParameter<int64_t>(config, "timeout", 30000);
 
   Nan::Callback *callback = new Nan::Callback(cb);
 
