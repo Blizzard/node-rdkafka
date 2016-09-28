@@ -23,6 +23,8 @@ v8::Local<v8::Value> Message::Pack() {
   Nan::Set(pack, Nan::New<v8::String>("message").ToLocalChecked(), ToBuffer());
   Nan::Set(pack, Nan::New<v8::String>("size").ToLocalChecked(),
     Nan::New<v8::Number>(size));
+  Nan::Set(pack, Nan::New<v8::String>("key").ToLocalChecked(),
+    Nan::New<v8::String>(key).ToLocalChecked());
   Nan::Set(pack, Nan::New<v8::String>("topic").ToLocalChecked(),
     Nan::New<v8::String>(topic_name).ToLocalChecked());
   Nan::Set(pack, Nan::New<v8::String>("offset").ToLocalChecked(),
@@ -60,6 +62,7 @@ Message::Message(RdKafka::Message *message):
       size = message->len();
       offset = message->offset();
 
+      key = *message->key();
       partition = message->partition();
 
       topic_name = message->topic_name();
