@@ -70,7 +70,7 @@ class Consumer : public Connection {
   std::string Name();
 
   Baton Subscribe(std::vector<std::string>);
-  NodeKafka::Message* Consume();
+  NodeKafka::Message* Consume(int timeout_ms);
 
   void ActivateDispatchers();
   void DeactivateDispatchers();
