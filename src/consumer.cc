@@ -221,10 +221,9 @@ Baton Consumer::Unsubscribe() {
       dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
     consumer->unsubscribe();
     m_is_subscribed = false;
-    return Baton(RdKafka::ERR_NO_ERROR);
-  } else {
-    return Baton(RdKafka::ERR__STATE);
   }
+
+  return Baton(RdKafka::ERR_NO_ERROR);
 }
 
 Baton Consumer::Subscribe(std::vector<std::string> topics) {
@@ -343,6 +342,7 @@ void Consumer::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(tpl, "subscribe", NodeSubscribe);
   Nan::SetPrototypeMethod(tpl, "subscribeSync", NodeSubscribeSync);
   Nan::SetPrototypeMethod(tpl, "unsubscribe", NodeUnsubscribe);
+  Nan::SetPrototypeMethod(tpl, "unsubscribeSync", NodeUnsubscribeSync);
   Nan::SetPrototypeMethod(tpl, "consumeLoop", NodeConsumeLoop);
   Nan::SetPrototypeMethod(tpl, "consume", NodeConsume);
 
