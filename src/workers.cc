@@ -388,16 +388,18 @@ void ConsumerUnsubscribe::HandleErrorCallback() {
  */
 
 ConsumerConsumeLoop::ConsumerConsumeLoop(Nan::Callback *callback,
-                                     Consumer* consumer) :
+                                     Consumer* consumer,
+                                     const int & timeout_ms) :
   MessageWorker(callback),
-  consumer(consumer) {}
+  consumer(consumer),
+  m_timeout_ms(timeout_ms) {}
 
 ConsumerConsumeLoop::~ConsumerConsumeLoop() {}
 
 void ConsumerConsumeLoop::Execute(const ExecutionMessageBus& bus) {
   // Do one check here before we move forward
   while (consumer->IsConnected()) {
-    NodeKafka::Message* message = consumer->Consume();
+    NodeKafka::Message* message = consumer->Consume(m_timeout_ms);
     if (message->errcode() == RdKafka::ERR__PARTITION_EOF) {
       delete message;
       usleep(1*1000);
@@ -466,10 +468,12 @@ void ConsumerConsumeLoop::HandleErrorCallback() {
 
 ConsumerConsumeNum::ConsumerConsumeNum(Nan::Callback *callback,
                                      Consumer* consumer,
-                                     const uint32_t & num_messages) :
+                                     const uint32_t & num_messages,
+                                     const int & timeout_ms) :
   ErrorAwareWorker(callback),
   m_consumer(consumer),
-  m_num_messages(num_messages) {}
+  m_num_messages(num_messages),
+  m_timeout_ms(timeout_ms) {}
 
 ConsumerConsumeNum::~ConsumerConsumeNum() {}
 
@@ -477,7 +481,7 @@ void ConsumerConsumeNum::Execute() {
   const int max = static_cast<int>(m_num_messages);
   for (int i = 0; i < max; i++) {
     // Get a message
-    NodeKafka::Message* message = m_consumer->Consume();
+    NodeKafka::Message* message = m_consumer->Consume(m_timeout_ms);
     if (message->IsError()) {
       if (message->errcode() != RdKafka::ERR__TIMED_OUT &&
           message->errcode() != RdKafka::ERR__PARTITION_EOF) {
@@ -543,14 +547,16 @@ void ConsumerConsumeNum::HandleErrorCallback() {
  */
 
 ConsumerConsume::ConsumerConsume(Nan::Callback *callback,
-                                     Consumer* consumer) :
+                                     Consumer* consumer,
+                                     const int & timeout_ms) :
   ErrorAwareWorker(callback),
-  consumer(consumer) {}
+  consumer(consumer),
+  m_timeout_ms(timeout_ms) {}
 
 ConsumerConsume::~ConsumerConsume() {}
 
 void ConsumerConsume::Execute() {
-  _message = consumer->Consume();
+  _message = consumer->Consume(m_timeout_ms);
   if (_message->IsError()) {
     if (_message->errcode() != RdKafka::ERR__TIMED_OUT ||
       _message->errcode() != RdKafka::ERR__PARTITION_EOF) {

@@ -259,7 +259,7 @@ class ConsumerUnsubscribe : public ErrorAwareWorker {
 
 class ConsumerConsumeLoop : public MessageWorker {
  public:
-  ConsumerConsumeLoop(Nan::Callback*, NodeKafka::Consumer*);
+  ConsumerConsumeLoop(Nan::Callback*, NodeKafka::Consumer*, const int &);
   ~ConsumerConsumeLoop();
 
   void Execute(const ExecutionMessageBus&);
@@ -268,11 +268,12 @@ class ConsumerConsumeLoop : public MessageWorker {
   void HandleMessageCallback(NodeKafka::Message*);
  private:
   NodeKafka::Consumer * consumer;
+  const int m_timeout_ms;
 };
 
 class ConsumerConsume : public ErrorAwareWorker {
  public:
-  ConsumerConsume(Nan::Callback*, NodeKafka::Consumer*);
+  ConsumerConsume(Nan::Callback*, NodeKafka::Consumer*, const int &);
   ~ConsumerConsume();
 
   void Execute();
@@ -280,12 +281,13 @@ class ConsumerConsume : public ErrorAwareWorker {
   void HandleErrorCallback();
  private:
   NodeKafka::Consumer * consumer;
+  const int m_timeout_ms;
   NodeKafka::Message* _message;
 };
 
 class ConsumerConsumeNum : public ErrorAwareWorker {
  public:
-  ConsumerConsumeNum(Nan::Callback*, NodeKafka::Consumer*, const uint32_t &);
+  ConsumerConsumeNum(Nan::Callback*, NodeKafka::Consumer*, const uint32_t &, const int &);  // NOLINT
   ~ConsumerConsumeNum();
 
   void Execute();
@@ -294,6 +296,7 @@ class ConsumerConsumeNum : public ErrorAwareWorker {
  private:
   NodeKafka::Consumer * m_consumer;
   const uint32_t m_num_messages;
+  const int m_timeout_ms;
   std::vector<NodeKafka::Message*> m_messages;
 };
 

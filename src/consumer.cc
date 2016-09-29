@@ -244,7 +244,7 @@ Baton Consumer::Subscribe(std::vector<std::string> topics) {
   return Baton(RdKafka::ERR_NO_ERROR);
 }
 
-NodeKafka::Message* Consumer::Consume() {
+NodeKafka::Message* Consumer::Consume(int timeout_ms) {
   NodeKafka::Message* m;
 
   if (IsConnected()) {
@@ -254,7 +254,7 @@ NodeKafka::Message* Consumer::Consume() {
     } else {
       RdKafka::KafkaConsumer* consumer =
         dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
-      m = new NodeKafka::Message(consumer->consume(1000));
+      m = new NodeKafka::Message(consumer->consume(timeout_ms));
 
       if (m->ConsumerShouldStop()) {
         Unsubscribe();
@@ -720,21 +720,36 @@ NAN_METHOD(Consumer::NodeSubscribeSync) {
 NAN_METHOD(Consumer::NodeConsumeLoop) {
   Nan::HandleScope scope;
 
-  if (info.Length() < 1) {
+  if (info.Length() < 2) {
     // Just throw an exception
     return Nan::ThrowError("Invalid number of parameters");
   }
 
-  if (!info[0]->IsFunction()) {
+  if (!info[0]->IsNumber()) {
+    return Nan::ThrowError("Need to specify a timeout");
+  }
+
+  if (!info[1]->IsFunction()) {
     return Nan::ThrowError("Need to specify a callback");
+  }
+
+  int timeout_ms;
+  Nan::Maybe<uint32_t> maybeTimeout =
+    Nan::To<uint32_t>(info[0].As<v8::Number>());
+
+  if (maybeTimeout.IsNothing()) {
+    timeout_ms = 1000;
+  } else {
+    timeout_ms = static_cast<int>(maybeTimeout.FromJust());
   }
 
   Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
 
-  v8::Local<v8::Function> cb = info[0].As<v8::Function>();
+  v8::Local<v8::Function> cb = info[1].As<v8::Function>();
 
   Nan::Callback *callback = new Nan::Callback(cb);
-  Nan::AsyncQueueWorker(new Workers::ConsumerConsumeLoop(callback, consumer));
+  Nan::AsyncQueueWorker(
+    new Workers::ConsumerConsumeLoop(callback, consumer, timeout_ms));
 
   info.GetReturnValue().Set(Nan::Null());
 }
@@ -742,17 +757,27 @@ NAN_METHOD(Consumer::NodeConsumeLoop) {
 NAN_METHOD(Consumer::NodeConsume) {
   Nan::HandleScope scope;
 
-  if (info.Length() < 1) {
+  if (info.Length() < 2) {
     // Just throw an exception
     return Nan::ThrowError("Invalid number of parameters");
   }
 
-  if (info[0]->IsNumber()) {
-    if (!info[1]->IsFunction()) {
+  int timeout_ms;
+  Nan::Maybe<uint32_t> maybeTimeout =
+    Nan::To<uint32_t>(info[0].As<v8::Number>());
+
+  if (maybeTimeout.IsNothing()) {
+    timeout_ms = 1000;
+  } else {
+    timeout_ms = static_cast<int>(maybeTimeout.FromJust());
+  }
+
+  if (info[1]->IsNumber()) {
+    if (!info[2]->IsFunction()) {
       return Nan::ThrowError("Need to specify a callback");
     }
 
-    v8::Local<v8::Number> numMessagesNumber = info[0].As<v8::Number>();
+    v8::Local<v8::Number> numMessagesNumber = info[1].As<v8::Number>();
     Nan::Maybe<uint32_t> numMessagesMaybe = Nan::To<uint32_t>(numMessagesNumber);  // NOLINT
 
     uint32_t numMessages;
@@ -764,21 +789,22 @@ NAN_METHOD(Consumer::NodeConsume) {
 
     Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
 
-    v8::Local<v8::Function> cb = info[1].As<v8::Function>();
+    v8::Local<v8::Function> cb = info[2].As<v8::Function>();
     Nan::Callback *callback = new Nan::Callback(cb);
     Nan::AsyncQueueWorker(
-      new Workers::ConsumerConsumeNum(callback, consumer, numMessages));
+      new Workers::ConsumerConsumeNum(callback, consumer, numMessages, timeout_ms));  // NOLINT
 
   } else {
-    if (!info[0]->IsFunction()) {
+    if (!info[1]->IsFunction()) {
       return Nan::ThrowError("Need to specify a callback");
     }
 
     Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
 
-    v8::Local<v8::Function> cb = info[0].As<v8::Function>();
+    v8::Local<v8::Function> cb = info[1].As<v8::Function>();
     Nan::Callback *callback = new Nan::Callback(cb);
-    Nan::AsyncQueueWorker(new Workers::ConsumerConsume(callback, consumer));
+    Nan::AsyncQueueWorker(
+      new Workers::ConsumerConsume(callback, consumer, timeout_ms));
   }
 
   info.GetReturnValue().Set(Nan::Null());
