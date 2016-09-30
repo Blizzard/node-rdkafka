@@ -23,6 +23,15 @@ v8::Local<v8::Value> Message::Pack() {
   Nan::Set(pack, Nan::New<v8::String>("message").ToLocalChecked(), ToBuffer());
   Nan::Set(pack, Nan::New<v8::String>("size").ToLocalChecked(),
     Nan::New<v8::Number>(size));
+
+  if (m_message->key()) {
+    Nan::Set(pack, Nan::New<v8::String>("key").ToLocalChecked(),
+      Nan::New<v8::String>(*m_message->key()).ToLocalChecked());
+  } else {
+    Nan::Set(pack, Nan::New<v8::String>("key").ToLocalChecked(),
+      Nan::Undefined());
+  }
+
   Nan::Set(pack, Nan::New<v8::String>("topic").ToLocalChecked(),
     Nan::New<v8::String>(topic_name).ToLocalChecked());
   Nan::Set(pack, Nan::New<v8::String>("offset").ToLocalChecked(),
