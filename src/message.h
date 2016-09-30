@@ -50,7 +50,6 @@ class Message {
   size_t size;
   int64_t offset;
   std::string topic_name;
-  std::string key;
   void* payload;
   int partition;
 
