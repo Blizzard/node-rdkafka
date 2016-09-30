@@ -12,7 +12,6 @@
         "<!(node -e \"require('nan')\")",
         "<(module_root_dir)/"
       ],
-      "libraries" : ['-lsasl2'],
       'conditions': [
         [ "<(BUILD_LIBRDKAFKA)==1",
             {
