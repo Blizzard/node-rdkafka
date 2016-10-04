@@ -54,6 +54,12 @@ int64_t GetParameter<int64_t>(v8::Local<v8::Object> object,
 }
 
 template<>
+int GetParameter<int>(v8::Local<v8::Object> object,
+  std::string field_name, int def) {
+  return static_cast<int>(GetParameter<int64_t>(object, field_name, def));
+}
+
+template<>
 std::string GetParameter<std::string>(v8::Local<v8::Object> object,
                                       std::string field_name,
                                       std::string def) {
@@ -131,8 +137,10 @@ v8::Local<v8::Array> ToV8Array(
     // We have the list now let's get the properties from it
     v8::Local<v8::Object> obj = Nan::New<v8::Object>();
 
-    Nan::Set(obj, Nan::New("offset").ToLocalChecked(),
-      Nan::New<v8::Number>(topic_partition->offset()));
+    if (topic_partition->offset() != RdKafka::Topic::OFFSET_INVALID) {
+      Nan::Set(obj, Nan::New("offset").ToLocalChecked(),
+        Nan::New<v8::Number>(topic_partition->offset()));
+    }
     Nan::Set(obj, Nan::New("partition").ToLocalChecked(),
       Nan::New<v8::Number>(topic_partition->partition()));
     Nan::Set(obj, Nan::New("topic").ToLocalChecked(),
