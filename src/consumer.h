@@ -96,7 +96,7 @@ class Consumer : public Connection {
   static NAN_METHOD(NodeDisconnect);
   static NAN_METHOD(NodeAssign);
   static NAN_METHOD(NodeUnassign);
-  static NAN_METHOD(NodeGetAssignments);
+  static NAN_METHOD(NodeAssignments);
   static NAN_METHOD(NodeUnsubscribe);
   static NAN_METHOD(NodeUnsubscribeSync);
   static NAN_METHOD(NodeCommit);

@@ -18,7 +18,7 @@ var grp = 'kafka-mocha-grp-' + crypto.randomBytes(20).toString();
 var TestCase = require('./test-case');
 
 var testCase = new TestCase('Consumer tests', function() {
-  this.test('properly rebalances', function(cb) {
+  this.test('can connect using a consumer', function(cb) {
     var consumer;
 
     consumer = new KafkaConsumer({
