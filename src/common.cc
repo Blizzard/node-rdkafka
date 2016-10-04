@@ -37,26 +37,17 @@ int64_t GetParameter<int64_t>(v8::Local<v8::Object> object,
   std::string field_name, int64_t def) {
   v8::Local<v8::String> field = Nan::New(field_name.c_str()).ToLocalChecked();
   if (Nan::Has(object, field).FromMaybe(false)) {
-    Nan::Maybe<int64_t> maybeInt = Nan::To<int64_t>(
-      Nan::Get(object, field).ToLocalChecked());
+    v8::Local<v8::Value> v = Nan::Get(object, field).ToLocalChecked();
+
+    if (!v->IsNumber()) {
+      return def;
+    }
+
+    Nan::Maybe<int64_t> maybeInt = Nan::To<int64_t>(v);
     if (maybeInt.IsNothing()) {
       return def;
     } else {
       return maybeInt.FromJust();
-    }
-  }
-  return def;
-}
-
-template<>
-int GetParameter<int>(v8::Local<v8::Object> object,
-  std::string field_name, int def) {
-  v8::Local<v8::String> field = Nan::New(field_name.c_str()).ToLocalChecked();
-  if (Nan::Has(object, field).FromMaybe(false)) {
-    Nan::Maybe<int64_t> maybeInt = Nan::To<int64_t>(
-      Nan::Get(object, field).ToLocalChecked());
-    if (!maybeInt.IsNothing()) {
-      return static_cast<int>(maybeInt.FromJust());
     }
   }
   return def;

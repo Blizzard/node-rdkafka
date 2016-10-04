@@ -272,12 +272,6 @@ Baton Consumer::RefreshAssignments() {
     return Baton(RdKafka::ERR__STATE);
   }
 
-  if (m_partitions.size() < 1) {
-    // If the assigned partition is not set it means we haven't
-    // rebalanced or been manually assigned yet.
-    return Baton(RdKafka::ERR__STATE);
-  }
-
   RdKafka::KafkaConsumer* consumer =
     dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
 
@@ -352,7 +346,7 @@ void Consumer::Init(v8::Local<v8::Object> exports) {
 
   Nan::SetPrototypeMethod(tpl, "assign", NodeAssign);
   Nan::SetPrototypeMethod(tpl, "unassign", NodeUnassign);
-  Nan::SetPrototypeMethod(tpl, "getAssignments", NodeGetAssignments);
+  Nan::SetPrototypeMethod(tpl, "assignments", NodeAssignments);
 
   Nan::SetPrototypeMethod(tpl, "commit", NodeCommit);
   Nan::SetPrototypeMethod(tpl, "commitSync", NodeCommitSync);
@@ -422,7 +416,7 @@ v8::Local<v8::Object> Consumer::NewInstance(v8::Local<v8::Value> arg) {
 
 /* Node exposed methods */
 
-NAN_METHOD(Consumer::NodeGetAssignments) {
+NAN_METHOD(Consumer::NodeAssignments) {
   Nan::HandleScope scope;
 
   Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
@@ -432,11 +426,6 @@ NAN_METHOD(Consumer::NodeGetAssignments) {
     return;
   }
 
-  std::vector<RdKafka::TopicPartition*>::iterator it;
-
-  v8::Local<v8::Array> returnArray = Nan::New<v8::Array>();
-
-  unsigned int i = 0;
   Baton b = consumer->RefreshAssignments();
 
   if (b.err() != RdKafka::ERR_NO_ERROR) {
@@ -444,26 +433,7 @@ NAN_METHOD(Consumer::NodeGetAssignments) {
     return;
   }
 
-  if (consumer->m_partitions.size() < 1) {
-    info.GetReturnValue().Set(returnArray);
-    return;
-  }
-
-  for (it = consumer->m_partitions.begin(); it != consumer->m_partitions.end();
-      ++it, ++i) {
-    RdKafka::TopicPartition* part = *it;
-
-    v8::Local<v8::Object> jsobj = Nan::New<v8::Object>();
-
-    Nan::Set(jsobj, Nan::New("topic").ToLocalChecked(),
-      Nan::New<v8::String>(part->topic()).ToLocalChecked());
-    Nan::Set(jsobj, Nan::New("partition").ToLocalChecked(),
-      Nan::New<v8::Number>(part->partition()));
-
-    returnArray->Set(i, jsobj);
-  }
-
-  info.GetReturnValue().Set(returnArray);
+  info.GetReturnValue().Set(TopicPartition::ToV8Array(consumer->m_partitions));
 }
 
 NAN_METHOD(Consumer::NodeAssign) {

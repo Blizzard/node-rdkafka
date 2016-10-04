@@ -119,6 +119,8 @@ var testCase = new TestCase('Interoperability tests', function() {
               }
 
               try {
+                t.equal(Array.isArray(consumer.assignments()), true, 'Assignments should be an array');
+                t.equal(consumer.assignments().length > 0, true, 'Should have at least one assignment');
                 t.equal(buffer.toString(), message.message.toString(),
                   'message is not equal to buffer');
               } catch (e) {
