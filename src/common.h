@@ -57,7 +57,7 @@ namespace Topic {
 
 namespace TopicPartition {
 
-v8::Local<v8::Array> ToV8Array(std::vector<RdKafka::TopicPartition*>);
+v8::Local<v8::Array> ToV8Array(std::vector<RdKafka::TopicPartition*> &);
 
 }  // namespace TopicPartition
 

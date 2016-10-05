@@ -163,9 +163,12 @@ namespace TopicPartition {
  * @brief RdKafka::TopicPartition vector to a v8 Array
  *
  * @see v8ArrayToTopicPartitionVector
+ *
+ * @node This will destroy the topic partition pointers inside the vector, rendering
+ * it unusable
  */
 v8::Local<v8::Array> ToV8Array(
-  std::vector<RdKafka::TopicPartition*> topic_partition_list) {
+  std::vector<RdKafka::TopicPartition*> & topic_partition_list) {
   v8::Local<v8::Array> array = Nan::New<v8::Array>();
   for (size_t topic_partition_i = 0;
     topic_partition_i < topic_partition_list.size(); topic_partition_i++) {
@@ -185,7 +188,15 @@ v8::Local<v8::Array> ToV8Array(
       Nan::New<v8::String>(topic_partition->topic().c_str()).ToLocalChecked());
 
     array->Set(topic_partition_i, obj);
+
+    // These are pointers so we need to delete them somewhere.
+    // Do it here because we're only going to convert when we're ready
+    // to return to v8.
+    delete topic_partition;
   }
+
+  // Clear the topic partition list of dangling pointers
+  topic_partition_list.clear();
 
   return array;
 }

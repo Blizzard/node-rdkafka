@@ -25,7 +25,8 @@ ConnectionMetadata::ConnectionMetadata(
   ErrorAwareWorker(callback),
   connection_(connection),
   topic_(topic),
-  timeout_ms_(timeout_ms) {}
+  timeout_ms_(timeout_ms),
+  m_metadata(NULL) {}
 
 ConnectionMetadata::~ConnectionMetadata() {}
 
