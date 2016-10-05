@@ -14,7 +14,7 @@ var count = 0;
 var total = 0;
 var store = [];
 var host = process.argv[2] || 'localhost:9092';
-var topic = process.argv[3] || 'telemetry-v2-ingest';
+var topic = process.argv[3] || 'test';
 
 var consumer = new Kafka.KafkaConsumer({
   'metadata.broker.list': host,
@@ -30,22 +30,6 @@ var consumer = new Kafka.KafkaConsumer({
 // Track how many messages we see per second
 var interval;
 
-consumer.on('rebalance', function() {
-  console.log('Consumer has been rebalanced');
-  interval = setInterval(function() {
-    if (isShuttingDown) {
-      clearInterval(interval);
-    }
-    console.log('%d messages per second', count);
-    if (count > 0) {
-      // Don't store ones when we didn't get data i guess?
-      store.push(count);
-      // setTimeout(shutdown, 500);
-    }
-   count = 0;
- }, 1000).unref();
-});
-
 var stream = consumer.getReadStream(topic, {
   fetchSize: 16
 });
@@ -56,6 +40,20 @@ stream
     console.log('Shutting down due to error');
     console.log(err.stack);
     shutdown();
+  })
+  .once('data', function() {
+    interval = setInterval(function() {
+      if (isShuttingDown) {
+        clearInterval(interval);
+      }
+      console.log('%d messages per second', count);
+      if (count > 0) {
+        // Don't store ones when we didn't get data i guess?
+        store.push(count);
+        // setTimeout(shutdown, 500);
+      }
+     count = 0;
+   }, 1000).unref();
   })
   .on('end', function() {
     // Can be called more than once without issue because of guard var
@@ -81,7 +79,9 @@ process.once('SIGINT', shutdown);
 process.once('SIGHUP', shutdown);
 
 function shutdown() {
-  if (isShuttingDown) return;
+  if (isShuttingDown) {
+    return;
+  }
   clearInterval(interval);
   isShuttingDown = true;
   if (store.length > 0) {

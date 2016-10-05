@@ -119,6 +119,44 @@ std::vector<std::string> v8ArrayToStringVector(v8::Local<v8::Array> parameter) {
   return newItem;
 }
 
+namespace Conversion {
+namespace Topic {
+
+std::vector<std::string> ToStringVector(v8::Local<v8::Array> parameter) {
+  std::vector<std::string> newItem;
+
+  if (parameter->Length() >= 1) {
+    for (unsigned int i = 0; i < parameter->Length(); i++) {
+      v8::Local<v8::Value> element = parameter->Get(i);
+
+      if (!element->IsRegExp()) {
+        Nan::MaybeLocal<v8::String> p = Nan::To<v8::String>(element);
+
+        if (p.IsEmpty()) {
+          continue;
+        }
+
+        Nan::Utf8String pVal(p.ToLocalChecked());
+        std::string pString(*pVal);
+
+        newItem.push_back(pString);
+      } else {
+        Nan::Utf8String pVal(element.As<v8::RegExp>()->GetSource());
+        std::string pString(*pVal);
+
+        // If it is a regular expression wrap it in that kafka decoration
+        std::string regexString = "\c \"" + pString + "\"";
+
+        newItem.push_back(pString);
+      }
+    }
+  }
+
+  return newItem;
+}
+
+}  // namespace Topic
+
 namespace TopicPartition {
 
 /**
@@ -270,5 +308,7 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Metadata* metadata) {
 }
 
 }  // namespace Metadata
+
+}  // namespace Conversion
 
 }  // namespace NodeKafka

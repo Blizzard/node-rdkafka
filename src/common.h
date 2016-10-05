@@ -49,17 +49,25 @@ class scoped_mutex_lock {
   uv_mutex_t &async_lock;
 };
 
+namespace Conversion {
+
+namespace Topic {
+  std::vector<std::string> ToStringVector(v8::Local<v8::Array>);
+}  // namespace Topic
+
 namespace TopicPartition {
 
 v8::Local<v8::Array> ToV8Array(std::vector<RdKafka::TopicPartition*>);
 
-}
+}  // namespace TopicPartition
 
 namespace Metadata {
 
 v8::Local<v8::Object> ToV8Object(RdKafka::Metadata*);
 
 }  // namespace Metadata
+
+}  // namespace Conversion
 
 }  // namespace NodeKafka
 

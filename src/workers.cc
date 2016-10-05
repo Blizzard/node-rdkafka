@@ -54,7 +54,7 @@ void ConnectionMetadata::HandleOKCallback() {
 
   // This is a big one!
   v8::Local<v8::Value> argv[argc] = { Nan::Null(),
-    NodeKafka::Metadata::ToV8Object(m_metadata)};
+    Conversion::Metadata::ToV8Object(m_metadata)};
 
   callback->Call(argc, argv);
 
