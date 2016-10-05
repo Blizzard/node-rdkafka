@@ -433,7 +433,8 @@ NAN_METHOD(Consumer::NodeAssignments) {
     return;
   }
 
-  info.GetReturnValue().Set(TopicPartition::ToV8Array(consumer->m_partitions));
+  info.GetReturnValue().Set(
+    Conversion::TopicPartition::ToV8Array(consumer->m_partitions));
 }
 
 NAN_METHOD(Consumer::NodeAssign) {
@@ -648,7 +649,7 @@ NAN_METHOD(Consumer::NodeSubscribe) {
   v8::Local<v8::Array> topicsArray = info[0].As<v8::Array>();
   v8::Local<v8::Function> cb = info[1].As<v8::Function>();
 
-  std::vector<std::string> topics = v8ArrayToStringVector(topicsArray);
+  std::vector<std::string> topics = Conversion::Topic::ToStringVector(topicsArray);  // NOLINT
 
   if (topics.empty()) {
      Nan::ThrowError("Please provide an array of topics to subscribe to");
@@ -676,7 +677,7 @@ NAN_METHOD(Consumer::NodeSubscribeSync) {
   Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
 
   v8::Local<v8::Array> topicsArray = info[0].As<v8::Array>();
-  std::vector<std::string> topics = v8ArrayToStringVector(topicsArray);
+  std::vector<std::string> topics = Conversion::Topic::ToStringVector(topicsArray);  // NOLINT
 
   Baton b = consumer->Subscribe(topics);
 
