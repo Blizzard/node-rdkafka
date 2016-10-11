@@ -145,7 +145,7 @@ std::vector<std::string> ToStringVector(v8::Local<v8::Array> parameter) {
         std::string pString(*pVal);
 
         // If it is a regular expression wrap it in that kafka decoration
-        std::string regexString = "\c \"" + pString + "\"";
+        std::string regexString = "\"" + pString + "\"";
 
         newItem.push_back(pString);
       }
@@ -164,11 +164,11 @@ namespace TopicPartition {
  *
  * @see v8ArrayToTopicPartitionVector
  *
- * @node This will destroy the topic partition pointers inside the vector, rendering
+ * @note This will destroy the topic partition pointers inside the vector, rendering
  * it unusable
  */
 v8::Local<v8::Array> ToV8Array(
-  std::vector<RdKafka::TopicPartition*> & topic_partition_list) {
+  std::vector<RdKafka::TopicPartition*> & topic_partition_list) {  // NOLINT
   v8::Local<v8::Array> array = Nan::New<v8::Array>();
   for (size_t topic_partition_i = 0;
     topic_partition_i < topic_partition_list.size(); topic_partition_i++) {
