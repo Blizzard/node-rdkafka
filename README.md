@@ -364,10 +364,10 @@ The following table lists important methods for this API.
 |-------|----------|
 |`consumer.connect()` | Connects to the broker. <br><br>The `connect()` emits the event `ready` when it has successfully connected, or an `error` when it has not. |
 |`consumer.disconnect()` | Disconnects from the broker. <br><br>The `disconnect()` method emits `disconnected` when it has disconnected or `error` if something went wrong.
-|`consumer.subscribe(topics, callback)` | Subscribes to an array of topics. <br><br> `topics` can be either an array or a string for a single topic. |
+|`consumer.subscribe(topics)` | Subscribes to an array of topics. <br><br> `topics` can be either an array or a string for a single topic. |
 |`consumer.unsubscribe()` | Unsubscribes from the currently subscribed topics. <br><br>You cannot subscribe to different topics without calling the `unsubscribe()` method first. |
-|`consumer.consume(cb)` | Gets a message from the existing subscription. |
-|`consumer.consume(topics, cb)` | Creates a subscription and get messages as they become available.<br><br>The `consume()` method keeps a background thread running to do the work. |
+|`consumer.consume(cb)` | Gets a message from the existing subscription. If `cb` is specified, invokes `cb(err, message)`. |
+|`consumer.consume(topics, cb)` | Creates a subscription and get messages as they become available.<br><br>The `consume()` method keeps a background thread running to do the work. If `cb` is specified, invokes `cb(err, message)`. |
 
 The following table lists events for this API.
 
