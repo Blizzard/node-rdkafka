@@ -207,7 +207,7 @@ To see the configuration options available to you, see the [Configuration](#conf
 |`producer.connect()`| Connects to the broker. <br><br> The `connect()` method emits the `ready` event when it connects successfully or an `error` when it does not.|
 |`producer.disconnect()`| Disconnects from the broker. <br><br>The `disconnect()` method emits the `disconnected` event when it has disconnected or `error` if something went wrong. |
 |`producer.poll()` | Polls the producer for delivery reports or other events to be transmitted via the emitter. <br><br>This happens automatically on transactions such as `produce`. |
-|`producer.produce(msg)`| Sends a message. <br><br>The `produce()` method takes a JSON object in the format showed above. |
+|`producer.produce(msg, cb)`| Sends a message. <br><br>The `produce()` method takes a JSON object in the format showed above. If `cb` is specified, invokes `cb(err)`. |
 
 ##### Events
 
