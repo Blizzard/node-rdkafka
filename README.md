@@ -293,7 +293,8 @@ Messages that are returned by the `KafkaConsumer` have the following structure.
   size: 2, // size of the message, in bytes
   topic: 'librdtesting-01', // topic the message comes from
   offset: 1337, // offset the message was read from
-  partition: 1 // partition the message was on
+  partition: 1, // partition the message was on
+  key: 'someKey' // key of the message if present
 }
 ```
 
