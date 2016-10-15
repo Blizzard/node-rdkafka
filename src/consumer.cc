@@ -254,7 +254,10 @@ NodeKafka::Message* Consumer::Consume(int timeout_ms) {
     } else {
       RdKafka::KafkaConsumer* consumer =
         dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
-      m = new NodeKafka::Message(consumer->consume(timeout_ms));
+
+      RdKafka::Message * message = consumer->consume(timeout_ms);
+      m = new NodeKafka::Message(message);
+      delete message;
 
       if (m->ConsumerShouldStop()) {
         Unsubscribe();
@@ -812,6 +815,5 @@ NAN_METHOD(Consumer::NodeDisconnect) {
   Nan::AsyncQueueWorker(new Workers::ConsumerDisconnect(callback, consumer));
   info.GetReturnValue().Set(Nan::Null());
 }
-
 
 }  // namespace NodeKafka
