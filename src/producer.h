@@ -73,7 +73,6 @@ class Producer : public Connection {
   ~Producer();
 
  private:
-  static NAN_METHOD(NodeProduceSync);
   static NAN_METHOD(NodeProduce);
   static NAN_METHOD(NodeOnDelivery);
   static NAN_METHOD(NodeSetPartitioner);

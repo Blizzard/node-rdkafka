@@ -21,7 +21,6 @@
 #include "src/common.h"
 #include "src/connection.h"
 #include "src/callbacks.h"
-#include "src/message.h"
 
 namespace NodeKafka {
 
@@ -70,7 +69,7 @@ class Consumer : public Connection {
   std::string Name();
 
   Baton Subscribe(std::vector<std::string>);
-  NodeKafka::Message* Consume(int timeout_ms);
+  Baton Consume(int timeout_ms);
 
   void ActivateDispatchers();
   void DeactivateDispatchers();

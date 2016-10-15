@@ -82,7 +82,6 @@ void Producer::Init(v8::Local<v8::Object> exports) {
 
   Nan::SetPrototypeMethod(tpl, "setPartitioner", NodeSetPartitioner);
   Nan::SetPrototypeMethod(tpl, "produce", NodeProduce);
-  Nan::SetPrototypeMethod(tpl, "produceSync", NodeProduceSync);
 
     // connect. disconnect. resume. pause. get meta data
   constructor.Reset(tpl->GetFunction());
@@ -194,16 +193,19 @@ void Producer::Disconnect() {
   }
 }
 
-Baton Producer::Produce(ProducerMessage* msg) {
-  if (msg->m_key.empty()) {
-    return Produce(msg->Payload(), msg->Size(), msg->GetTopic(),
-      msg->m_partition, NULL);
-  } else {
-    return Produce(msg->Payload(), msg->Size(), msg->GetTopic(),
-      msg->m_partition, &msg->m_key);
-  }
-}
-
+/**
+ * [Producer::Produce description]
+ * @param message - pointer to the message we are sending. This method will
+ * create a copy of it, so you are still required to free it when done.
+ * @param size - size of the message. We are copying the memory so we need
+ * the size
+ * @param topic - RdKafka::Topic* object to send the message to. Generally
+ * created by NodeKafka::Topic::toRDKafkaTopic
+ * @param partition - partition to send it to. Send in
+ * RdKafka::Topic::PARTITION_UA to send to an unassigned topic
+ * @param key - a string pointer for the key, or null if there is none.
+ * @return - A baton object with error code set if it failed.
+ */
 Baton Producer::Produce(void* message, size_t size, RdKafka::Topic* topic,
   int32_t partition, std::string *key) {
   RdKafka::ErrorCode response_code;
@@ -244,7 +246,25 @@ void Producer::Poll() {
 }
 
 /* Node exposed methods */
-NAN_METHOD(Producer::NodeProduceSync) {
+
+/**
+ * @brief Producer::NodeProduce - produce a message through a producer
+ *
+ * This is a synchronous method. You may ask, "why?". The answer is because
+ * there is no true value doing this asynchronously. All it does is degrade
+ * performance. This method does not block - all it does is add a message
+ * to a queue. In the case where the queue is full, it will return an error
+ * immediately. The only way this method blocks is when you provide it a
+ * flag to do so, which we never do.
+ *
+ * Doing it asynchronously eats up the libuv threadpool for no reason and
+ * increases execution time by a very small amount. It will take two ticks of
+ * the event loop to execute at minimum - 1 for executing it and another for
+ * calling back the callback.
+ *
+ * @sa RdKafka::Producer::produce
+ */
+NAN_METHOD(Producer::NodeProduce) {
   Nan::HandleScope scope;
 
   // Need to extract the message data here.
@@ -298,45 +318,6 @@ NAN_METHOD(Producer::NodeProduceSync) {
   } else {
     info.GetReturnValue().Set(Nan::True());
   }
-}
-
-NAN_METHOD(Producer::NodeProduce) {
-  Nan::HandleScope scope;
-
-  // This needs to be offloaded to libuv
-  // Need to extract the message data here.
-  if (info.Length() < 2 || !info[0]->IsObject() || !info[1]->IsObject()) {
-    // Just throw an exception
-    return Nan::ThrowError("Need to specify message data and topic");
-  }
-
-  v8::Local<v8::Object> obj = info[0].As<v8::Object>();
-
-  // Second parameter is a topic config
-  Topic* topic = ObjectWrap::Unwrap<Topic>(info[1].As<v8::Object>());
-
-  ProducerMessage* message = new ProducerMessage(obj, topic);
-  if (message->IsEmpty()) {
-    if (message->m_errstr.empty()) {
-      return Nan::ThrowError("Need to specify a message to send");
-    } else {
-      return Nan::ThrowError(message->m_errstr.c_str());
-    }
-  }
-
-  Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
-
-  if (info.Length() < 3 || !info[2]->IsFunction()) {
-    return Nan::ThrowError("You must provide a callback");
-  }
-
-  v8::Local<v8::Function> cb = info[2].As<v8::Function>();
-
-  Nan::Callback * callback = new Nan::Callback(cb);
-
-  Nan::AsyncQueueWorker(
-    new Workers::ProducerProduce(callback, producer, message));
-  info.GetReturnValue().Set(Nan::Null());
 }
 
 NAN_METHOD(Producer::NodeOnDelivery) {
@@ -463,92 +444,6 @@ NAN_METHOD(Producer::NodeDisconnect) {
   Nan::AsyncQueueWorker(new Workers::ProducerDisconnect(callback, producer));
 
   info.GetReturnValue().Set(Nan::Null());
-}
-
-/**
- * @brief Producer message object.
- *
- * Handles conversions between v8::Values for topic config and message config
- *
- * Rather than have the Producer itself worry about v8 I'd rather it be decoupled.
- * Similarly to the way we have topics deal with conversions of v8 objects
- * rather than the Producer itself, we have this message object deal with
- * validating object parameters and getting it ready to send.
- *
- * @sa RdKafka::Producer::send
- * @sa NodeKafka::Consumer::Produce
- */
-
-ProducerMessage::ProducerMessage(v8::Local<v8::Object> obj, Topic * topic):
-  m_topic(topic),
-  m_is_empty(true) {
-  // We have this bad boy now
-
-  m_partition =
-    GetParameter<int64_t>(obj, "partition", RdKafka::Topic::PARTITION_UA);
-
-  if (m_partition < 0) {
-    m_partition = RdKafka::Topic::PARTITION_UA;  // this is just -1
-  }
-
-  // This one is a buffer
-  v8::Local<v8::String> messageField = Nan::New("message").ToLocalChecked();
-  if (Nan::Has(obj, messageField).FromMaybe(false)) {
-    Nan::MaybeLocal<v8::Value> buffer_pre_object =
-      Nan::Get(obj, messageField);
-
-    if (buffer_pre_object.IsEmpty()) {
-      // this is an error object then
-      // errstr = "Missing message parameter";
-      return;
-    }
-
-    v8::Local<v8::Value> buffer_value = buffer_pre_object.ToLocalChecked();
-
-    if (!node::Buffer::HasInstance(buffer_value)) {
-      return;
-    }
-
-    v8::Local<v8::Object> buffer_object = buffer_value->ToObject();
-
-    // v8 handles the garbage collection here so we need to make a copy of
-    // the buffer or assign the buffer to a persistent handle.
-
-    // I'm not sure which would be the more performant option. I assume
-    // the persistent handle would be but for now we'll try this one
-    // which should be more memory-efficient and allow v8 to dispose of the
-    // buffer sooner
-
-    m_buffer_length = node::Buffer::Length(buffer_object);
-    m_buffer_data = malloc(m_buffer_length);
-    memcpy(m_buffer_data, node::Buffer::Data(buffer_object), m_buffer_length);
-  } else {
-    return;
-  }
-
-  // Currently a valid message
-  m_is_empty = false;
-
-  // Key
-  m_key = GetParameter<std::string>(obj, "key", "");
-}
-
-ProducerMessage::~ProducerMessage() {}
-
-bool ProducerMessage::IsEmpty() {
-  return m_is_empty;
-}
-
-void* ProducerMessage::Payload() {
-  return m_buffer_data;
-}
-
-RdKafka::Topic* ProducerMessage::GetTopic() {
-  return m_topic->toRDKafkaTopic();
-}
-
-size_t ProducerMessage::Size() {
-  return m_buffer_length;
 }
 
 }  // namespace NodeKafka

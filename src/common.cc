@@ -320,6 +320,48 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Metadata* metadata) {
 
 }  // namespace Metadata
 
+namespace Message {
+
+v8::Local<v8::Object> ToV8Object(RdKafka::Message *message) {
+
+  if (message->err() == RdKafka::ERR_NO_ERROR) {
+    v8::Local<v8::Object> pack = Nan::New<v8::Object>();
+
+    void* payload = malloc(message->len());
+    memcpy(payload, message->payload(), message->len());
+
+    Nan::MaybeLocal<v8::Object> buff =
+      Nan::NewBuffer(static_cast<char*>(payload),
+      static_cast<int>(message->len()));
+
+    Nan::Set(pack, Nan::New<v8::String>("payload").ToLocalChecked(), buff.ToLocalChecked());
+    Nan::Set(pack, Nan::New<v8::String>("size").ToLocalChecked(),
+      Nan::New<v8::Number>(message->len()));
+
+    if (message->key()) {
+      std::string* key = new std::string(*message->key());
+      Nan::Set(pack, Nan::New<v8::String>("key").ToLocalChecked(),
+        Nan::New<v8::String>(*key).ToLocalChecked());
+    } else {
+      Nan::Set(pack, Nan::New<v8::String>("key").ToLocalChecked(),
+        Nan::Undefined());
+    }
+
+    Nan::Set(pack, Nan::New<v8::String>("topic_name").ToLocalChecked(),
+      Nan::New<v8::String>(message->topic_name()).ToLocalChecked());
+    Nan::Set(pack, Nan::New<v8::String>("offset").ToLocalChecked(),
+      Nan::New<v8::Number>(message->offset()));
+    Nan::Set(pack, Nan::New<v8::String>("partition").ToLocalChecked(),
+      Nan::New<v8::Number>(message->partition()));
+
+    return pack;
+  } else {
+    return RdKafkaError(message->err());
+  }
+}
+
+}
+
 }  // namespace Conversion
 
 }  // namespace NodeKafka

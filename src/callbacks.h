@@ -16,7 +16,6 @@
 
 #include "deps/librdkafka/src-cpp/rdkafkacpp.h"
 #include "src/common.h"
-#include "src/message.h"
 
 typedef Nan::Persistent<v8::Function,
   Nan::CopyablePersistentTraits<v8::Function> > PersistentCopyableFunction;
@@ -84,24 +83,6 @@ class Event : public RdKafka::EventCb {
   ~Event();
   void event_cb(RdKafka::Event&);
   EventDispatcher dispatcher;
-};
-
-class ConsumeDispatcher : public Dispatcher {
- public:
-  ConsumeDispatcher();
-  ~ConsumeDispatcher();
-  void Add(NodeKafka::Message *);
-  void Flush();
- protected:
-  std::vector<NodeKafka::Message *> events;
-};
-
-class Consume : public RdKafka::ConsumeCb {
- public:
-  Consume();
-  ~Consume();
-  void consume_cb(RdKafka::Message &, void *);
-  ConsumeDispatcher dispatcher;
 };
 
 struct delivery_report_t {
