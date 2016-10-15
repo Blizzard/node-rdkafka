@@ -265,7 +265,6 @@ Baton Consumer::Consume(int timeout_ms) {
   } else {
     return Baton(RdKafka::ERR__STATE, "Consumer is not connected");
   }
-
 }
 
 Baton Consumer::RefreshAssignments() {

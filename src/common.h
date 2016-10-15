@@ -18,7 +18,7 @@
 
 #include "deps/librdkafka/src-cpp/rdkafkacpp.h"
 
-#include "errors.h"
+#include "src/errors.h"
 
 typedef std::vector<const RdKafka::BrokerMetadata*> BrokerMetadataList;
 typedef std::vector<const RdKafka::PartitionMetadata*> PartitionMetadataList;

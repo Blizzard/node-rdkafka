@@ -1,5 +1,15 @@
 NODE-GYP ?= node_modules/.bin/node-gyp
-PYTHON ?= python
+
+# Sick of changing this. Do a check and try to use python 2 if it doesn't work
+PYTHON_VERSION_FULL := $(wordlist 2,4,$(subst ., ,$(shell python --version 2>&1)))
+PYTHON_VERSION_MAJOR := $(word 1,${PYTHON_VERSION_FULL})
+
+ifeq ($(PYTHON_VERSION_MAJOR), 2)
+PYTHON = python
+else
+PYTHON = python2
+endif
+
 NODE ?= node
 CPPLINT ?= cpplint.py
 BUILDTYPE ?= Release

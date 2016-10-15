@@ -12,49 +12,96 @@ var crypto = require('crypto');
 var KafkaConsumer = require('../').KafkaConsumer;
 
 var kafkaBrokerList = process.env.KAFKA_HOST || 'localhost:9092';
-
 var grp = 'kafka-mocha-grp-' + crypto.randomBytes(20).toString();
 
-var TestCase = require('./test-case');
+describe('Consumer', function() {
 
-var testCase = new TestCase('Consumer tests', function() {
-  this.test('can connect using a consumer', function(cb) {
-    var consumer;
+  var gcfg = {
+    'bootstrap.servers': kafkaBrokerList,
+    'group.id': grp
+  };
 
-    consumer = new KafkaConsumer({
-      'group.id': grp,
-      'metadata.broker.list': kafkaBrokerList,
-      'fetch.wait.max.ms': 1,
-      'session.timeout.ms': 2000,
-    });
-    consumer.connect({}, function(err, metadata) {
-      try {
+  describe('disconnect', function() {
+    var tcfg = { 'auto.offset.reset': 'earliest' };
+
+    it('should happen gracefully', function(cb) {
+      var consumer = new KafkaConsumer(gcfg, tcfg);
+
+      consumer.connect({}, function(err, info) {
         t.ifError(err);
-        t.equal(typeof metadata, 'object', 'metadata should be returned');
 
-        // Ensure it is in the correct format
-        t.ok(metadata.orig_broker_name, 'Broker name is not set');
-        t.ok(metadata.orig_broker_id, 'Broker id is not set');
-        t.equal(Array.isArray(metadata.brokers), true);
-        t.equal(Array.isArray(metadata.topics), true);
-      } catch (e) {
-        return cb(e);
-      }
+        consumer.disconnect(function() {
+          cb();
+        });
 
-      consumer.disconnect(function(err) {
-        cb();
       });
+
     });
+
+    it('should happen without issue after subscribing', function(cb) {
+      var consumer = new KafkaConsumer(gcfg, tcfg);
+
+      consumer.connect({}, function(err, info) {
+        t.ifError(err);
+
+        consumer.subscribe(['test']);
+
+        consumer.disconnect(function() {
+          cb();
+        });
+
+      });
+
+    });
+
+    it('should happen without issue after consuming', function(cb) {
+      this.timeout(11000);
+
+      var consumer = new KafkaConsumer(gcfg, tcfg);
+
+      consumer.setDefaultConsumeTimeout(10000);
+
+      consumer.connect({}, function(err, info) {
+        t.ifError(err);
+
+        consumer.subscribe(['test']);
+
+        consumer.consume(function(err, message) {
+          t.ifError(err);
+
+          consumer.disconnect(function() {
+            cb();
+          });
+        });
+
+      });
+
+    });
+
+    it('should happen without issue after consuming an error', function(cb) {
+      var consumer = new KafkaConsumer(gcfg, tcfg);
+
+      consumer.setDefaultConsumeTimeout(1);
+
+      consumer.connect({}, function(err, info) {
+        t.ifError(err);
+
+        consumer.subscribe(['test']);
+
+        consumer.consume(function(err, message) {
+          t.notEqual(err, undefined, 'Error should not be undefined.');
+          t.notEqual(err, null, 'Error should not be null.');
+          t.equal(message, undefined, 'Message should not be set');
+
+          consumer.disconnect(function() {
+            cb();
+          });
+        });
+
+      });
+
+    });
+
   });
-});
-
-testCase.run(function(err) {
-  if (err) {
-    return process.exit(1);
-  }
-
-  console.log('All tests passed successfully');
-
-  process.exit(0);
 
 });
