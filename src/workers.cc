@@ -361,7 +361,6 @@ ConsumerConsumeLoop::~ConsumerConsumeLoop() {}
 void ConsumerConsumeLoop::Execute(const ExecutionMessageBus& bus) {
   // Do one check here before we move forward
   while (consumer->IsConnected()) {
-
     Baton b = consumer->Consume(m_timeout_ms);
 
     if (b.err() == RdKafka::ERR__PARTITION_EOF) {

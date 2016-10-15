@@ -55,7 +55,7 @@ class Producer : public Connection {
   void Disconnect();
   void Poll();
   #if RD_KAFKA_VERSION > 0x00090200
-  Baton Flush(int);
+  Baton Flush(int timeout_ms);
   #endif
 
   Baton Produce(ProducerMessage* msg);

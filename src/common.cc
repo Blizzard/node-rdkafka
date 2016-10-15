@@ -323,18 +323,17 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Metadata* metadata) {
 namespace Message {
 
 v8::Local<v8::Object> ToV8Object(RdKafka::Message *message) {
-
   if (message->err() == RdKafka::ERR_NO_ERROR) {
     v8::Local<v8::Object> pack = Nan::New<v8::Object>();
 
     void* payload = malloc(message->len());
     memcpy(payload, message->payload(), message->len());
 
-    Nan::MaybeLocal<v8::Object> buff =
-      Nan::NewBuffer(static_cast<char*>(payload),
-      static_cast<int>(message->len()));
+    Nan::MaybeLocal<v8::Object> buff = Nan::NewBuffer(
+      static_cast<char*>(payload), static_cast<int>(message->len()));
 
-    Nan::Set(pack, Nan::New<v8::String>("payload").ToLocalChecked(), buff.ToLocalChecked());
+    Nan::Set(pack, Nan::New<v8::String>("payload").ToLocalChecked(),
+      buff.ToLocalChecked());
     Nan::Set(pack, Nan::New<v8::String>("size").ToLocalChecked(),
       Nan::New<v8::Number>(message->len()));
 
@@ -360,7 +359,7 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Message *message) {
   }
 }
 
-}
+}  // namespace Message
 
 }  // namespace Conversion
 
