@@ -40,22 +40,21 @@ class Message {
 
   RdKafka::ErrorCode errcode();
 
-  static void Free(char *, void *);
   v8::Local<v8::Object> ToBuffer();
 
  private:
-  RdKafka::Message* m_message;
   RdKafka::ErrorCode m_errcode;
 
-  size_t size;
-  int64_t offset;
-  std::string topic_name;
-  void* payload;
-  int partition;
+  std::string * m_key;
+  size_t m_size;
+  int64_t m_offset;
+  std::string m_topic_name;
+  void* m_payload;
+  int m_partition;
 
-  bool stop_running;
+  bool m_stop_running;
 
-  std::string errstr;
+  std::string m_errstr;
 };
 
 }  // namespace NodeKafka

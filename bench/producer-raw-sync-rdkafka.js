@@ -70,25 +70,16 @@ crypto.randomBytes(4096, function(ex, buffer) {
 
       started = new Date().getTime();
 
-      var x = function(e) {
-        if (e) {
-          console.log(e);
-          errors += 1;
-        } else {
-          verifiedComplete += 1;
-        }
+      var sendMessage = function() {
+        // topic, partition, payload, key
+        var errorCode = producer.produceSync(topic, null, buffer, null);
+
+        verifiedComplete += 1;
         count += 1;
         totalComplete += 1;
         if (totalComplete === MAX) {
           shutdown();
         }
-      };
-
-      var sendMessage = function() {
-        producer.produce({
-          topic: topic,
-          message: buffer
-        }, x);
         if (total < MAX) {
           total += 1;
           setImmediate(sendMessage);

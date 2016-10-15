@@ -54,6 +54,9 @@ class Producer : public Connection {
   Baton Connect();
   void Disconnect();
   void Poll();
+  #if RD_KAFKA_VERSION > 0x00090200
+  Baton Flush(int);
+  #endif
 
   Baton Produce(ProducerMessage* msg);
   Baton Produce(void*, size_t, RdKafka::Topic*, int32_t, std::string*);
@@ -77,6 +80,9 @@ class Producer : public Connection {
   static NAN_METHOD(NodeConnect);
   static NAN_METHOD(NodeDisconnect);
   static NAN_METHOD(NodePoll);
+  #if RD_KAFKA_VERSION > 0x00090200
+  static NAN_METHOD(NodeFlush);
+  #endif
 
   Callbacks::Delivery m_dr_cb;
   Callbacks::Partitioner m_partitioner_cb;

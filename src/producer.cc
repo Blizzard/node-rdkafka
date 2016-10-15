@@ -213,7 +213,7 @@ Baton Producer::Produce(void* message, size_t size, RdKafka::Topic* topic,
     if (IsConnected()) {
       RdKafka::Producer* producer = dynamic_cast<RdKafka::Producer*>(m_client);
       response_code = producer->produce(topic, partition,
-            RdKafka::Producer::RK_MSG_FREE, message, size, key, NULL);
+            RdKafka::Producer::RK_MSG_COPY, message, size, key, NULL);
 
       Poll();
     } else {
@@ -248,32 +248,53 @@ NAN_METHOD(Producer::NodeProduceSync) {
   Nan::HandleScope scope;
 
   // Need to extract the message data here.
-  if (info.Length() < 2 || !info[0]->IsObject() || !info[1]->IsObject()) {
+  if (info.Length() < 4 || !info[0]->IsObject() || !info[2]->IsObject()) {
     // Just throw an exception
     return Nan::ThrowError("Need to specify message data and topic");
   }
 
-  v8::Local<v8::Object> obj = info[0].As<v8::Object>();
+  // First parameter is a topic
+  Topic* topic = ObjectWrap::Unwrap<Topic>(info[0].As<v8::Object>());
 
-  // Second parameter is a topic config
-  Topic* topic = ObjectWrap::Unwrap<Topic>(info[1].As<v8::Object>());
+  // Second parameter is the partition
+  int32_t partition;
 
-  ProducerMessage* message = new ProducerMessage(obj, topic);
-  if (message->IsEmpty()) {
-    if (message->m_errstr.empty()) {
-      return Nan::ThrowError("Need to specify a message to send");
-    } else {
-      return Nan::ThrowError(message->m_errstr.c_str());
-    }
+  if (info[1]->IsNull() || info[1]->IsUndefined()) {
+    partition = RdKafka::Topic::PARTITION_UA;
+  } else {
+    partition = Nan::To<int32_t>(info[1]).FromJust();
   }
+
+  if (partition < 0) {
+    partition = RdKafka::Topic::PARTITION_UA;
+  }
+
+  if (!node::Buffer::HasInstance(info[2])) {
+    return Nan::ThrowError("Need to specify message data and topic");
+  }
+
+  v8::Local<v8::Object> message_buffer_object = info[2]->ToObject();
+
+  // v8 handles the garbage collection here so we need to make a copy of
+  // the buffer or assign the buffer to a persistent handle.
+
+  // I'm not sure which would be the more performant option. I assume
+  // the persistent handle would be but for now we'll try this one
+  // which should be more memory-efficient and allow v8 to dispose of the
+  // buffer sooner
+
+  size_t message_buffer_length = node::Buffer::Length(message_buffer_object);
+  void* message_buffer_data = node::Buffer::Data(message_buffer_object);
 
   Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
 
-  // Make a fake callback for this function to call.
-  Baton b = producer->Produce(message);
+  // Testing crap
+
+  Baton b = producer->Produce(message_buffer_data, message_buffer_length,
+    topic->toRDKafkaTopic(), partition, NULL);
 
   if (b.err() != RdKafka::ERR_NO_ERROR) {
-    info.GetReturnValue().Set(b.ToObject());
+    return Nan::ThrowError(RdKafka::err2str(b.err()).c_str());
   } else {
     info.GetReturnValue().Set(Nan::True());
   }
@@ -377,6 +398,54 @@ NAN_METHOD(Producer::NodePoll) {
     info.GetReturnValue().Set(Nan::True());
   }
 }
+
+#if RD_KAFKA_VERSION > 0x00090200
+Baton Producer::Flush(int timeout_ms) {
+  RdKafka::ErrorCode response_code;
+  if (IsConnected()) {
+    scoped_mutex_lock lock(m_connection_lock);
+    if (IsConnected()) {
+      RdKafka::Producer* producer = dynamic_cast<RdKafka::Producer*>(m_client);
+      response_code = producer->flush(timeout_ms);
+    } else {
+      response_code = RdKafka::ERR__STATE;
+    }
+  } else {
+    response_code = RdKafka::ERR__STATE;
+  }
+
+  return Baton(response_code);
+}
+
+NAN_METHOD(Producer::NodeFlush) {
+  Nan::HandleScope scope;
+
+  if (info.Length() < 1 || !info[0]->IsFunction()) {
+    // Just throw an exception
+    return Nan::ThrowError("Need to specify a callback");
+  }
+
+  int timeout_ms;
+
+  if (info[0]->IsNull() || info[0]->IsUndefined()) {
+    timeout_ms = 1000;
+  } else {
+    timeout_ms = Nan::To<int>(info[0]).FromJust();
+  }
+
+  Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
+
+  if (!producer->IsConnected()) {
+    Nan::ThrowError("Producer is disconnected");
+  } else {
+    Baton b = producer->Flush(timeout_ms);
+    if (b.err() != RdKafka::ErrorCode::ERR_NO_ERROR) {
+      return Nan::ThrowError(b.errstr().c_str());
+    }
+    info.GetReturnValue().Set(Nan::True());
+  }
+}
+#endif
 
 NAN_METHOD(Producer::NodeDisconnect) {
   Nan::HandleScope scope;

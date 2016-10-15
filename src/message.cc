@@ -20,30 +20,26 @@ v8::Local<v8::Value> Message::Pack() {
 
   v8::Local<v8::Object> pack = Nan::New<v8::Object>();
 
-  Nan::Set(pack, Nan::New<v8::String>("message").ToLocalChecked(), ToBuffer());
+  Nan::Set(pack, Nan::New<v8::String>("payload").ToLocalChecked(), ToBuffer());
   Nan::Set(pack, Nan::New<v8::String>("size").ToLocalChecked(),
-    Nan::New<v8::Number>(size));
+    Nan::New<v8::Number>(m_size));
 
-  if (m_message->key()) {
+  if (m_key) {
     Nan::Set(pack, Nan::New<v8::String>("key").ToLocalChecked(),
-      Nan::New<v8::String>(*m_message->key()).ToLocalChecked());
+      Nan::New<v8::String>(*m_key).ToLocalChecked());
   } else {
     Nan::Set(pack, Nan::New<v8::String>("key").ToLocalChecked(),
       Nan::Undefined());
   }
 
   Nan::Set(pack, Nan::New<v8::String>("topic").ToLocalChecked(),
-    Nan::New<v8::String>(topic_name).ToLocalChecked());
+    Nan::New<v8::String>(m_topic_name).ToLocalChecked());
   Nan::Set(pack, Nan::New<v8::String>("offset").ToLocalChecked(),
-    Nan::New<v8::Number>(offset));
+    Nan::New<v8::Number>(m_offset));
   Nan::Set(pack, Nan::New<v8::String>("partition").ToLocalChecked(),
-    Nan::New<v8::Number>(partition));
+    Nan::New<v8::Number>(m_partition));
 
   return pack;
-}
-
-RdKafka::Message* Message::GetMessage() {
-  return m_message;
 }
 
 RdKafka::ErrorCode Message::errcode() {
@@ -51,74 +47,75 @@ RdKafka::ErrorCode Message::errcode() {
 }
 
 Message::Message(const RdKafka::ErrorCode &err) {
-  stop_running = false;
+  m_stop_running = false;
   m_errcode = err;
-  m_message = NULL;
+  m_payload = NULL;
 }
 
-Message::Message(RdKafka::Message *message):
-  m_message(message) {
+Message::Message(RdKafka::Message *message) {
   m_errcode = message->err();
-  stop_running = false;
+  m_stop_running = false;
 
   // Starts polling before the partitioner is ready.
   // This may be a problem we want to keep record of
   switch (m_errcode) {
     case RdKafka::ERR_NO_ERROR:
       /* Real message */
-      size = message->len();
-      offset = message->offset();
+      m_size = message->len();
+      m_offset = message->offset();
 
-      partition = message->partition();
+      m_partition = message->partition();
 
-      topic_name = message->topic_name();
-      payload = message->payload();
+      m_topic_name = message->topic_name();
+      m_payload = malloc(message->len());
+      memcpy(m_payload, message->payload(), m_size);
+
+      if (message->key()) {
+        // copy the key because life sucks
+        m_key = new std::string(*message->key());
+      } else {
+        m_key = NULL;
+      }
 
       break;
 
     case RdKafka::ERR__TIMED_OUT:
-      errstr = message->errstr();
+      m_errstr = message->errstr();
       break;
 
     case RdKafka::ERR__PARTITION_EOF:
-      errstr = message->errstr();
+      m_errstr = message->errstr();
       // exit_eof && ++eof_cnt == partition_cnt
       break;
 
     case RdKafka::ERR__UNKNOWN_TOPIC:
     case RdKafka::ERR__UNKNOWN_PARTITION:
-      errstr = message->errstr();
-      stop_running = true;
+      m_errstr = message->errstr();
+      m_stop_running = true;
       break;
 
     default:
       /* Errors */
-      errstr = message->errstr();
-      stop_running = true;  // We don't know what this is so back out
+      m_errstr = message->errstr();
+      m_stop_running = true;  // We don't know what this is so back out
   }
+
 }
 
 Message::~Message() {
-  if (m_message) {
-    delete m_message;
+  if (m_key) {
+    delete m_key;
   }
 }
 
 size_t Message::Size() {
-  return size;
-}
-
-void Message::Free(char * data, void * hint) {
-  Message* m = static_cast<Message*>(hint);
-  delete m;
+  return m_size;
 }
 
 v8::Local<v8::Object> Message::ToBuffer() {
   Nan::MaybeLocal<v8::Object> buff =
     Nan::NewBuffer(static_cast<char*>(Payload()),
-    static_cast<int>(Size()),
-    Message::Free,
-    this);
+    static_cast<int>(Size()));
 
   return buff.ToLocalChecked();
 }
@@ -132,11 +129,11 @@ v8::Local<v8::Object> Message::GetErrorObject() {
 }
 
 char* Message::Payload() {
-  return static_cast<char *>(payload);
+  return static_cast<char *>(m_payload);
 }
 
 bool Message::ConsumerShouldStop() {
-  return stop_running;
+  return m_stop_running;
 }
 
 }  // namespace NodeKafka
