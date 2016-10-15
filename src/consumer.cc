@@ -244,30 +244,28 @@ Baton Consumer::Subscribe(std::vector<std::string> topics) {
   return Baton(RdKafka::ERR_NO_ERROR);
 }
 
-NodeKafka::Message* Consumer::Consume(int timeout_ms) {
-  NodeKafka::Message* m;
-
+Baton Consumer::Consume(int timeout_ms) {
   if (IsConnected()) {
     scoped_mutex_lock lock(m_connection_lock);
     if (!IsConnected()) {
-      m = new NodeKafka::Message(RdKafka::ERR__STATE);
+      return Baton(RdKafka::ERR__STATE, "Consumer is not connected");
     } else {
       RdKafka::KafkaConsumer* consumer =
         dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
 
       RdKafka::Message * message = consumer->consume(timeout_ms);
-      m = new NodeKafka::Message(message);
-      delete message;
-
-      if (m->ConsumerShouldStop()) {
-        Unsubscribe();
+      RdKafka::ErrorCode response_code = message->err();
+      if (response_code != RdKafka::ERR_NO_ERROR) {
+        delete message;
+        return Baton(response_code);
       }
+
+      return Baton(message);
     }
   } else {
-    m = new NodeKafka::Message(RdKafka::ERR__STATE);
+    return Baton(RdKafka::ERR__STATE, "Consumer is not connected");
   }
 
-  return m;
 }
 
 Baton Consumer::RefreshAssignments() {

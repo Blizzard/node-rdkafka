@@ -14,7 +14,6 @@
 
 using NodeKafka::Producer;
 using NodeKafka::Connection;
-using NodeKafka::Message;
 
 namespace NodeKafka {
 namespace Workers {
@@ -146,44 +145,6 @@ void ProducerDisconnect::HandleOKCallback() {
 void ProducerDisconnect::HandleErrorCallback() {
   // This should never run
   assert(0);
-}
-
-ProducerProduce::ProducerProduce(
-    Nan::Callback *callback,
-    Producer *producer,
-    ProducerMessage *message):
-  ErrorAwareWorker(callback),
-  producer(producer),
-  message(message) {}
-
-ProducerProduce::~ProducerProduce() {
-  delete message;
-}
-
-void ProducerProduce::Execute() {
-  Baton b = producer->Produce(message);
-
-  if (b.err() != RdKafka::ERR_NO_ERROR) {
-    SetErrorCode(b.err());
-  }
-}
-
-void ProducerProduce::HandleOKCallback() {
-  Nan::HandleScope scope;
-
-  const unsigned int argc = 1;
-  v8::Local<v8::Value> argv[argc] = { Nan::Null() };
-
-  callback->Call(argc, argv);
-}
-
-void ProducerProduce::HandleErrorCallback() {
-  Nan::HandleScope scope;
-
-  const unsigned int argc = 1;
-  v8::Local<v8::Value> argv[argc] = { GetErrorObject() };
-
-  callback->Call(argc, argv);
 }
 
 /**
@@ -400,44 +361,40 @@ ConsumerConsumeLoop::~ConsumerConsumeLoop() {}
 void ConsumerConsumeLoop::Execute(const ExecutionMessageBus& bus) {
   // Do one check here before we move forward
   while (consumer->IsConnected()) {
-    NodeKafka::Message* message = consumer->Consume(m_timeout_ms);
-    if (message->errcode() == RdKafka::ERR__PARTITION_EOF) {
-      delete message;
-      usleep(1*1000);
-    } else if (message->errcode() == RdKafka::ERR__TIMED_OUT) {
+
+    Baton b = consumer->Consume(m_timeout_ms);
+
+    if (b.err() == RdKafka::ERR__PARTITION_EOF) {
+      // EOF means there are no more messages to read.
+      // We should wait a little bit for more messages to come in
+      // when in consume loop mode
+      usleep(1000*1000);
+    } else if (b.err() == RdKafka::ERR__TIMED_OUT) {
       // If it is timed out this could just mean there were no
       // new messages fetched quickly enough. This isn't really
       // an error that should kill us.
-      //
-      // But... this error is given when we are disconnecting so
-      // we need to check that
-      delete message;
-      usleep(1000*1000);
+      usleep(500*1000);
+    } else if (b.err() == RdKafka::ERR_NO_ERROR) {
+      bus.Send(b.data<RdKafka::Message*>());
     } else {
-      bus.Send(message);
-      if (message->IsError() || message->ConsumerShouldStop()) {
-        break;
-      }
+      // Unknown error. We need to break out of this
+      SetErrorMessage(b.errstr().c_str());
+      break;
     }
   }
 }
 
-void ConsumerConsumeLoop::HandleMessageCallback(NodeKafka::Message* msg) {
+void ConsumerConsumeLoop::HandleMessageCallback(RdKafka::Message* msg) {
   Nan::HandleScope scope;
 
   const unsigned int argc = 2;
   v8::Local<v8::Value> argv[argc];
 
-  if (msg->IsError()) {
-    argv[0] = msg->GetErrorObject();
-    argv[1] = Nan::Null();
-    // Delete message here. If it is not passed to a buffer, we need to get rid
-    // of it
-    delete msg;
-  } else {
-    argv[0] = Nan::Null();
-    argv[1] = msg->Pack();
-  }
+  argv[0] = Nan::Null();
+  argv[1] = Conversion::Message::ToV8Object(msg);
+
+  // We can delete msg now
+  delete msg;
 
   callback->Call(argc, argv);
 }
@@ -482,17 +439,16 @@ void ConsumerConsumeNum::Execute() {
   const int max = static_cast<int>(m_num_messages);
   for (int i = 0; i < max; i++) {
     // Get a message
-    NodeKafka::Message* message = m_consumer->Consume(m_timeout_ms);
-    if (message->IsError()) {
-      if (message->errcode() != RdKafka::ERR__TIMED_OUT &&
-          message->errcode() != RdKafka::ERR__PARTITION_EOF) {
-        SetErrorCode(message->errcode());
-        usleep(1000);
+    Baton b = m_consumer->Consume(m_timeout_ms);
+    if (b.err() != RdKafka::ERR_NO_ERROR) {
+      if (b.err() != RdKafka::ERR__TIMED_OUT &&
+          b.err() != RdKafka::ERR__PARTITION_EOF) {
+        SetErrorBaton(b);
       }
       break;
     }
 
-    m_messages.push_back(message);
+    m_messages.push_back(b.data<RdKafka::Message*>());
   }
 }
 
@@ -506,11 +462,13 @@ void ConsumerConsumeNum::HandleOKCallback() {
 
   if (m_messages.size() > 0) {
     int i = -1;
-    for (std::vector<NodeKafka::Message*>::iterator it = m_messages.begin();
+    for (std::vector<RdKafka::Message*>::iterator it = m_messages.begin();
         it != m_messages.end(); ++it) {
       i++;
-      NodeKafka::Message* message = *it;
-      returnArray->Set(i, message->Pack());
+      RdKafka::Message* message = *it;
+      returnArray->Set(i, Conversion::Message::ToV8Object(message));
+
+      delete message;
     }
   }
 
@@ -523,9 +481,9 @@ void ConsumerConsumeNum::HandleErrorCallback() {
   Nan::HandleScope scope;
 
   if (m_messages.size() > 0) {
-    for (std::vector<NodeKafka::Message*>::iterator it = m_messages.begin();
+    for (std::vector<RdKafka::Message*>::iterator it = m_messages.begin();
         it != m_messages.end(); ++it) {
-      NodeKafka::Message* message = *it;
+      RdKafka::Message* message = *it;
       delete message;
     }
   }
@@ -557,12 +515,14 @@ ConsumerConsume::ConsumerConsume(Nan::Callback *callback,
 ConsumerConsume::~ConsumerConsume() {}
 
 void ConsumerConsume::Execute() {
-  _message = consumer->Consume(m_timeout_ms);
-  if (_message->IsError()) {
-    if (_message->errcode() != RdKafka::ERR__TIMED_OUT ||
-      _message->errcode() != RdKafka::ERR__PARTITION_EOF) {
-      SetErrorMessage(RdKafka::err2str(_message->errcode()).c_str());
+  Baton b = consumer->Consume(m_timeout_ms);
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    if (b.err() != RdKafka::ERR__TIMED_OUT ||
+      b.err() != RdKafka::ERR__PARTITION_EOF) {
+      SetErrorBaton(b);
     }
+  } else {
+    m_message = b.data<RdKafka::Message*>();
   }
 }
 
@@ -571,13 +531,12 @@ void ConsumerConsume::HandleOKCallback() {
 
   const unsigned int argc = 2;
   v8::Local<v8::Value> argv[argc];
+
   argv[0] = Nan::Null();
-  if (_message->IsError()) {
-    argv[1] = Nan::False();
-    delete _message;
-  } else {
-    argv[1] = _message->Pack();
-  }
+  argv[1] = Conversion::Message::ToV8Object(m_message);
+
+  delete m_message;
+
   callback->Call(argc, argv);
 }
 
@@ -585,11 +544,9 @@ void ConsumerConsume::HandleErrorCallback() {
   Nan::HandleScope scope;
 
   const unsigned int argc = 1;
-  v8::Local<v8::Value> argv[argc] = { _message->GetErrorObject() };
+  v8::Local<v8::Value> argv[argc] = { GetErrorObject() };
 
   callback->Call(argc, argv);
-
-  delete _message;
 }
 
 // Commit

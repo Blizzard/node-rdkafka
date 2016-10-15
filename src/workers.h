@@ -81,7 +81,7 @@ class MessageWorker : public Nan::AsyncWorker {
       return;
     }
 
-    std::vector<NodeKafka::Message*> message_queue;
+    std::vector<RdKafka::Message*> message_queue;
 
     {
       scoped_mutex_lock lock(m_async_lock);
@@ -101,7 +101,7 @@ class MessageWorker : public Nan::AsyncWorker {
   class ExecutionMessageBus {
     friend class MessageWorker;
    public:
-     void Send(NodeKafka::Message* m) const {
+     void Send(RdKafka::Message* m) const {
        that_->Produce_(m);
      }
    private:
@@ -110,7 +110,7 @@ class MessageWorker : public Nan::AsyncWorker {
   };
 
   virtual void Execute(const ExecutionMessageBus&) = 0;
-  virtual void HandleMessageCallback(NodeKafka::Message*) = 0;
+  virtual void HandleMessageCallback(RdKafka::Message*) = 0;
 
   virtual void Destroy() {
     uv_close(reinterpret_cast<uv_handle_t*>(m_async), AsyncClose_);
@@ -122,7 +122,7 @@ class MessageWorker : public Nan::AsyncWorker {
     Execute(message_bus);
   }
 
-  void Produce_(NodeKafka::Message* m) {
+  void Produce_(RdKafka::Message* m) {
     scoped_mutex_lock lock(m_async_lock);
     m_asyncdata.push_back(m);
     uv_async_send(m_async);
@@ -140,7 +140,7 @@ class MessageWorker : public Nan::AsyncWorker {
 
   uv_async_t *m_async;
   uv_mutex_t m_async_lock;
-  std::vector<NodeKafka::Message*> m_asyncdata;
+  std::vector<RdKafka::Message*> m_asyncdata;
 };
 
 class ConnectionMetadata : public ErrorAwareWorker {
@@ -187,21 +187,6 @@ class ProducerDisconnect : public ErrorAwareWorker {
 
  private:
   NodeKafka::Producer * producer;
-};
-
-class ProducerProduce : public ErrorAwareWorker {
- public:
-  ProducerProduce(
-    Nan::Callback*, NodeKafka::Producer*, NodeKafka::ProducerMessage*);
-  ~ProducerProduce();
-
-  void Execute();
-  void HandleOKCallback();
-  void HandleErrorCallback();
-
- private:
-  NodeKafka::Producer * producer;
-  NodeKafka::ProducerMessage * message;
 };
 
 class ConsumerConnect : public ErrorAwareWorker {
@@ -265,7 +250,7 @@ class ConsumerConsumeLoop : public MessageWorker {
   void Execute(const ExecutionMessageBus&);
   void HandleOKCallback();
   void HandleErrorCallback();
-  void HandleMessageCallback(NodeKafka::Message*);
+  void HandleMessageCallback(RdKafka::Message*);
  private:
   NodeKafka::Consumer * consumer;
   const int m_timeout_ms;
@@ -282,7 +267,7 @@ class ConsumerConsume : public ErrorAwareWorker {
  private:
   NodeKafka::Consumer * consumer;
   const int m_timeout_ms;
-  NodeKafka::Message* _message;
+  RdKafka::Message* m_message;
 };
 
 class ConsumerConsumeNum : public ErrorAwareWorker {
@@ -297,7 +282,7 @@ class ConsumerConsumeNum : public ErrorAwareWorker {
   NodeKafka::Consumer * m_consumer;
   const uint32_t m_num_messages;
   const int m_timeout_ms;
-  std::vector<NodeKafka::Message*> m_messages;
+  std::vector<RdKafka::Message*> m_messages;
 };
 
 class ConsumerCommit : public ErrorAwareWorker {

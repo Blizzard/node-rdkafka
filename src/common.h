@@ -18,6 +18,8 @@
 
 #include "deps/librdkafka/src-cpp/rdkafkacpp.h"
 
+#include "errors.h"
+
 typedef std::vector<const RdKafka::BrokerMetadata*> BrokerMetadataList;
 typedef std::vector<const RdKafka::PartitionMetadata*> PartitionMetadataList;
 typedef std::vector<const RdKafka::TopicMetadata *> TopicMetadataList;
@@ -66,6 +68,12 @@ namespace Metadata {
 v8::Local<v8::Object> ToV8Object(RdKafka::Metadata*);
 
 }  // namespace Metadata
+
+namespace Message {
+
+v8::Local<v8::Object> ToV8Object(RdKafka::Message*);
+
+}
 
 }  // namespace Conversion
 

@@ -40,9 +40,9 @@ Baton::Baton(const RdKafka::ErrorCode &code, std::string errstr) {
   m_errstr = errstr;
 }
 
-Baton::Baton(void* _data) {
+Baton::Baton(void* data) {
   m_err = RdKafka::ERR_NO_ERROR;
-  m_data = _data;
+  m_data = data;
 }
 
 v8::Local<v8::Object> Baton::ToObject() {
