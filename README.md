@@ -207,7 +207,7 @@ To see the configuration options available to you, see the [Configuration](#conf
 |`producer.connect()`| Connects to the broker. <br><br> The `connect()` method emits the `ready` event when it connects successfully or an `error` when it does not.|
 |`producer.disconnect()`| Disconnects from the broker. <br><br>The `disconnect()` method emits the `disconnected` event when it has disconnected or `error` if something went wrong. |
 |`producer.poll()` | Polls the producer for delivery reports or other events to be transmitted via the emitter. <br><br>This happens automatically on transactions such as `produce`. |
-|`producer.produce(msg)`| Sends a message. <br><br>The `produce()` method takes a JSON object in the format showed above. |
+|`producer.produce(msg, cb)`| Sends a message. <br><br>The `produce()` method takes a JSON object in the format showed above. If `cb` is specified, invokes `cb(err)`. |
 
 ##### Events
 
@@ -293,7 +293,8 @@ Messages that are returned by the `KafkaConsumer` have the following structure.
   size: 2, // size of the message, in bytes
   topic: 'librdtesting-01', // topic the message comes from
   offset: 1337, // offset the message was read from
-  partition: 1 // partition the message was on
+  partition: 1, // partition the message was on
+  key: 'someKey' // key of the message if present
 }
 ```
 
@@ -363,10 +364,10 @@ The following table lists important methods for this API.
 |-------|----------|
 |`consumer.connect()` | Connects to the broker. <br><br>The `connect()` emits the event `ready` when it has successfully connected, or an `error` when it has not. |
 |`consumer.disconnect()` | Disconnects from the broker. <br><br>The `disconnect()` method emits `disconnected` when it has disconnected or `error` if something went wrong.
-|`consumer.subscribe(topics, callback)` | Subscribes to an array of topics. <br><br> `topics` can be either an array or a string for a single topic. |
+|`consumer.subscribe(topics)` | Subscribes to an array of topics. <br><br> `topics` can be either an array or a string for a single topic. |
 |`consumer.unsubscribe()` | Unsubscribes from the currently subscribed topics. <br><br>You cannot subscribe to different topics without calling the `unsubscribe()` method first. |
-|`consumer.consume(cb)` | Gets a message from the existing subscription. |
-|`consumer.consume(topics, cb)` | Creates a subscription and get messages as they become available.<br><br>The `consume()` method keeps a background thread running to do the work. |
+|`consumer.consume(cb)` | Gets a message from the existing subscription. If `cb` is specified, invokes `cb(err, message)`. |
+|`consumer.consume(topics, cb)` | Creates a subscription and get messages as they become available.<br><br>The `consume()` method keeps a background thread running to do the work. If `cb` is specified, invokes `cb(err, message)`. |
 
 The following table lists events for this API.
 
