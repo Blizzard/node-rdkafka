@@ -29,6 +29,16 @@ static void RdKafkaCleanup(void*) {  // NOLINT
   RdKafka::wait_destroyed(5000);
 }
 
+NAN_METHOD(NodeRdKafkaErr2Str) {
+  int points = Nan::To<int>(info[0]).FromJust();
+  // Cast to error code
+  RdKafka::ErrorCode err = static_cast<RdKafka::ErrorCode>(points);
+
+  std::string errstr = RdKafka::err2str(err);
+
+  info.GetReturnValue().Set(Nan::New<v8::String>(errstr).ToLocalChecked());
+}
+
 void ConstantsInit(v8::Local<v8::Object> exports) {
   v8::Local<v8::Object> constants = Nan::New<v8::Object>();
 
@@ -106,11 +116,13 @@ void ConstantsInit(v8::Local<v8::Object> exports) {
   NODE_DEFINE_CONSTANT(constants, ErrorCode::ERR_CLUSTER_AUTHORIZATION_FAILED);
 
   #if RD_KAFKA_VERSION > 0x00090200
-  NODE_DEFINE_CONSTANT(constants, RdKafka::Producer::RK_MSG_BLOCK);
   NODE_DEFINE_CONSTANT(constants, ErrorCode::ERR__TIMED_OUT_QUEUE);
   #endif
 
   exports->Set(Nan::New("codes").ToLocalChecked(), constants);
+
+  exports->Set(Nan::New("err2str").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<v8::FunctionTemplate>(NodeRdKafkaErr2Str)).ToLocalChecked());  // NOLINT
 }
 
 void Init(v8::Local<v8::Object> exports, v8::Local<v8::Object> module) {

@@ -313,11 +313,11 @@ NAN_METHOD(Producer::NodeProduce) {
   Baton b = producer->Produce(message_buffer_data, message_buffer_length,
     topic->toRDKafkaTopic(), partition, NULL);
 
-  if (b.err() != RdKafka::ERR_NO_ERROR) {
-    return Nan::ThrowError(RdKafka::err2str(b.err()).c_str());
-  } else {
-    info.GetReturnValue().Set(Nan::True());
-  }
+  // Let the JS library throw if we need to so the error can be more rich
+
+  int error_code = static_cast<int>(b.err());
+
+  info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
 }
 
 NAN_METHOD(Producer::NodeOnDelivery) {
