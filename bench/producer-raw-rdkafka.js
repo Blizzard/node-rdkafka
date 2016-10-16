@@ -31,9 +31,7 @@ var producer = new Kafka.Producer({
   'socket.keepalive.enable': true,
   'queue.buffering.max.messages': 100000,
   'queue.buffering.max.ms': 1000,
-  'batch.num.messages': 1000,
-  // paused: true,
-  'dr_cb': true
+  'batch.num.messages': 1000
 });
 
 // Track how many messages we see per second
@@ -70,27 +68,25 @@ crypto.randomBytes(4096, function(ex, buffer) {
 
       started = new Date().getTime();
 
-      var x = function(e) {
-        if (e) {
-          console.log(e);
-          errors += 1;
-        } else {
+      var sendMessage = function() {
+        try {
+          var errorCode = producer.produce(topic, null, buffer, null);
           verifiedComplete += 1;
+        } catch (e) {
+          console.error(e);
+          errors++;
         }
+
         count += 1;
         totalComplete += 1;
         if (totalComplete === MAX) {
           shutdown();
         }
-      };
-
-      var sendMessage = function() {
-        producer.produce({
-          topic: topic,
-          message: buffer
-        }, x);
         if (total < MAX) {
           total += 1;
+
+          // This is 100% sync so we need to setImmediate to give it time
+          // to breathe.
           setImmediate(sendMessage);
         }
       };
@@ -105,10 +101,6 @@ crypto.randomBytes(4096, function(ex, buffer) {
     .on('disconnected', shutdown);
 
 });
-
-process.once('SIGTERM', shutdown);
-process.once('SIGINT', shutdown);
-process.once('SIGHUP', shutdown);
 
 function shutdown(e) {
   done = true;
