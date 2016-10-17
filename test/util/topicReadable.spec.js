@@ -30,7 +30,7 @@ module.exports = {
           'Provided callback should always be a function');
         setImmediate(function() {
           cb(null, {
-            message: new Buffer('test'),
+            payload: new Buffer('test'),
             key: 'testkey',
             offset: 1
           });
@@ -58,8 +58,8 @@ module.exports = {
       stream.once('readable', function() {
         var message = stream.read();
         t.notEqual(message, null);
-        t.ok(Buffer.isBuffer(message.message));
-        t.equal('test', message.message.toString());
+        t.ok(Buffer.isBuffer(message.payload));
+        t.equal('test', message.payload.toString());
         t.equal('testkey', message.key);
         t.equal(typeof message.offset, 'number');
         stream.pause();
@@ -77,7 +77,7 @@ module.exports = {
           numSent++;
           setImmediate(function() {
             cb(null, {
-              message: new Buffer('test'),
+              payload: new Buffer('test'),
               offset: 1
             });
           });
@@ -92,7 +92,7 @@ module.exports = {
         var message = stream.read();
         numReceived++;
         t.notEqual(message, null);
-        t.ok(Buffer.isBuffer(message.message));
+        t.ok(Buffer.isBuffer(message.payload));
         t.equal(typeof message.offset, 'number');
         if (numReceived === numMessages) {
           // give it a second to get an error
@@ -106,7 +106,7 @@ module.exports = {
       var writable = new Writable({
         write: function(message, encoding, next) {
           t.notEqual(message, null);
-          t.ok(Buffer.isBuffer(message.message));
+          t.ok(Buffer.isBuffer(message.payload));
           t.equal(typeof message.offset, 'number');
           this.cork();
           cb();

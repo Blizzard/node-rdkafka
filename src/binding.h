@@ -11,6 +11,7 @@
 #define SRC_BINDING_H_
 
 #include <nan.h>
+#include <string>
 #include "deps/librdkafka/src-cpp/rdkafkacpp.h"
 #include "src/common.h"
 #include "src/errors.h"
