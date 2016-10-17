@@ -46,13 +46,39 @@ module.exports = {
 
       var message;
 
-      fakeClient.produce = function(message, cb) {
-        t.equal(typeof cb, 'function',
-          'Provided callback should always be a function');
-        t.deepEqual({ topicName: 'topic' }, message.topic);
-        t.equal(message.message.toString(), 'Awesome');
-        t.equal(Buffer.isBuffer(message.message), true);
+      fakeClient.produce = function(topic, partition, message, key) {
+        t.deepEqual({ topicName: 'topic' }, topic);
+        t.equal(message.toString(), 'Awesome');
+        t.equal(Buffer.isBuffer(message), true);
         done();
+      };
+
+      var stream = new TopicWritable(fakeClient, 'topic', {});
+      stream.on('error', function(err) {
+        t.fail(err);
+      });
+
+      stream.write(new Buffer('Awesome'));
+    },
+
+    'properly handles queue errors': function(done) {
+
+      var message;
+
+      var first = true;
+
+      fakeClient.produce = function(topic, partition, message, key) {
+        t.deepEqual({ topicName: 'topic' }, topic);
+        t.equal(message.toString(), 'Awesome');
+        t.equal(Buffer.isBuffer(message), true);
+        if (first) {
+          first = false;
+          var err = new Error('Queue full');
+          err.code = -184;
+          throw err;
+        } else {
+          done();
+        }
       };
 
       var stream = new TopicWritable(fakeClient, 'topic', {});
@@ -68,17 +94,13 @@ module.exports = {
       var message;
       var currentMessage = 0;
 
-      fakeClient.produce = function(message, cb) {
+      fakeClient.produce = function(topic, partition, message, key) {
         currentMessage++;
-        t.equal(typeof cb, 'function',
-          'Provided callback should always be a function');
-        t.deepEqual({ topicName: 'topic' }, message.topic);
-        t.equal(message.message.toString(), 'Awesome' + currentMessage);
-        t.equal(Buffer.isBuffer(message.message), true);
+        t.deepEqual({ topicName: 'topic' }, topic);
+        t.equal(message.toString(), 'Awesome' + currentMessage);
+        t.equal(Buffer.isBuffer(message), true);
         if (currentMessage === 2) {
           done();
-        } else {
-          cb();
         }
       };
 
@@ -109,17 +131,13 @@ module.exports = {
         }
       });
 
-      fakeClient.produce = function(message, cb) {
+      fakeClient.produce = function(topic, partition, message, key) {
         currentMessage++;
-        t.equal(typeof cb, 'function',
-          'Provided callback should always be a function');
-        t.deepEqual({ topicName: 'topic' }, message.topic);
-        t.equal(message.message.toString(), 'Awesome' + currentMessage);
-        t.equal(Buffer.isBuffer(message.message), true);
+        t.deepEqual({ topicName: 'topic' }, topic);
+        t.equal(message.toString(), 'Awesome' + currentMessage);
+        t.equal(Buffer.isBuffer(message), true);
         if (currentMessage === 2) {
           done();
-        } else {
-          cb();
         }
       };
 
