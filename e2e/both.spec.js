@@ -11,133 +11,14 @@ var crypto = require('crypto');
 var t = require('assert');
 
 var Kafka = require('../');
-
 var kafkaBrokerList = process.env.KAFKA_HOST || 'localhost:9092';
 
-var TestCase = require('./test-case');
-var md5hash = crypto.createHash('md5');
-md5hash.update(crypto.randomBytes(20).toString());
-var grp = 'kafka-mocha-grp-' + md5hash.digest('hex');
+describe('Consumer/Producer', function() {
 
-var testCase = new TestCase('Interoperability tests', function() {
+  var producer;
+  var consumer;
 
-  this.test('consumer can read produced messages', function(cb) {
-    this.timeout(50000);
-    var producerConnected = false;
-    var consumerConnected = false;
-    var producer;
-    var consumer;
-    var producerDisconnected = false;
-    var consumerDisconnected = false;
-
-    var maybeDoneDisconnecting = function() {
-      if (consumerDisconnected && producerDisconnected) {
-        cb();
-      }
-    };
-
-    var disconnect = function() {
-      return cb();
-      /*
-      console.log('Disconnecting');
-      if (consumer) {
-        console.log('DCing consumer');
-        consumer.disconnect(function() {
-          console.log('Done dcing consumer');
-          consumerDisconnected = true;
-          maybeDoneDisconnecting();
-        });
-      } else {
-        consumerDisconnected = true;
-        maybeDoneDisconnecting();
-      }
-
-      if (producer) {
-        console.log('DCing producer');
-        producer.disconnect(function() {
-          console.log('Done dcing producer');
-          producerDisconnected = true;
-          maybeDoneDisconnecting();
-        });
-      } else {
-        producerDisconnected = true;
-        maybeDoneDisconnecting();
-      }
-      */
-
-    };
-
-    // Maybe Done
-
-    var maybeDone = function() {
-      if (producerConnected && consumerConnected) {
-        var topic = 'test';
-
-        crypto.randomBytes(4096, function(ex, buffer) {
-
-          var pT = setInterval(function() {
-            producer.produce({
-              message: buffer,
-              topic: topic
-            }, function(err) {
-              t.ifError(err);
-            });
-          }, 2000);
-
-          var tt = setInterval(function() {
-            if (!producer.isConnected()) {
-              clearInterval(tt);
-            } else {
-              producer.poll();
-            }
-          }, 100);
-
-          var offset;
-
-          producer.once('delivery-report', function(report) {
-            clearInterval(tt);
-            offset = report.offset;
-          });
-
-          consumer
-            .subscribe([topic]);
-
-          var ct;
-
-          var consumeOne = function() {
-            consumer.consume(function(err, message) {
-              if (err && (err.code === -191 || err.code === -185)) {
-                ct = setTimeout(consumeOne, 100);
-                return;
-              }
-
-              clearInterval(tt);
-              clearInterval(pT);
-
-              if (err) {
-                return cb(err);
-              }
-
-              try {
-                t.equal(Array.isArray(consumer.assignments()), true, 'Assignments should be an array');
-                t.equal(consumer.assignments().length > 0, true, 'Should have at least one assignment');
-                t.equal(buffer.toString(), message.message.toString(),
-                  'message is not equal to buffer');
-              } catch (e) {
-                return cb(e);
-              }
-              disconnect();
-            });
-          };
-
-          consumeOne();
-
-          // Consume until we get it or time out
-
-        });
-      }
-    };
-
+  beforeEach(function(done) {
     producer = new Kafka.Producer({
       'client.id': 'kafka-mocha',
       'metadata.broker.list': kafkaBrokerList,
@@ -147,15 +28,17 @@ var testCase = new TestCase('Interoperability tests', function() {
     });
 
     producer.connect({}, function(err, d) {
-      try {
-        t.ifError(err);
-        t.equal(typeof d, 'object', 'metadata should be returned');
-      } catch (e) {
-        return cb(e);
-      }
-      producerConnected = true;
-      maybeDone();
+      t.ifError(err);
+      t.equal(typeof d, 'object', 'metadata should be returned');
+      done();
     });
+
+  });
+
+  beforeEach(function(done) {
+    var md5hash = crypto.createHash('md5');
+    md5hash.update(crypto.randomBytes(20).toString());
+    var grp = 'kafka-mocha-grp-' + md5hash.digest('hex');
 
     consumer = new Kafka.KafkaConsumer({
       'metadata.broker.list': kafkaBrokerList,
@@ -171,18 +54,70 @@ var testCase = new TestCase('Interoperability tests', function() {
     consumer.connect({}, function(err, d) {
       t.ifError(err);
       t.equal(typeof d, 'object', 'metadata should be returned');
-      consumerConnected = true;
-      maybeDone();
+      done();
     });
-
   });
 
-});
+  afterEach(function(done) {
+    consumer.disconnect(function() {
+      done();
+    });
+  });
 
-testCase.run(function(err) {
-  if (!err) {
-    console.log('All tests passed successfully');
-  }
+  afterEach(function(done) {
+    producer.disconnect(function() {
+      done();
+    });
+  });
 
-  process.exit();
+  it('should be able to produce and consume messages', function(done) {
+    this.timeout(20000);
+    var topic = 'test';
+
+    crypto.randomBytes(4096, function(ex, buffer) {
+
+      var pT = setInterval(function() {
+        // Will throw if it is bad
+        producer.produce(topic, null, buffer, null);
+      }, 2000);
+
+      var tt = setInterval(function() {
+        producer.poll();
+      }, 100);
+
+      var offset;
+
+      producer.once('delivery-report', function(report) {
+        clearInterval(tt);
+        clearInterval(pT);
+        offset = report.offset;
+      });
+
+      consumer
+        .subscribe([topic]);
+
+      var ct;
+
+      var consumeOne = function() {
+        consumer.consume(function(err, message) {
+          if (err && (err.code === -191 || err.code === -185)) {
+            ct = setTimeout(consumeOne, 100);
+            return;
+          }
+
+          t.ifError(err);
+          t.equal(Array.isArray(consumer.assignments()), true, 'Assignments should be an array');
+          t.equal(consumer.assignments().length > 0, true, 'Should have at least one assignment');
+          t.equal(buffer.toString(), message.payload.toString(),
+            'message is not equal to buffer');
+          done();
+        });
+      };
+
+      // Consume until we get it or time out
+      consumeOne();
+
+    });
+  });
+
 });

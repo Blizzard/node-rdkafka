@@ -60,8 +60,7 @@ test: node_modules/.dirstamp
 	@./node_modules/.bin/mocha $(TEST_REPORTER) $(TESTS) $(TEST_OUTPUT)
 
 e2e: $(E2E_TESTS)
-	@$(NODE) e2e/consumer.spec.js && $(NODE) e2e/producer.spec.js && $(NODE) e2e/both.spec.js
-
+	@./node_modules/.bin/mocha $(TEST_REPORTER) $(E2E_TESTS) $(TEST_OUTPUT)
 
 define release
 	NEXT_VERSION=$(shell node -pe 'require("semver").inc("$(VERSION)", "$(1)")')
