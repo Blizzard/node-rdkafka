@@ -12,14 +12,41 @@ var crypto = require('crypto');
 var KafkaConsumer = require('../').KafkaConsumer;
 
 var kafkaBrokerList = process.env.KAFKA_HOST || 'localhost:9092';
-var grp = 'kafka-mocha-grp-' + crypto.randomBytes(20).toString();
 
 describe('Consumer', function() {
+  var gcfg;
 
-  var gcfg = {
-    'bootstrap.servers': kafkaBrokerList,
-    'group.id': grp
-  };
+  beforeEach(function() {
+    var grp = 'kafka-mocha-grp-' + crypto.randomBytes(20).toString();
+     gcfg = {
+      'bootstrap.servers': kafkaBrokerList,
+      'group.id': grp
+    };
+  });
+
+  describe('consume', function() {
+
+    var consumer;
+    beforeEach(function(done) {
+      consumer = new KafkaConsumer(gcfg, {});
+
+      consumer.connect({ timeout: 2000 }, function(err, info) {
+        t.ifError(err);
+        done();
+      });
+    });
+
+    afterEach(function(done) {
+      consumer.disconnect(function() {
+        done();
+      });
+    });
+
+    it('should be able to take a subscription', function() {
+      consumer.subscribe(['test']);
+    });
+
+  });
 
   describe('disconnect', function() {
     var tcfg = { 'auto.offset.reset': 'earliest' };
@@ -27,7 +54,7 @@ describe('Consumer', function() {
     it('should happen gracefully', function(cb) {
       var consumer = new KafkaConsumer(gcfg, tcfg);
 
-      consumer.connect({}, function(err, info) {
+      consumer.connect({ timeout: 2000 }, function(err, info) {
         t.ifError(err);
 
         consumer.disconnect(function() {
@@ -41,7 +68,7 @@ describe('Consumer', function() {
     it('should happen without issue after subscribing', function(cb) {
       var consumer = new KafkaConsumer(gcfg, tcfg);
 
-      consumer.connect({}, function(err, info) {
+      consumer.connect({ timeout: 2000 }, function(err, info) {
         t.ifError(err);
 
         consumer.subscribe(['test']);
@@ -61,7 +88,7 @@ describe('Consumer', function() {
 
       consumer.setDefaultConsumeTimeout(10000);
 
-      consumer.connect({}, function(err, info) {
+      consumer.connect({ timeout: 2000 }, function(err, info) {
         t.ifError(err);
 
         consumer.subscribe(['test']);
@@ -83,7 +110,7 @@ describe('Consumer', function() {
 
       consumer.setDefaultConsumeTimeout(1);
 
-      consumer.connect({}, function(err, info) {
+      consumer.connect({ timeout: 2000 }, function(err, info) {
         t.ifError(err);
 
         consumer.subscribe(['test']);
