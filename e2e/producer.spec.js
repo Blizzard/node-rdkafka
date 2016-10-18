@@ -57,9 +57,25 @@ describe('Producer', function() {
     });
   });
 
+  it('should produce a message with a null payload', function(done) {
+    var tt = setInterval(function() {
+      producer.poll();
+    }, 200).unref();
+
+    producer.on('delivery-report', function(report) {
+      clearInterval(tt);
+      t.ok(report !== undefined);
+      t.ok(typeof report.topic_name === 'string');
+      t.ok(typeof report.partition === 'number');
+      t.ok(typeof report.offset === 'number');
+      done();
+    });
+
+    producer.produce('test', null, null, null);
+  });
+
   it('should get 100% deliverability', function(done) {
     this.timeout(3000);
-
 
     var total = 0;
     var max = 10000;
