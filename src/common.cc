@@ -77,9 +77,6 @@ std::string GetParameter<std::string>(v8::Local<v8::Object> object,
         std::string parameterString(*parameterValue);
 
         return parameterString;
-
-      } else {
-        Log("Value is undefined or null");
       }
     }
   }
@@ -332,7 +329,7 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Message *message) {
     Nan::MaybeLocal<v8::Object> buff = Nan::NewBuffer(
       static_cast<char*>(payload), static_cast<int>(message->len()));
 
-    Nan::Set(pack, Nan::New<v8::String>("payload").ToLocalChecked(),
+    Nan::Set(pack, Nan::New<v8::String>("value").ToLocalChecked(),
       buff.ToLocalChecked());
     Nan::Set(pack, Nan::New<v8::String>("size").ToLocalChecked(),
       Nan::New<v8::Number>(message->len()));

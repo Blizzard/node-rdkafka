@@ -268,9 +268,9 @@ NAN_METHOD(Producer::NodeProduce) {
   Nan::HandleScope scope;
 
   // Need to extract the message data here.
-  if (info.Length() < 4 || !info[0]->IsObject() || !info[2]->IsObject()) {
+  if (info.Length() < 3 || !info[0]->IsObject()) {
     // Just throw an exception
-    return Nan::ThrowError("Need to specify message data and topic");
+    return Nan::ThrowError("Need to specify a topic, partition, and message");
   }
 
   // First parameter is a topic
@@ -289,32 +289,52 @@ NAN_METHOD(Producer::NodeProduce) {
     partition = RdKafka::Topic::PARTITION_UA;
   }
 
-  if (!node::Buffer::HasInstance(info[2])) {
-    return Nan::ThrowError("Need to specify message data and topic");
+  size_t message_buffer_length;
+  void* message_buffer_data;
+
+  if (info[2]->IsNull()) {
+    // This is okay for whatever reason
+    message_buffer_length = 0;
+    message_buffer_data = NULL;
+  } else if (!node::Buffer::HasInstance(info[2])) {
+    return Nan::ThrowError("Message must be a buffer or null");
+  } else {
+    v8::Local<v8::Object> message_buffer_object = info[2]->ToObject();
+
+    // v8 handles the garbage collection here so we need to make a copy of
+    // the buffer or assign the buffer to a persistent handle.
+
+    // I'm not sure which would be the more performant option. I assume
+    // the persistent handle would be but for now we'll try this one
+    // which should be more memory-efficient and allow v8 to dispose of the
+    // buffer sooner
+
+    message_buffer_length = node::Buffer::Length(message_buffer_object);
+    message_buffer_data = node::Buffer::Data(message_buffer_object);
   }
 
-  v8::Local<v8::Object> message_buffer_object = info[2]->ToObject();
+  // Last we have to get the key
+  std::string * key;
 
-  // v8 handles the garbage collection here so we need to make a copy of
-  // the buffer or assign the buffer to a persistent handle.
+  if (info[3]->IsNull() || info[3]->IsUndefined()) {
+    key = NULL;
+  } else {
+    v8::Local<v8::String> val = info[3]->ToString();
+    // Get string pointer for this thing
+    Nan::Utf8String keyUTF8(val);
+    std::string keyString(*keyUTF8);
 
-  // I'm not sure which would be the more performant option. I assume
-  // the persistent handle would be but for now we'll try this one
-  // which should be more memory-efficient and allow v8 to dispose of the
-  // buffer sooner
-
-  size_t message_buffer_length = node::Buffer::Length(message_buffer_object);
-  void* message_buffer_data = node::Buffer::Data(message_buffer_object);
+    // This will just go out of scope and we don't send it anywhere,
+    // since it is copied there is no need to delete it
+    key = &keyString;
+  }
 
   Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
 
-  // Testing crap
-
   Baton b = producer->Produce(message_buffer_data, message_buffer_length,
-    topic->toRDKafkaTopic(), partition, NULL);
+    topic->toRDKafkaTopic(), partition, key);
 
   // Let the JS library throw if we need to so the error can be more rich
-
   int error_code = static_cast<int>(b.err());
 
   info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));

@@ -76,11 +76,6 @@ describe('Consumer/Producer', function() {
 
     crypto.randomBytes(4096, function(ex, buffer) {
 
-      var pT = setInterval(function() {
-        // Will throw if it is bad
-        producer.produce(topic, null, buffer, null);
-      }, 2000);
-
       var tt = setInterval(function() {
         producer.poll();
       }, 100);
@@ -89,7 +84,6 @@ describe('Consumer/Producer', function() {
 
       producer.once('delivery-report', function(report) {
         clearInterval(tt);
-        clearInterval(pT);
         offset = report.offset;
       });
 
@@ -100,7 +94,11 @@ describe('Consumer/Producer', function() {
 
       var consumeOne = function() {
         consumer.consume(function(err, message) {
-          if (err && (err.code === -191 || err.code === -185)) {
+          if (err && err.code === -191) {
+            producer.produce(topic, null, buffer, null);
+            ct = setTimeout(consumeOne, 100);
+            return;
+          } else if (err && err.code === -185) {
             ct = setTimeout(consumeOne, 100);
             return;
           }
@@ -108,7 +106,7 @@ describe('Consumer/Producer', function() {
           t.ifError(err);
           t.equal(Array.isArray(consumer.assignments()), true, 'Assignments should be an array');
           t.equal(consumer.assignments().length > 0, true, 'Should have at least one assignment');
-          t.equal(buffer.toString(), message.payload.toString(),
+          t.equal(buffer.toString(), message.value.toString(),
             'message is not equal to buffer');
           done();
         });
