@@ -140,7 +140,7 @@ void Consumer::part_list_print(const std::vector<RdKafka::TopicPartition*> &part
 
 Baton Consumer::Assign(std::vector<RdKafka::TopicPartition*> partitions) {
   if (!IsConnected()) {
-    return Baton(RdKafka::ERR__STATE);
+    return Baton(RdKafka::ERR__STATE, "Consumer is disconnected");
   }
 
   RdKafka::KafkaConsumer* consumer =
@@ -204,13 +204,76 @@ Baton Consumer::Commit(std::string topic_name, int partition, int64_t offset) {
 Baton Consumer::Commit() {
   // sets an error message
   if (!IsConnected()) {
-    return Baton(RdKafka::ERR__STATE);
+    return Baton(RdKafka::ERR__STATE, "Consumer is not connected");
   }
 
   RdKafka::KafkaConsumer* consumer =
     dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
 
   RdKafka::ErrorCode err = consumer->commitSync();
+
+  return Baton(err);
+}
+
+Baton Consumer::Committed(int timeout_ms) {
+  if (!IsConnected()) {
+    return Baton(RdKafka::ERR__STATE, "Consumer is not connected");
+  }
+
+  RdKafka::KafkaConsumer* consumer =
+    dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
+
+  std::vector<RdKafka::TopicPartition*> * partitions =
+    new std::vector<RdKafka::TopicPartition*>;
+
+  RdKafka::ErrorCode err = consumer->committed(*partitions, timeout_ms);
+
+  if (err == RdKafka::ErrorCode::ERR_NO_ERROR) {
+    // Good to go
+    return Baton(partitions);
+  }
+
+  return Baton(err);
+}
+
+Baton Consumer::Position() {
+  if (!IsConnected()) {
+    return Baton(RdKafka::ERR__STATE, "Consumer is not connected");
+  }
+
+  RdKafka::KafkaConsumer* consumer =
+    dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
+
+  std::vector<RdKafka::TopicPartition*> * partitions =
+    new std::vector<RdKafka::TopicPartition*>;
+
+  RdKafka::ErrorCode err = consumer->position(*partitions);
+
+  if (err == RdKafka::ErrorCode::ERR_NO_ERROR) {
+    // Good to go
+    return Baton(partitions);
+  }
+
+  return Baton(err);
+}
+
+Baton Consumer::Subscription() {
+  if (!IsConnected()) {
+    return Baton(RdKafka::ERR__STATE, "Consumer is not connected");
+  }
+
+  RdKafka::KafkaConsumer* consumer =
+    dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
+
+  // Needs to be a pointer since we're returning it through the baton
+  std::vector<std::string> * topics = new std::vector<std::string>;
+
+  RdKafka::ErrorCode err = consumer->subscription(*topics);
+
+  if (err == RdKafka::ErrorCode::ERR_NO_ERROR) {
+    // Good to go
+    return Baton(topics);
+  }
 
   return Baton(err);
 }
@@ -333,10 +396,10 @@ void Consumer::Init(v8::Local<v8::Object> exports) {
    * @brief Methods exposed to do with message retrieval
    */
 
+
+  Nan::SetPrototypeMethod(tpl, "subscription", NodeSubscription);
   Nan::SetPrototypeMethod(tpl, "subscribe", NodeSubscribe);
-  Nan::SetPrototypeMethod(tpl, "subscribeSync", NodeSubscribeSync);
   Nan::SetPrototypeMethod(tpl, "unsubscribe", NodeUnsubscribe);
-  Nan::SetPrototypeMethod(tpl, "unsubscribeSync", NodeUnsubscribeSync);
   Nan::SetPrototypeMethod(tpl, "consumeLoop", NodeConsumeLoop);
   Nan::SetPrototypeMethod(tpl, "consume", NodeConsume);
 
@@ -344,6 +407,8 @@ void Consumer::Init(v8::Local<v8::Object> exports) {
    * @brief Methods to do with partition assignment / rebalancing
    */
 
+  Nan::SetPrototypeMethod(tpl, "committed", NodeCommitted);
+  Nan::SetPrototypeMethod(tpl, "position", NodePosition);
   Nan::SetPrototypeMethod(tpl, "assign", NodeAssign);
   Nan::SetPrototypeMethod(tpl, "unassign", NodeUnassign);
   Nan::SetPrototypeMethod(tpl, "assignments", NodeAssignments);
@@ -416,21 +481,82 @@ v8::Local<v8::Object> Consumer::NewInstance(v8::Local<v8::Value> arg) {
 
 /* Node exposed methods */
 
+NAN_METHOD(Consumer::NodeCommitted) {
+  Nan::HandleScope scope;
+
+  int timeout_ms;
+  Nan::Maybe<uint32_t> maybeTimeout =
+    Nan::To<uint32_t>(info[0].As<v8::Number>());
+
+  if (maybeTimeout.IsNothing()) {
+    timeout_ms = 1000;
+  } else {
+    timeout_ms = static_cast<int>(maybeTimeout.FromJust());
+  }
+
+  v8::Local<v8::Function> cb = info[1].As<v8::Function>();
+  Nan::Callback *callback = new Nan::Callback(cb);
+
+  Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
+
+  Nan::AsyncQueueWorker(
+    new Workers::ConsumerCommitted(callback, consumer, timeout_ms));
+
+  info.GetReturnValue().Set(Nan::Null());
+}
+
+NAN_METHOD(Consumer::NodeSubscription) {
+  Nan::HandleScope scope;
+
+  Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
+
+  Baton b = consumer->Subscription();
+
+  if (b.err() != RdKafka::ErrorCode::ERR_NO_ERROR) {
+    // Let the JS library throw if we need to so the error can be more rich
+    int error_code = static_cast<int>(b.err());
+    return info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
+  }
+
+  std::vector<std::string> * topics = b.data<std::vector<std::string>*>();
+
+  info.GetReturnValue().Set(Conversion::Topic::ToV8Array(*topics));
+
+  delete topics;
+}
+
+NAN_METHOD(Consumer::NodePosition) {
+  Nan::HandleScope scope;
+
+  Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
+
+  Baton b = consumer->Position();
+
+  if (b.err() != RdKafka::ErrorCode::ERR_NO_ERROR) {
+    // Let the JS library throw if we need to so the error can be more rich
+    int error_code = static_cast<int>(b.err());
+    return info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
+  }
+
+  std::vector<RdKafka::TopicPartition*> * partitions =
+    b.data<std::vector<RdKafka::TopicPartition*>*>();
+
+  info.GetReturnValue().Set(Conversion::TopicPartition::ToV8Array(*partitions)); // NOLINT
+
+  delete partitions;
+}
+
 NAN_METHOD(Consumer::NodeAssignments) {
   Nan::HandleScope scope;
 
   Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
 
-  if (!consumer->IsConnected()) {
-    Nan::ThrowError("Consumer is disconnected");
-    return;
-  }
-
   Baton b = consumer->RefreshAssignments();
 
   if (b.err() != RdKafka::ERR_NO_ERROR) {
-    Nan::ThrowError(RdKafka::err2str(b.err()).c_str());
-    return;
+    // Let the JS library throw if we need to so the error can be more rich
+    int error_code = static_cast<int>(b.err());
+    return info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
   }
 
   info.GetReturnValue().Set(
@@ -439,13 +565,6 @@ NAN_METHOD(Consumer::NodeAssignments) {
 
 NAN_METHOD(Consumer::NodeAssign) {
   Nan::HandleScope scope;
-
-  Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
-
-  if (!consumer->IsConnected()) {
-    Nan::ThrowError("Consumer is disconnected");
-    return;
-  }
 
   if (info.Length() < 1 || !info[0]->IsArray()) {
     // Just throw an exception
@@ -485,6 +604,8 @@ NAN_METHOD(Consumer::NodeAssign) {
     }
   }
 
+  Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
+
   Baton b = consumer->Assign(topic_partitions);
 
   // i dont know who manages the memory at this point
@@ -516,41 +637,14 @@ NAN_METHOD(Consumer::NodeUnassign) {
   info.GetReturnValue().Set(Nan::True());
 }
 
-void Consumer::NodeUnsubscribe(const FunctionCallbackInfo<v8::Value>& info) {
-  Nan::HandleScope scope;
-
-  Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
-  // Don't check if we are subscribed. If we aren't just leave it be
-
-  if (info.Length() <  1 || !info[0]->IsFunction()) {
-    Nan::ThrowError("First argument must be a function");
-  }
-
-  v8::Local<v8::Function> cb = info[1].As<v8::Function>();
-
-  Nan::Callback *callback = new Nan::Callback(cb);
-
-  // These workers likely need to be tracked so we can stop them when we
-  // disconnect or run unubscribe
-  Nan::AsyncQueueWorker(new Workers::ConsumerUnsubscribe(callback, consumer));
-
-  info.GetReturnValue().Set(Nan::Null());
-}
-
-void Consumer::NodeUnsubscribeSync(const FunctionCallbackInfo<v8::Value>& info) {  // NOLINT
+NAN_METHOD(Consumer::NodeUnsubscribe) {
   Nan::HandleScope scope;
 
   Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
 
-  // Do it sync i guess
   Baton b = consumer->Unsubscribe();
 
-  if (b.err() != RdKafka::ERR_NO_ERROR) {
-    info.GetReturnValue().Set(Nan::Error(RdKafka::err2str(b.err()).c_str()));
-    return;
-  }
-
-  info.GetReturnValue().Set(Nan::True());
+  info.GetReturnValue().Set(Nan::New<v8::Number>(static_cast<int>(b.err())));
 }
 
 NAN_METHOD(Consumer::NodeCommitSync) {
@@ -630,45 +724,6 @@ NAN_METHOD(Consumer::NodeCommit) {
 NAN_METHOD(Consumer::NodeSubscribe) {
   Nan::HandleScope scope;
 
-  if (info.Length() < 2) {
-    // Just throw an exception
-    return Nan::ThrowError("Invalid number of parameters");
-  }
-
-  if (!info[0]->IsArray()) {
-    return Nan::ThrowError("First parameter to subscribe must be an array");
-  }
-
-  if (!info[1]->IsFunction()) {
-    // Just throw an exception
-    return Nan::ThrowError("Need to specify a callback");
-  }
-
-  Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
-
-  v8::Local<v8::Array> topicsArray = info[0].As<v8::Array>();
-  v8::Local<v8::Function> cb = info[1].As<v8::Function>();
-
-  std::vector<std::string> topics = Conversion::Topic::ToStringVector(topicsArray);  // NOLINT
-
-  if (topics.empty()) {
-     Nan::ThrowError("Please provide an array of topics to subscribe to");
-     return;
-  }
-
-  Nan::Callback *callback = new Nan::Callback(cb);
-
-  // These workers likely need to be tracked so we can stop them when we
-  // disconnect or run unubscribe
-  Nan::AsyncQueueWorker(
-    new Workers::ConsumerSubscribe(callback, consumer, topics));
-
-  info.GetReturnValue().Set(Nan::Null());
-}
-
-NAN_METHOD(Consumer::NodeSubscribeSync) {
-  Nan::HandleScope scope;
-
   if (info.Length() < 1 || !info[0]->IsArray()) {
     // Just throw an exception
     return Nan::ThrowError("First parameter must be an array");
@@ -681,11 +736,8 @@ NAN_METHOD(Consumer::NodeSubscribeSync) {
 
   Baton b = consumer->Subscribe(topics);
 
-  if (b.err() != RdKafka::ERR_NO_ERROR) {
-    info.GetReturnValue().Set(b.ToObject());
-  } else {
-    info.GetReturnValue().Set(Nan::True());
-  }
+  int error_code = static_cast<int>(b.err());
+  info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
 }
 
 NAN_METHOD(Consumer::NodeConsumeLoop) {

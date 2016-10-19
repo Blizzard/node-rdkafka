@@ -16,7 +16,7 @@ var topic = process.argv[3] || 'test';
 
 var consumer = new Kafka.KafkaConsumer({
   'metadata.broker.list': host,
-  'group.id': 'node-rdkafka-bench',
+  'group.id': 'node-rdkafka-bench-s',
   'fetch.wait.max.ms': 100,
   'fetch.message.max.bytes': 1024 * 1024,
   'enable.auto.commit': false
@@ -47,10 +47,6 @@ consumer.connect()
     count += 1;
     total += 1;
   });
-
-process.once('SIGTERM', shutdown);
-process.once('SIGINT', shutdown);
-process.once('SIGHUP', shutdown);
 
 function shutdown() {
   clearInterval(interval);

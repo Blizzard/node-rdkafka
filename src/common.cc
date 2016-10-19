@@ -152,6 +152,18 @@ std::vector<std::string> ToStringVector(v8::Local<v8::Array> parameter) {
   return newItem;
 }
 
+v8::Local<v8::Array> ToV8Array(std::vector<std::string> parameter) {
+  v8::Local<v8::Array> newItem = Nan::New<v8::Array>();
+
+  for (size_t i = 0; i < parameter.size(); i++) {
+    std::string topic = parameter[i];
+
+    newItem->Set(i, Nan::New<v8::String>(topic).ToLocalChecked());
+  }
+
+  return newItem;
+}
+
 }  // namespace Topic
 
 namespace TopicPartition {

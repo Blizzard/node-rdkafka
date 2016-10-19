@@ -7,7 +7,7 @@
  * of the MIT license.  See the LICENSE.txt file for details.
  */
 
-var TopicReadable = require('../../lib/util/topicReadable');
+var TopicReadable = require('../lib/topic-readable');
 var t = require('assert');
 var Writable = require('stream').Writable;
 var Emitter = require('events');
@@ -119,7 +119,48 @@ module.exports = {
         t.fail(err);
       });
 
+    },
+
+    'stops reading on unsubscribe': function(next) {
+      var numMessages = 10;
+      var numReceived = 0;
+      var numSent = 0;
+
+      fakeClient.consume = function(size, cb) {
+        if (numSent < numMessages) {
+          numSent++;
+          setImmediate(function() {
+            cb(null, {
+              value: new Buffer('test'),
+              offset: 1
+            });
+          });
+        } else {
+        }
+      };
+
+      var stream = new TopicReadable(fakeClient, 'topic', {});
+      stream.on('error', function(err) {
+        // Ignore
+      });
+      stream.on('readable', function() {
+        var message = stream.read();
+        numReceived++;
+        if (message) {
+          t.ok(Buffer.isBuffer(message.value));
+          t.equal(typeof message.offset, 'number');
+          if (numReceived === numMessages) {
+            // give it a second to get an error
+            fakeClient.emit('unsubscribed');
+          }
+        }
+      });
+
+      stream.on('end', function() {
+        next();
+      });
     }
+
 
   },
 };
