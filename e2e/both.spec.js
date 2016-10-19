@@ -12,6 +12,7 @@ var t = require('assert');
 
 var Kafka = require('../');
 var kafkaBrokerList = process.env.KAFKA_HOST || 'localhost:9092';
+var eventListener = require('./listener');
 
 describe('Consumer/Producer', function() {
 
@@ -23,7 +24,7 @@ describe('Consumer/Producer', function() {
       'client.id': 'kafka-mocha',
       'metadata.broker.list': kafkaBrokerList,
       'fetch.wait.max.ms': 1,
-
+      'debug': 'all',
       'dr_cb': true
     });
 
@@ -32,6 +33,8 @@ describe('Consumer/Producer', function() {
       t.equal(typeof d, 'object', 'metadata should be returned');
       done();
     });
+
+    eventListener(producer);
 
   });
 
@@ -45,7 +48,8 @@ describe('Consumer/Producer', function() {
       'group.id': grp,
       'fetch.wait.max.ms': 1000,
       'session.timeout.ms': 10000,
-      'enable.auto.commit': true
+      'enable.auto.commit': true,
+      'debug': 'all'
       // paused: true,
     }, {
       'auto.offset.reset': 'largest'
@@ -56,6 +60,8 @@ describe('Consumer/Producer', function() {
       t.equal(typeof d, 'object', 'metadata should be returned');
       done();
     });
+
+    eventListener(consumer);
   });
 
   afterEach(function(done) {

@@ -9,6 +9,8 @@
 var t = require('assert');
 var crypto = require('crypto');
 
+var eventListener = require('./listener');
+
 var KafkaConsumer = require('../').KafkaConsumer;
 
 var kafkaBrokerList = process.env.KAFKA_HOST || 'localhost:9092';
@@ -20,7 +22,8 @@ describe('Consumer', function() {
     var grp = 'kafka-mocha-grp-' + crypto.randomBytes(20).toString();
      gcfg = {
       'bootstrap.servers': kafkaBrokerList,
-      'group.id': grp
+      'group.id': grp,
+      'debug': 'all'
     };
   });
 
@@ -34,6 +37,8 @@ describe('Consumer', function() {
         t.ifError(err);
         done();
       });
+
+      eventListener(consumer);
     });
 
     afterEach(function(done) {
