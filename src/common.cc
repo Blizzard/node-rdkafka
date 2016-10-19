@@ -340,7 +340,7 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Message *message) {
         Nan::New<v8::String>(*key).ToLocalChecked());
     } else {
       Nan::Set(pack, Nan::New<v8::String>("key").ToLocalChecked(),
-        Nan::Undefined());
+        Nan::Null());
     }
 
     Nan::Set(pack, Nan::New<v8::String>("topic_name").ToLocalChecked(),

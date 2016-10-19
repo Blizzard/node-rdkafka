@@ -11,29 +11,30 @@ var Kafka = require('../');
 var t = require('assert');
 var crypto = require('crypto');
 
+var eventListener = require('./listener');
+
 var kafkaBrokerList = process.env.KAFKA_HOST || 'localhost:9092';
 
 var serviceStopped = false;
 
 describe('Producer', function() {
 
-  var topic;
   var producer;
 
   beforeEach(function(done) {
     producer = new Kafka.Producer({
       'client.id': 'kafka-test',
       'metadata.broker.list': kafkaBrokerList,
-      'dr_cb': true
+      'dr_cb': true,
+      'debug': 'all'
     });
     producer.connect({}, function(err) {
       t.ifError(err);
 
-      // Create the topic
-      topic = producer.Topic('test', {});
-
       done();
     });
+
+    eventListener(producer);
   });
 
   afterEach(function(done) {
@@ -62,7 +63,7 @@ describe('Producer', function() {
       producer.poll();
     }, 200).unref();
 
-    producer.on('delivery-report', function(report) {
+    producer.once('delivery-report', function(report) {
       clearInterval(tt);
       t.ok(report !== undefined);
       t.ok(typeof report.topic_name === 'string');
@@ -105,7 +106,7 @@ describe('Producer', function() {
 
     // Produce
     for (total = 0; total <= max; total++) {
-      producer.produce(topic, null, new Buffer('message ' + total), null);
+      producer.produce('test', null, new Buffer('message ' + total), null);
     }
 
   });
