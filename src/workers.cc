@@ -243,92 +243,6 @@ void ConsumerDisconnect::HandleErrorCallback() {
 }
 
 /**
- * @brief Consumer subscribe worker.
- *
- * Easy Nan::AsyncWorker for subscribing to a list of topics
- *
- * @sa RdKafka::KafkaConsumer::Subscribe
- * @sa NodeKafka::Consumer::Subscribe
- */
-
-ConsumerSubscribe::ConsumerSubscribe(Nan::Callback *callback,
-  Consumer* consumer,
-  std::vector<std::string> topics) :
-  ErrorAwareWorker(callback),
-  consumer(consumer),
-  topics(topics) {}
-
-ConsumerSubscribe::~ConsumerSubscribe() {}
-
-void ConsumerSubscribe::Execute() {
-  Baton b = consumer->Subscribe(topics);
-
-  if (b.err() != RdKafka::ERR_NO_ERROR) {
-    SetErrorCode(b.err());
-  }
-}
-
-void ConsumerSubscribe::HandleOKCallback() {
-  Nan::HandleScope scope;
-
-  const unsigned int argc = 1;
-  v8::Local<v8::Value> argv[argc] = { Nan::Null() };
-
-  callback->Call(argc, argv);
-}
-
-void ConsumerSubscribe::HandleErrorCallback() {
-  Nan::HandleScope scope;
-
-  const unsigned int argc = 1;
-  v8::Local<v8::Value> argv[argc] = { GetErrorObject() };
-
-  callback->Call(argc, argv);
-}
-
-/**
- * @brief Consumer unsubscribe worker.
- *
- * Easy Nan::AsyncWorker for unsubscribing from the currently subscribed topics
- *
- * @sa RdKafka::KafkaConsumer::Unsubscribe
- * @sa NodeKafka::Consumer::Unsubscribe
- */
-
-ConsumerUnsubscribe::ConsumerUnsubscribe(Nan::Callback *callback,
-                                     Consumer* consumer) :
-  ErrorAwareWorker(callback),
-  consumer(consumer) {}
-
-ConsumerUnsubscribe::~ConsumerUnsubscribe() {}
-
-void ConsumerUnsubscribe::Execute() {
-  Baton b = consumer->Unsubscribe();
-
-  if (b.err() != RdKafka::ERR_NO_ERROR) {
-    SetErrorCode(b.err());
-  }
-}
-
-void ConsumerUnsubscribe::HandleOKCallback() {
-  Nan::HandleScope scope;
-
-  const unsigned int argc = 1;
-  v8::Local<v8::Value> argv[argc] = { Nan::Null() };
-
-  callback->Call(argc, argv);
-}
-
-void ConsumerUnsubscribe::HandleErrorCallback() {
-  Nan::HandleScope scope;
-
-  const unsigned int argc = 1;
-  v8::Local<v8::Value> argv[argc] = { Nan::Error(ErrorMessage()) };
-
-  callback->Call(argc, argv);
-}
-
-/**
  * @brief Consumer get messages worker.
  *
  * A more complex Nan::AsyncProgressWorker. I made a custom superclass to deal
@@ -540,6 +454,57 @@ void ConsumerConsume::HandleOKCallback() {
 }
 
 void ConsumerConsume::HandleErrorCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc] = { GetErrorObject() };
+
+  callback->Call(argc, argv);
+}
+
+/**
+ * @brief Consumer get committed topic partitions worker.
+ *
+ * This callback will get a topic partition list of committed offsets
+ * for each topic partition. It is done async because it has a timeout
+ * and I don't want node to block
+ *
+ * @see RdKafka::KafkaConsumer::Committed
+ */
+
+ConsumerCommitted::ConsumerCommitted(Nan::Callback *callback,
+                                     Consumer* consumer,
+                                     const int & timeout_ms) :
+  ErrorAwareWorker(callback),
+  m_consumer(consumer),
+  m_timeout_ms(timeout_ms) {}
+
+ConsumerCommitted::~ConsumerCommitted() {}
+
+void ConsumerCommitted::Execute() {
+  Baton b = m_consumer->Committed(m_timeout_ms);
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    SetErrorBaton(b);
+  } else {
+    m_topic_partitions = b.data<std::vector<RdKafka::TopicPartition*>*>();
+  }
+}
+
+void ConsumerCommitted::HandleOKCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 2;
+  v8::Local<v8::Value> argv[argc];
+
+  argv[0] = Nan::Null();
+  argv[1] = Conversion::TopicPartition::ToV8Array(*m_topic_partitions);
+
+  delete m_topic_partitions;
+
+  callback->Call(argc, argv);
+}
+
+void ConsumerCommitted::HandleErrorCallback() {
   Nan::HandleScope scope;
 
   const unsigned int argc = 1;

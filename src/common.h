@@ -55,6 +55,7 @@ namespace Conversion {
 
 namespace Topic {
   std::vector<std::string> ToStringVector(v8::Local<v8::Array>);
+  v8::Local<v8::Array> ToV8Array(std::vector<std::string>);
 }  // namespace Topic
 
 namespace TopicPartition {

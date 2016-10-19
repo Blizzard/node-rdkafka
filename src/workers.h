@@ -215,33 +215,6 @@ class ConsumerDisconnect : public ErrorAwareWorker {
   NodeKafka::Consumer * consumer;
 };
 
-class ConsumerSubscribe : public ErrorAwareWorker {
- public:
-  ConsumerSubscribe(
-    Nan::Callback*, NodeKafka::Consumer*, std::vector<std::string>);
-  ~ConsumerSubscribe();
-
-  void Execute();
-  void HandleOKCallback();
-  void HandleErrorCallback();
- private:
-  NodeKafka::Consumer * consumer;
-  std::vector<std::string> topics;
-};
-
-class ConsumerUnsubscribe : public ErrorAwareWorker {
- public:
-  ConsumerUnsubscribe(
-    Nan::Callback*, NodeKafka::Consumer*);
-  ~ConsumerUnsubscribe();
-
-  void Execute();
-  void HandleOKCallback();
-  void HandleErrorCallback();
- private:
-  NodeKafka::Consumer * consumer;
-};
-
 class ConsumerConsumeLoop : public MessageWorker {
  public:
   ConsumerConsumeLoop(Nan::Callback*, NodeKafka::Consumer*, const int &);
@@ -268,6 +241,20 @@ class ConsumerConsume : public ErrorAwareWorker {
   NodeKafka::Consumer * consumer;
   const int m_timeout_ms;
   RdKafka::Message* m_message;
+};
+
+class ConsumerCommitted : public ErrorAwareWorker {
+ public:
+  ConsumerCommitted(Nan::Callback*, NodeKafka::Consumer*, const int &);
+  ~ConsumerCommitted();
+
+  void Execute();
+  void HandleOKCallback();
+  void HandleErrorCallback();
+ private:
+  NodeKafka::Consumer * m_consumer;
+  const int m_timeout_ms;
+  std::vector<RdKafka::TopicPartition*> * m_topic_partitions;
 };
 
 class ConsumerConsumeNum : public ErrorAwareWorker {

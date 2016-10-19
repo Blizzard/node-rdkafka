@@ -52,11 +52,14 @@ class Consumer : public Connection {
   Baton Connect();
   Baton Disconnect();
 
+  Baton Subscription();
   Baton Unsubscribe();
   bool IsSubscribed();
 
   Baton Commit(std::string, int, int64_t);
   Baton Commit();
+  Baton Committed(int timeout_ms);
+  Baton Position();
 
   Baton RefreshAssignments();
 
@@ -91,15 +94,16 @@ class Consumer : public Connection {
   // Node methods
   static NAN_METHOD(NodeConnect);
   static NAN_METHOD(NodeSubscribe);
-  static NAN_METHOD(NodeSubscribeSync);
   static NAN_METHOD(NodeDisconnect);
   static NAN_METHOD(NodeAssign);
   static NAN_METHOD(NodeUnassign);
   static NAN_METHOD(NodeAssignments);
   static NAN_METHOD(NodeUnsubscribe);
-  static NAN_METHOD(NodeUnsubscribeSync);
   static NAN_METHOD(NodeCommit);
   static NAN_METHOD(NodeCommitSync);
+  static NAN_METHOD(NodeCommitted);
+  static NAN_METHOD(NodePosition);
+  static NAN_METHOD(NodeSubscription);
 
   static NAN_METHOD(NodeConsumeLoop);
   static NAN_METHOD(NodeConsume);

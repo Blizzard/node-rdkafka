@@ -27,6 +27,50 @@ describe('Consumer', function() {
     };
   });
 
+  describe('committed', function() {
+
+    var consumer;
+    beforeEach(function(done) {
+      consumer = new KafkaConsumer(gcfg, {});
+
+      consumer.connect({ timeout: 2000 }, function(err, info) {
+        t.ifError(err);
+        done();
+      });
+
+      eventListener(consumer);
+    });
+
+    afterEach(function(done) {
+      consumer.disconnect(function() {
+        done();
+      });
+    });
+
+    it('should be able to get committed offsets', function(cb) {
+      consumer.committed(1000, function(err, committed) {
+        t.ifError(err);
+        t.equal(Array.isArray(committed), true, 'Committed offsets should be an array');
+        for (var x in committed) {
+          var toppar = committed[x];
+          t.equal(typeof toppar, 'object', 'TopicPartition should be an object');
+          t.equal(typeof toppar.offset, 'number', 'Offset should be a number');
+        }
+        cb();
+      });
+    });
+
+    it('should obey the timeout', function(cb) {
+      consumer.committed(0, function(err, committed) {
+        if (!err) {
+          t.fail(err, 'not null', 'Error should be set for a timeout');
+        }
+        cb();
+      });
+    });
+
+  });
+
   describe('consume', function() {
 
     var consumer;
