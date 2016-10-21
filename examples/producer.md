@@ -10,76 +10,68 @@
 
 var Kafka = require('../');
 
- var producer = new Kafka.Producer({
-   'client.id': 'kafka',
-   'metadata.broker.list': 'localhost:9092',
-   'compression.codec': 'gzip',
-   'retry.backoff.ms': 200,
-   'message.send.max.retries': 10,
-   'socket.keepalive.enable': true,
-   'queue.buffering.max.messages': 100000,
-   'queue.buffering.max.ms': 1000,
-   'batch.num.messages': 1000000,
-   'dr_cb': true
- });
+var producer = new Kafka.Producer({
+  //'debug' : 'all',  
+  'metadata.broker.list': 'localhost:9092',
+  'dr_cb': true  //delivery report callback
+});
 
- var total = 0;
- var totalSent = 0;
- var max = 200000;
- var errors = 0;
- var started = Date.now();
+var topicName = 'test';
 
- var sendMessage = function() {
-   var ret = producer.sendMessage({
-     topic: 'test',
-     message: new Buffer('message ' + total)
-   }, function() {});
-   total++;
-   if (total >= max) {
-     console.log('Done sending');
-   } else {
-     setImmediate(sendMessage);
-   }
- };
+//logging debug messages, if debug is enabled 
+producer.on('event.log', function(log) {
+  console.log(log);
+});
 
- var verified_received = 0;
- var exitNextTick = false;
- var errorsArr = [];
+//logging all errors
+producer.on('error', function(err) {
+  console.error('Error from producer');
+  console.error(err);
+});
 
- var t = setInterval(function() {
-   producer.poll();
+//counter to stop this sample after maxMessages are sent
+var counter = 0;
+var maxMessages = 10;
 
-   if (exitNextTick) {
-     clearInterval(t);
-     return setTimeout(function() {
-       console.log('[%d] Received: %d, Errors: %d, Total: %d', process.pid, verified_received, errors, total);
-       console.log('[%d] Finished sending %d in %d seconds', process.pid, total, parseInt((Date.now() - started) / 1000));
-       if (errors > 0) {
-         console.error(errorsArr[0]);
-         process.exitCode = 1;
-       }
-       producer.disconnect(function() {
-         process.exit(process.exitCode);
-       });
-     }, 2000);
-   }
+producer.on('delivery-report', function(report) {
+  console.log('delivery-report: ' + JSON.stringify(report));
+  counter++;
+});
 
-   if (verified_received + errors === max) {
-     exitNextTick = true;
-   }
+//Wait for the ready event before producing
+producer.on('ready', function(arg) {
+  console.log('producer ready.' + JSON.stringify(arg));
 
- }, 1000);
- producer.connect({}, function(err) {
-   if (err) {
-     return process.exit(1);
-   }
- })
- .on('error', function(e) {
-   errors++;
-   errorsArr.push(e);
- })
- .on('delivery-report', function() {
-   verified_received++;
- })
- .on('ready', sendMessage);
+  //Create a Topic object with any options our Producer
+  //should use when producing to that topic.
+  var topic = producer.Topic(topicName, {
+   // Make the Kafka broker acknowledge our message (optional)
+   'request.required.acks': 1
+  });
+
+  for (var i = 0; i < maxMessages; i++) {
+    var value = new Buffer('value-' +i);
+    var key = "key-"+i;
+    // if partition is set to -1, librdkafka will use the default partitioner
+    var partition = -1;
+    producer.produce(topic, partition, value, key);
+  }
+
+  //need to keep polling for a while to ensure the delivery reports are received
+  var pollLoop = setInterval(function() {
+      producer.poll();
+      if (counter === maxMessages) {
+        clearInterval(pollLoop);
+        producer.disconnect();
+      } 
+    }, 1000);
+
+});
+
+producer.on('disconnected', function(arg) {
+  console.log('producer disconnected. ' + JSON.stringify(arg));
+});
+
+//starting the producer
+producer.connect();
 ```
