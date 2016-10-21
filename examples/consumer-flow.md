@@ -1,5 +1,5 @@
 Connecting to a Kafka Consumer is easy. Let's try to connect to one using
-the Stream implementation
+the Flowing implementation
 
 ```js
 /*
