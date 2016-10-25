@@ -40,21 +40,8 @@ var numMessages = 5;
 consumer.on('ready', function(arg) {
   console.log('consumer ready.' + JSON.stringify(arg));
 
-  //getting metadata (illustrative step, optional)
+  //start consuming messages
   consumer.consume([topicName]); 
-  var opts = {
-      topic: topicName,
-      timeout: 10000
-  };
-  consumer.getMetadata(opts, function(err, metadata) {
-    if (err) {
-      console.error('Error getting metadata');
-      console.error(err);
-    } else {
-      console.log('Got metadata');
-      console.log(metadata);
-    }
-  });
 });
 
 
