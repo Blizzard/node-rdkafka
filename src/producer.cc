@@ -330,7 +330,7 @@ NAN_METHOD(Producer::NodeProduce) {
   Baton b = producer->Produce(message_buffer_data, message_buffer_length,
     topic->toRDKafkaTopic(), partition, key);
 
-  //we can delete the key as librdkafka will take a copy of the message
+  // we can delete the key as librdkafka will take a copy of the message
   if (key) delete key;
 
   // Let the JS library throw if we need to so the error can be more rich
