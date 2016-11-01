@@ -322,17 +322,18 @@ NAN_METHOD(Producer::NodeProduce) {
     v8::Local<v8::String> val = info[3]->ToString();
     // Get string pointer for this thing
     Nan::Utf8String keyUTF8(val);
-    std::string keyString(*keyUTF8);
-
-    // This will just go out of scope and we don't send it anywhere,
-    // since it is copied there is no need to delete it
-    key = &keyString;
+    key = new std::string(*keyUTF8);
   }
 
   Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
 
   Baton b = producer->Produce(message_buffer_data, message_buffer_length,
     topic->toRDKafkaTopic(), partition, key);
+
+  // we can delete the key as librdkafka will take a copy of the message
+  if (key) {
+    delete key;
+  }
 
   // Let the JS library throw if we need to so the error can be more rich
   int error_code = static_cast<int>(b.err());
