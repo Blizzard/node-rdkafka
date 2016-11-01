@@ -331,7 +331,9 @@ NAN_METHOD(Producer::NodeProduce) {
     topic->toRDKafkaTopic(), partition, key);
 
   // we can delete the key as librdkafka will take a copy of the message
-  if (key) delete key;
+  if (key) {
+    delete key;
+  }
 
   // Let the JS library throw if we need to so the error can be more rich
   int error_code = static_cast<int>(b.err());
