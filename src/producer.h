@@ -15,7 +15,7 @@
 #include <node_buffer.h>
 #include <string>
 
-#include "deps/librdkafka/src-cpp/rdkafkacpp.h"
+#include "rdkafkacpp.h"
 
 #include "src/common.h"
 #include "src/connection.h"

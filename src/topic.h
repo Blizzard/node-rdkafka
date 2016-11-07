@@ -13,7 +13,7 @@
 #include <nan.h>
 #include <string>
 
-#include "deps/librdkafka/src-cpp/rdkafkacpp.h"
+#include "rdkafkacpp.h"
 
 #include "src/config.h"
 
