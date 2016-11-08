@@ -14,7 +14,7 @@
 
 #include <vector>
 
-#include "deps/librdkafka/src-cpp/rdkafkacpp.h"
+#include "rdkafkacpp.h"
 #include "src/common.h"
 
 typedef Nan::Persistent<v8::Function,

@@ -399,8 +399,10 @@ _CPP_HEADERS = frozenset([
 # - Anything not following google file name conventions (containing an
 #   uppercase character, such as Python.h or nsStringAPI.h, for example).
 # - Lua headers.
+# - rdkafka.cpp header, because it would be located in different directories depending
+#   on whether it's pulled from librdkafka sources or librdkafka-dev package.
 _THIRD_PARTY_HEADERS_PATTERN = re.compile(
-    r'^(?:[^/]*[A-Z][^/]*\.h|lua\.h|lauxlib\.h|lualib\.h)$')
+    r'^(?:[^/]*[A-Z][^/]*\.h|lua\.h|lauxlib\.h|lualib\.h|rdkafkacpp\.h)$')
 
 
 # Assertion macros.  These are defined in base/logging.h and

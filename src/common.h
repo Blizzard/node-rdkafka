@@ -16,7 +16,7 @@
 #include <string>
 #include <vector>
 
-#include "deps/librdkafka/src-cpp/rdkafkacpp.h"
+#include "rdkafkacpp.h"
 
 #include "src/errors.h"
 
