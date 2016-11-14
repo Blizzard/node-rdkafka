@@ -285,7 +285,7 @@ class ConsumerCommit : public ErrorAwareWorker {
   void HandleErrorCallback();
  private:
   NodeKafka::Consumer * consumer;
-  consumer_commit_t _conf;
+  consumer_commit_t m_conf;
   bool committing_message;
 };
 

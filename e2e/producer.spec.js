@@ -66,7 +66,7 @@ describe('Producer', function() {
     producer.once('delivery-report', function(report) {
       clearInterval(tt);
       t.ok(report !== undefined);
-      t.ok(typeof report.topic_name === 'string');
+      t.ok(typeof report.topic === 'string');
       t.ok(typeof report.partition === 'number');
       t.ok(typeof report.offset === 'number');
       done();
@@ -94,7 +94,7 @@ describe('Producer', function() {
     producer
       .on('delivery-report', function(report) {
         t.ok(report !== undefined);
-        t.ok(typeof report.topic_name === 'string');
+        t.ok(typeof report.topic === 'string');
         t.ok(typeof report.partition === 'number');
         t.ok(typeof report.offset === 'number');
         verified_received++;
