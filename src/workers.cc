@@ -520,7 +520,7 @@ ConsumerCommit::ConsumerCommit(Nan::Callback *callback,
                                      consumer_commit_t config) :
   ErrorAwareWorker(callback),
   consumer(consumer),
-  _conf(config) {
+  m_conf(config) {
     committing_message = true;
   }
 
@@ -537,7 +537,7 @@ void ConsumerCommit::Execute() {
   Baton b(NULL);
 
   if (committing_message) {
-    b = consumer->Commit(_conf._topic_name, _conf._partition, _conf._offset);
+    b = consumer->Commit(m_conf.m_topic_name, m_conf.m_partition, m_conf.m_offset);  // NOLINT
   } else {
     b = consumer->Commit();
   }

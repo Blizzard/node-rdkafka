@@ -254,7 +254,7 @@ void DeliveryReportDispatcher::Flush() {
       argv[0] = Nan::Null();
       Local<Object> jsobj(Nan::New<Object>());
 
-      Nan::Set(jsobj, Nan::New("topic_name").ToLocalChecked(),
+      Nan::Set(jsobj, Nan::New("topic").ToLocalChecked(),
         Nan::New(_events[i].topic_name).ToLocalChecked());
       Nan::Set(jsobj, Nan::New("partition").ToLocalChecked(),
         Nan::New<v8::Number>(_events[i].partition));
