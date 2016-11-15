@@ -6,7 +6,12 @@ if [[ `git status --porcelain` ]]; then
   exit 1
 fi
 
-make docs
+REPO=git@github.com:Blizzard/node-rdkafka.git
+
+# Get the most recent stuff if we don't have it
+git fetch $REPO gh-pages || exit $?
+
+make docs || exit $?
 
 # Get package version and save to variable
 
@@ -43,5 +48,7 @@ git add --all
 git commit --author="$COMMIT_AUTHOR" -m "Updated docs for '$COMMIT_MESSAGE'"
 
 rm -rf $TEMPDIR
+
+git push $REPO gh-pages || exit $?
 
 git checkout $CURRENT_BRANCH

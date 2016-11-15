@@ -18,6 +18,14 @@ script:
 - make lint
 - make test
 - make e2e
-after_success:
-- make docs
-- echo "Disallow: /" >> docs/robots.txt
+before_deploy:
+- openssl aes-256-cbc -K $encrypted_a2e08d5c220e_key -iv $encrypted_a2e08d5c220e_iv -in deploy.enc -out /tmp/deploy -d
+- eval "$(ssh-agent -s)"
+- chmod 600 /tmp/deploy
+- ssh-add /tmp/deploy
+deploy:
+  provider: script
+  skip_cleanup: true
+  script: make_docs.sh
+  on:
+    branch: master
