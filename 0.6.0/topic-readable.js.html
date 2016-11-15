@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Source: util/topicReadable.js</title>
+    <title>JSDoc: Source: topic-readable.js</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -22,13 +22,13 @@
     <div class="grid-container">
       <div class="grid-25">
         <a class="brand mark" href="index.html">
-          Source: util/topicReadable.js
-          <span class="tag">3.4.0</span>
+          Source: topic-readable.js
+          <span class="tag">3.4.3</span>
         </a>
       </div>
       <div class="grid-75">
         <ul class="nav navbar-nav navbar-right">
-          <li class="dropdown"><a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#" onclick="return false;">Classes</a><ul class="dropdown-menu" role="menu"><li><a href="Client.html">Client</a></li><li><a href="KafkaConsumer.html">KafkaConsumer</a></li><li><a href="LibrdKafkaError.html">LibrdKafkaError</a></li><li><a href="Producer.html">Producer</a></li><li><a href="TopicReadable.html">TopicReadable</a></li><li><a href="TopicWritable.html">TopicWritable</a></li></ul></li><li class="dropdown"><a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#" onclick="return false;">Events</a><ul class="dropdown-menu" role="menu"><li><a href="Client.html#event:disconnected">disconnected</a></li><li><a href="Client.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:data">data</a></li><li><a href="KafkaConsumer.html#event:disconnected">disconnected</a></li><li><a href="KafkaConsumer.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:rebalance">rebalance</a></li><li><a href="Producer.html#event:disconnected">disconnected</a></li><li><a href="Producer.html#event:ready">ready</a></li></ul></li><li class="dropdown"><a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#" onclick="return false;">Tutorials</a><ul class="dropdown-menu" role="menu"><li><a href="tutorial-consumer.html">consumer</a></li><li><a href="tutorial-metadata.html">metadata</a></li><li><a href="tutorial-producer-cluster.html">producer-cluster</a></li><li><a href="tutorial-producer-multiple.html">producer-multiple</a></li><li><a href="tutorial-producer_.html">producer</a></li></ul></li>
+          <li class="dropdown"><a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#" onclick="return false;">Classes</a><ul class="dropdown-menu" role="menu"><li><a href="Client.html">Client</a></li><li><a href="KafkaConsumer.html">KafkaConsumer</a></li><li><a href="LibrdKafkaError.html">LibrdKafkaError</a></li><li><a href="Producer.html">Producer</a></li><li><a href="TopicReadable.html">TopicReadable</a></li><li><a href="TopicWritable.html">TopicWritable</a></li></ul></li><li class="dropdown"><a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#" onclick="return false;">Events</a><ul class="dropdown-menu" role="menu"><li><a href="Client.html#event:disconnected">disconnected</a></li><li><a href="Client.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:data">data</a></li><li><a href="KafkaConsumer.html#event:disconnected">disconnected</a></li><li><a href="KafkaConsumer.html#event:ready">ready</a></li><li><a href="Producer.html#event:disconnected">disconnected</a></li><li><a href="Producer.html#event:ready">ready</a></li></ul></li><li class="dropdown"><a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#" onclick="return false;">Tutorials</a><ul class="dropdown-menu" role="menu"><li><a href="tutorial-consumer-flow.html">consumer-flow</a></li><li><a href="tutorial-consumer.html">consumer</a></li><li><a href="tutorial-metadata.html">metadata</a></li><li><a href="tutorial-producer-cluster.html">producer-cluster</a></li><li><a href="tutorial-producer-multiple.html">producer-multiple</a></li><li><a href="tutorial-producer_.html">producer</a></li></ul></li>
         </ul>
       </div>
     </div>
@@ -40,7 +40,7 @@
   <div class="grid-container project-container">
 
     <div class="grid-75 push-25">
-      <h1>Source: util/topicReadable.js</h1>
+      <h1>Source: topic-readable.js</h1>
 
       
 
@@ -109,8 +109,8 @@ function TopicReadable(consumer, topics, options) {
   }
 
   if (!Array.isArray(topics)) {
-    if (typeof topics !== 'string') {
-      throw new TypeError('"topics" argument must be a string or an array');
+    if (typeof topics !== 'string' &amp;&amp; !(topics instanceof RegExp)) {
+      throw new TypeError('"topics" argument must be a string, regex, or an array');
     } else {
       topics = [topics];
     }
@@ -128,6 +128,7 @@ function TopicReadable(consumer, topics, options) {
   this.rebalanced = undefined;
   this.connected = false;
   this.fetchSize = options.fetchSize || 1;
+  this.unsubscribed = false;
 
   var self = this;
 
@@ -138,6 +139,11 @@ function TopicReadable(consumer, topics, options) {
     .on('disconnected', function() {
       self.rebalanced = undefined;
       self.connected = false;
+    })
+    .on('unsubscribed', function() {
+      // Invalidate the stream when we unsubscribe
+      self.unsubscribed = true;
+      self.push(null);
     });
 
   if (!this.consumer.isConnected()) {
@@ -251,7 +257,9 @@ TopicReadable.prototype.close = function(cb) {
   close();
 
   function close() {
-    self.consumer.unsubscribe();
+    if (!self.unsubscribed) {
+      self.consumer.unsubscribe();
+    }
     self.emit('closed');
   }
 };
@@ -267,7 +275,7 @@ TopicReadable.prototype.close = function(cb) {
     <div class="grid-25 pull-75">
       <div class="navigation-sidebar">
         <ul class="nav nav-list">
-          <li><a href="javascript: void(0);">Classes</a><ul class="nav nav-list" role="menu"><li><a href="Client.html">Client</a></li><li><a href="KafkaConsumer.html">KafkaConsumer</a></li><li><a href="LibrdKafkaError.html">LibrdKafkaError</a></li><li><a href="Producer.html">Producer</a></li><li><a href="TopicReadable.html">TopicReadable</a></li><li><a href="TopicWritable.html">TopicWritable</a></li></ul></li><li><a href="javascript: void(0);">Events</a><ul class="nav nav-list" role="menu"><li><a href="Client.html#event:disconnected">disconnected</a></li><li><a href="Client.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:data">data</a></li><li><a href="KafkaConsumer.html#event:disconnected">disconnected</a></li><li><a href="KafkaConsumer.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:rebalance">rebalance</a></li><li><a href="Producer.html#event:disconnected">disconnected</a></li><li><a href="Producer.html#event:ready">ready</a></li></ul></li><li><a href="javascript: void(0);">Tutorials</a><ul class="nav nav-list" role="menu"><li><a href="tutorial-consumer.html">consumer</a></li><li><a href="tutorial-metadata.html">metadata</a></li><li><a href="tutorial-producer-cluster.html">producer-cluster</a></li><li><a href="tutorial-producer-multiple.html">producer-multiple</a></li><li><a href="tutorial-producer_.html">producer</a></li></ul></li>
+          <li><a href="javascript: void(0);">Classes</a><ul class="nav nav-list" role="menu"><li><a href="Client.html">Client</a></li><li><a href="KafkaConsumer.html">KafkaConsumer</a></li><li><a href="LibrdKafkaError.html">LibrdKafkaError</a></li><li><a href="Producer.html">Producer</a></li><li><a href="TopicReadable.html">TopicReadable</a></li><li><a href="TopicWritable.html">TopicWritable</a></li></ul></li><li><a href="javascript: void(0);">Events</a><ul class="nav nav-list" role="menu"><li><a href="Client.html#event:disconnected">disconnected</a></li><li><a href="Client.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:data">data</a></li><li><a href="KafkaConsumer.html#event:disconnected">disconnected</a></li><li><a href="KafkaConsumer.html#event:ready">ready</a></li><li><a href="Producer.html#event:disconnected">disconnected</a></li><li><a href="Producer.html#event:ready">ready</a></li></ul></li><li><a href="javascript: void(0);">Tutorials</a><ul class="nav nav-list" role="menu"><li><a href="tutorial-consumer-flow.html">consumer-flow</a></li><li><a href="tutorial-consumer.html">consumer</a></li><li><a href="tutorial-metadata.html">metadata</a></li><li><a href="tutorial-producer-cluster.html">producer-cluster</a></li><li><a href="tutorial-producer-multiple.html">producer-multiple</a></li><li><a href="tutorial-producer_.html">producer</a></li></ul></li>
         </ul>
         <!-- <ul class="nav nav-list collapse"> -->
       </div>
@@ -285,7 +293,7 @@ TopicReadable.prototype.close = function(cb) {
     <div class="footer-content">
       <div class="grid-75">
         <div class="legal">
-            Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc </a> on Thu Aug 11 2016 10:58:53 GMT-0700 (PDT)
+            Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc </a> on Tue Nov 15 2016 14:17:18 GMT-0800 (PST)
         </div>
       </div>
       <div class="grid-25">
