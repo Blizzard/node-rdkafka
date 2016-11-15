@@ -8,8 +8,10 @@ fi
 
 REPO=git@github.com:Blizzard/node-rdkafka.git
 
+git remote add deploy $REPO
+
 # Get the most recent stuff if we don't have it
-git fetch $REPO gh-pages || exit $?
+git fetch deploy gh-pages || exit $?
 
 make docs || exit $?
 
@@ -33,7 +35,7 @@ CURRENT_BRANCH=$(git rev-parse --symbolic-full-name --abbrev-ref HEAD)
 COMMIT_MESSAGE=$(git log --pretty='format:%B' -1)
 COMMIT_AUTHOR=$(git log --pretty='format:%aN <%aE>' -1)
 
-if [[ `git checkout --quiet gh-pages` ]]; then
+if [[ `git checkout --quiet -b gh-pages deploy/gh-pages` ]]; then
   >&2 echo "Could not checkout gh-pages"
   exit 1
 fi

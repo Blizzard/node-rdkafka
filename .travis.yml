@@ -25,7 +25,6 @@ before_deploy:
 - ssh-add /tmp/deploy
 deploy:
   provider: script
-  skip_cleanup: true
-  script: make_docs.sh
+  script: ./make_docs.sh
   on:
     branch: master
