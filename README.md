@@ -161,34 +161,24 @@ producer.connect();
 
 // Wait for the ready event before proceeding
 producer.on('ready', function() {
-  // Create a Topic object with any options our Producer
-  // should use when writing to that topic.
-  var topic = producer.Topic('topic', {
-    // Make the Kafka broker acknowledge our message (optional)
-    'request.required.acks': 1
-  });
-
-  producer.produce({
-    // Message to send. If a string is supplied, it will be
-    // converted to a Buffer automatically, but we're being
-    // explicit here for the sake of example.
-    message: new Buffer('Awesome message'),
-    // for keyed messages, we also specify the key - note that this field is optional
-    key: 'Stormwind',
-    // optionally we can manually specify a partition for the message
-    // this defaults to -1 - which will use librdkafka's default partitioner (consistent random for keyed messages, random for unkeyed messages)
-    partition: 0,
-    // The topic object we created above
-    topic: topic
-  }, function(err) {
-    // Called after the message is queued
-    if (err) {
-      console.error('A problem occurred when sending our message');
-      console.error(err);
-    } else {
-      console.log('Message produced successfully!');
-    }
-  });
+  try {
+    producer.produce(
+      // Topic to send the message to
+      'topic',
+      // optionally we can manually specify a partition for the message
+      // this defaults to -1 - which will use librdkafka's default partitioner (consistent random for keyed messages, random for unkeyed messages)
+      null,
+      // Message to send. If a string is supplied, it will be
+      // converted to a Buffer automatically, but we're being
+      // explicit here for the sake of example.
+      new Buffer('Awesome message'),
+      // for keyed messages, we also specify the key - note that this field is optional
+      'Stormwind',
+    );
+  } catch (err) {
+    console.error('A problem occurred when sending our message');
+    console.error(err);
+  }
 });
 
 // Any errors we encounter, including connection errors
@@ -207,7 +197,7 @@ To see the configuration options available to you, see the [Configuration](#conf
 |`producer.connect()`| Connects to the broker. <br><br> The `connect()` method emits the `ready` event when it connects successfully or an `error` when it does not.|
 |`producer.disconnect()`| Disconnects from the broker. <br><br>The `disconnect()` method emits the `disconnected` event when it has disconnected or `error` if something went wrong. |
 |`producer.poll()` | Polls the producer for delivery reports or other events to be transmitted via the emitter. <br><br>This happens automatically on transactions such as `produce`. |
-|`producer.produce(msg, cb)`| Sends a message. <br><br>The `produce()` method takes a JSON object in the format showed above. If `cb` is specified, invokes `cb(err)`. |
+|`producer.produce(topic, partition, msg, key)`| Sends a message. <br><br>The `produce()` method throws when produce would return an error. Ordinarily, this is just if the queue is full. |
 
 ##### Events
 
