@@ -76,7 +76,7 @@ describe('Consumer/Producer', function() {
     });
   });
 
-  it('should be able to produce and consume messages', function(done) {
+  it('should be able to produce and consume messages: subscribe/consumeOnce', function(done) {
     this.timeout(20000);
     var topic = 'test';
 
@@ -93,8 +93,7 @@ describe('Consumer/Producer', function() {
         offset = report.offset;
       });
 
-      consumer
-        .subscribe([topic]);
+      consumer.subscribe([topic]);
 
       var ct;
 
@@ -120,6 +119,42 @@ describe('Consumer/Producer', function() {
 
       // Consume until we get it or time out
       consumeOne();
+
+    });
+  });
+  
+  it('should be able to produce and consume messages: consumeLoop', function(done) {
+    this.timeout(20000);
+    var topic = 'test';
+    var key = 'key';
+    
+    crypto.randomBytes(4096, function(ex, buffer) {
+
+      var tt = setInterval(function() {
+        producer.poll();
+      }, 100);
+
+      producer.once('delivery-report', function(report) {
+        //console.log('delivery-report: ' + JSON.stringify(report));
+        clearInterval(tt);
+        t.equal(topic, report.topic, 'invalid delivery-report topic');
+        t.equal(key, report.key, 'invalid delivery-report key');
+        t.ok(report.offset >= 0, 'invalid delivery-report offset');
+      });
+
+      consumer.on('data', function(message) {
+        t.equal(buffer.toString(), message.value.toString(), 'invalid message value');
+        t.equal(key, message.key, 'invalid message key');
+        t.equal(topic, message.topic, 'invalid message topic');
+        t.ok(message.offset >= 0, 'invalid message offset');
+        done();
+      });
+      
+      consumer.consume([topic]);
+
+      setTimeout(function() {
+        producer.produce(topic, null, buffer, key);
+      }, 2000);
 
     });
   });
