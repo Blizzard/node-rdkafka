@@ -75,13 +75,67 @@ describe('Producer', function() {
     producer.produce('test', null, null, null);
   });
 
+  it('should produce a message with a non-null payload', function(done) {
+    var tt = setInterval(function() {
+      producer.poll();
+    }, 200).unref();
+
+    producer.once('delivery-report', function(report) {
+      clearInterval(tt);
+      t.ok(report !== undefined);
+      t.ok(typeof report.topic === 'string');
+      t.ok(typeof report.partition === 'number');
+      t.ok(typeof report.offset === 'number');
+      done();
+    });
+
+    producer.produce('test', null, new Buffer('message '), null);
+  });
+
+  it('should produce a message with a topic object', function(done) {
+    var tt = setInterval(function() {
+      producer.poll();
+    }, 200).unref();
+
+    var topic = producer.Topic('test', {});
+
+    producer.once('delivery-report', function(report) {
+      clearInterval(tt);
+      t.ok(report !== undefined);
+      t.ok(typeof report.topic === 'string');
+      t.ok(typeof report.partition === 'number');
+      t.ok(typeof report.offset === 'number');
+      done();
+    });
+
+    producer.produce(topic, null, new Buffer('message '), null);
+  });
+
+  it('should produce a message with a key', function(done) {
+    var tt = setInterval(function() {
+      producer.poll();
+    }, 200).unref();
+
+    producer.once('delivery-report', function(report) {
+      clearInterval(tt);
+      t.ok(report !== undefined);
+      t.ok(typeof report.topic === 'string');
+      t.ok(typeof report.partition === 'number');
+      t.ok(typeof report.offset === 'number');
+      t.ok(typeof report.key === 'string');
+      t.equal(report.key, 'stormwind', 'Key does not match');
+      done();
+    });
+
+    producer.produce('test', null, new Buffer('message '), 'stormwind');
+  });
+
   it('should get 100% deliverability', function(done) {
     this.timeout(3000);
 
     var total = 0;
     var max = 10000;
     var errors = 0;
-    var started = Date.now();
 
     var verified_received = 0;
     var exitNextTick = false;
