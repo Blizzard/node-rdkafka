@@ -136,7 +136,7 @@ describe('Consumer', function() {
       t.equal(0, consumer.subscription().length);
     });
 
-    it('should be able to take an empty assignment', function() {
+    xit('should be able to take an empty assignment - EXCLUDED because of https://github.com/Blizzard/node-rdkafka/issues/63', function() {
       consumer.assign([{ topic:'test', partition:0 }]);
       t.equal(1, consumer.assignments().length);
       consumer.assign([]);
