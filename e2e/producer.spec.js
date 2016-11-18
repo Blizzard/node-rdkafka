@@ -30,7 +30,6 @@ describe('Producer', function() {
     });
     producer.connect({}, function(err) {
       t.ifError(err);
-
       done();
     });
 
@@ -58,10 +57,12 @@ describe('Producer', function() {
     });
   });
 
-  it('should produce a message with a null payload', function(done) {
+  it('should produce a message with a null payload and null key', function(done) {
+    this.timeout(3000);
+
     var tt = setInterval(function() {
       producer.poll();
-    }, 200).unref();
+    }, 200);
 
     producer.once('delivery-report', function(report) {
       clearInterval(tt);
@@ -69,27 +70,63 @@ describe('Producer', function() {
       t.ok(typeof report.topic === 'string');
       t.ok(typeof report.partition === 'number');
       t.ok(typeof report.offset === 'number');
+      t.ok( report.key === null);
       done();
     });
 
     producer.produce('test', null, null, null);
   });
 
+  xit('should produce a message with an empty payload and empty key (https://github.com/Blizzard/node-rdkafka/issues/36)', function(done) {
+    this.timeout(3000);
+
+    var tt = setInterval(function() {
+      producer.poll();
+    }, 200);
+
+    producer.once('delivery-report', function(report) {
+      clearInterval(tt);
+      t.ok(report !== undefined);
+      t.ok(typeof report.topic === 'string');
+      t.ok(typeof report.partition === 'number');
+      t.ok(typeof report.offset === 'number');
+      t.ok( report.key === '', 'key should be an empty string');
+      done();
+    });
+
+    producer.produce('test', null, new Buffer(''), '');
+  });
+  
+  it('should produce a message with a payload and key', function(done) {
+    this.timeout(3000);
+
+    var tt = setInterval(function() {
+      producer.poll();
+    }, 200);
+
+    producer.once('delivery-report', function(report) {
+      clearInterval(tt);
+      t.ok(report !== undefined);
+      t.ok(typeof report.topic === 'string');
+      t.ok(typeof report.partition === 'number');
+      t.ok(typeof report.offset === 'number');
+      t.equal('key', report.key);
+      done();
+    });
+
+    producer.produce('test', null, new Buffer('value'), 'key');
+  });
+  
   it('should get 100% deliverability', function(done) {
     this.timeout(3000);
 
     var total = 0;
     var max = 10000;
-    var errors = 0;
-    var started = Date.now();
-
     var verified_received = 0;
-    var exitNextTick = false;
-    var errorsArr = [];
 
     var tt = setInterval(function() {
       producer.poll();
-    }, 200).unref();
+    }, 200);
 
     producer
       .on('delivery-report', function(report) {
@@ -111,4 +148,29 @@ describe('Producer', function() {
 
   });
 
+  it('should produce a message to a Topic object', function(done) {
+    this.timeout(3000);
+
+    var tt = setInterval(function() {
+      producer.poll();
+    }, 200);
+
+    var topic = producer.Topic('test', {
+     'request.required.acks': 1
+     //'produce.offset.report': true
+    });
+    
+    producer.once('delivery-report', function(report) {
+      clearInterval(tt);
+      t.ok(report !== undefined);
+      t.ok(typeof report.topic === 'string');
+      t.ok(typeof report.partition === 'number');
+      t.ok(typeof report.offset === 'number');
+      t.equal('key', report.key);
+      done();
+    });
+
+    producer.produce(topic, null, new Buffer('value'), 'key');
+  });
+  
 });

@@ -71,7 +71,7 @@ describe('Consumer', function() {
 
   });
 
-  describe('consume', function() {
+  describe('subscribe', function() {
 
     var consumer;
     beforeEach(function(done) {
@@ -91,10 +91,57 @@ describe('Consumer', function() {
       });
     });
 
-    it('should be able to take a subscription', function() {
+    it('should be able to subscribe', function() {
+      t.equal(0, consumer.subscription().length);
       consumer.subscribe(['test']);
+      t.equal(1, consumer.subscription().length);
+      t.equal('test', consumer.subscription()[0]);
+      t.equal(0, consumer.assignments().length);
     });
 
+    it('should be able to unsusbcribe', function() {
+      consumer.subscribe(['test']);
+      t.equal(1, consumer.subscription().length);
+      consumer.unsubscribe();
+      t.equal(0, consumer.subscription().length);
+      t.equal(0, consumer.assignments().length);
+    });
+  });
+
+  describe('assign', function() {
+
+    var consumer;
+    beforeEach(function(done) {
+      consumer = new KafkaConsumer(gcfg, {});
+
+      consumer.connect({ timeout: 2000 }, function(err, info) {
+        t.ifError(err);
+        done();
+      });
+
+      eventListener(consumer);
+    });
+
+    afterEach(function(done) {
+      consumer.disconnect(function() {
+        done();
+      });
+    });
+
+    it('should be able to take an assignment', function() {
+      t.equal(0, consumer.assignments().length);
+      consumer.assign([{ topic:'test', partition:0 }]);
+      t.equal(1, consumer.assignments().length);
+      t.equal('test', consumer.assignments()[0].topic);
+      t.equal(0, consumer.subscription().length);
+    });
+
+    xit('should be able to take an empty assignment - EXCLUDED because of https://github.com/Blizzard/node-rdkafka/issues/63', function() {
+      consumer.assign([{ topic:'test', partition:0 }]);
+      t.equal(1, consumer.assignments().length);
+      consumer.assign([]);
+      t.equal(0, consumer.assignments().length);
+    });
   });
 
   describe('disconnect', function() {
