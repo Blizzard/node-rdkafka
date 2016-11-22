@@ -28,3 +28,4 @@ deploy:
   script: ./make_docs.sh
   on:
     branch: master
+    tags: true
