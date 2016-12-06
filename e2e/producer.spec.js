@@ -64,8 +64,9 @@ describe('Producer', function() {
       producer.poll();
     }, 200);
 
-    producer.once('delivery-report', function(report) {
+    producer.once('delivery-report', function(err, report) {
       clearInterval(tt);
+      t.ifError(err);
       t.ok(report !== undefined);
       t.ok(typeof report.topic === 'string');
       t.ok(typeof report.partition === 'number');
@@ -104,8 +105,9 @@ describe('Producer', function() {
       producer.poll();
     }, 200);
 
-    producer.once('delivery-report', function(report) {
+    producer.once('delivery-report', function(err, report) {
       clearInterval(tt);
+      t.ifError(err);
       t.ok(report !== undefined);
       t.ok(typeof report.topic === 'string');
       t.ok(typeof report.partition === 'number');
@@ -129,7 +131,8 @@ describe('Producer', function() {
     }, 200);
 
     producer
-      .on('delivery-report', function(report) {
+      .on('delivery-report', function(err, report) {
+        t.ifError(err);
         t.ok(report !== undefined);
         t.ok(typeof report.topic === 'string');
         t.ok(typeof report.partition === 'number');
@@ -160,8 +163,9 @@ describe('Producer', function() {
      //'produce.offset.report': true
     });
     
-    producer.once('delivery-report', function(report) {
+    producer.once('delivery-report', function(err, report) {
       clearInterval(tt);
+      t.ifError(err);
       t.ok(report !== undefined);
       t.ok(typeof report.topic === 'string');
       t.ok(typeof report.partition === 'number');

@@ -38,10 +38,15 @@ class Dispatcher {
   void Execute();
   void Activate();
   void Deactivate();
+
+  // if this flag is true, msg payload is added to the delivery report
+  bool dr_copy_payload = false;
+
  protected:
   std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > > callbacks;  // NOLINT
 
   uv_mutex_t async_lock;
+
  private:
   NAN_INLINE static NAUV_WORK_CB(AsyncMessage_) {
      Dispatcher *dispatcher =
@@ -96,8 +101,10 @@ struct delivery_report_t {
   int32_t partition;
   int64_t offset;
   std::string key;
+  size_t len;
+  void* payload;
 
-  explicit delivery_report_t(RdKafka::Message &);
+  explicit delivery_report_t(RdKafka::Message &, bool dr_copy_payload);
   ~delivery_report_t();
 };
 

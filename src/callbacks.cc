@@ -247,48 +247,68 @@ void DeliveryReportDispatcher::Flush() {
     v8::Local<v8::Value> argv[argc] = {};
 
     if (_events[i].is_error) {
-      // If it is an error we need the first argument to be set
-      argv[0] = Nan::Error(_events[i].error_string.c_str());
-      argv[1] = Nan::Null();
+        // If it is an error we need the first argument to be set
+        argv[0] = Nan::Error(_events[i].error_string.c_str());
     } else {
-      argv[0] = Nan::Null();
-      Local<Object> jsobj(Nan::New<Object>());
-
-      Nan::Set(jsobj, Nan::New("topic").ToLocalChecked(),
-        Nan::New(_events[i].topic_name).ToLocalChecked());
-      Nan::Set(jsobj, Nan::New("partition").ToLocalChecked(),
-        Nan::New<v8::Number>(_events[i].partition));
-      Nan::Set(jsobj, Nan::New("offset").ToLocalChecked(),
-        Nan::New<v8::Number>(_events[i].offset));
-      if (_events[i].key.empty()) {
-        Nan::Set(jsobj, Nan::New("key").ToLocalChecked(), Nan::Null());
-      } else {
-        Nan::Set(jsobj, Nan::New("key").ToLocalChecked(),
-          Nan::New<v8::String>(_events[i].key).ToLocalChecked());
-      }
-
-      argv[1] = jsobj;
+        argv[0] = Nan::Null();
     }
+    Local<Object> jsobj(Nan::New<Object>());
+
+    Nan::Set(jsobj, Nan::New("topic").ToLocalChecked(),
+            Nan::New(_events[i].topic_name).ToLocalChecked());
+    Nan::Set(jsobj, Nan::New("partition").ToLocalChecked(),
+            Nan::New<v8::Number>(_events[i].partition));
+    Nan::Set(jsobj, Nan::New("offset").ToLocalChecked(),
+            Nan::New<v8::Number>(_events[i].offset));
+    if (_events[i].key.empty()) {
+        Nan::Set(jsobj, Nan::New("key").ToLocalChecked(), Nan::Null());
+    } else {
+        Nan::Set(jsobj, Nan::New("key").ToLocalChecked(),
+                Nan::New<v8::String>(_events[i].key).ToLocalChecked());
+    }
+
+    if (_events[i].payload) {
+        Nan::MaybeLocal<v8::Object> buff = Nan::NewBuffer(
+                static_cast<char*>(_events[i].payload),
+                static_cast<int>(_events[i].len));
+        Nan::Set(jsobj, Nan::New<v8::String>("value").ToLocalChecked(),
+                buff.ToLocalChecked());
+    }
+    Nan::Set(jsobj, Nan::New<v8::String>("size").ToLocalChecked(),
+            Nan::New<v8::Number>(_events[i].len));
+
+    argv[1] = jsobj;
 
     Dispatch(argc, argv);
   }
 }
 
-delivery_report_t::delivery_report_t(RdKafka::Message &message) {
+delivery_report_t::delivery_report_t(RdKafka::Message &message,
+        bool dr_copy_payload) {
   if (message.err() == RdKafka::ERR_NO_ERROR) {
     is_error = false;
-    topic_name = message.topic_name();
-    partition = message.partition();
-    offset = message.offset();
-    if (message.key_len() > 0) {
-      key = *message.key();
-    } else {
-      key = "";
-    }
   } else {
     is_error = true;
     error_code = message.err();
     error_string = message.errstr();
+  }
+
+  topic_name = message.topic_name();
+  partition = message.partition();
+  offset = message.offset();
+  if (message.key_len() > 0) {
+    key = *message.key();
+  } else {
+    key = "";
+  }
+  len = message.len();
+  if (len > 0 && dr_copy_payload) {
+      // this pointer will be owned and freed by the Nan::NewBuffer
+      // created in DeliveryReportDispatcher::Flush()
+      payload = malloc(len);
+      memcpy(payload, message.payload(), len);
+  } else {
+      payload = NULL;
   }
 }
 
@@ -305,7 +325,7 @@ void Delivery::dr_cb(RdKafka::Message &message) {
     return;
   }
 
-  delivery_report_t msg(message);
+  delivery_report_t msg(message, dispatcher.dr_copy_payload);
   dispatcher.Add(msg);
   dispatcher.Execute();
 }

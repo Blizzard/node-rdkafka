@@ -88,8 +88,9 @@ describe('Consumer/Producer', function() {
 
       var offset;
 
-      producer.once('delivery-report', function(report) {
+      producer.once('delivery-report', function(err, report) {
         clearInterval(tt);
+        t.ifError(err);
         offset = report.offset;
       });
 
@@ -134,9 +135,10 @@ describe('Consumer/Producer', function() {
         producer.poll();
       }, 100);
 
-      producer.once('delivery-report', function(report) {
+      producer.once('delivery-report', function(err, report) {
         //console.log('delivery-report: ' + JSON.stringify(report));
         clearInterval(tt);
+        t.ifError(err);
         t.equal(topic, report.topic, 'invalid delivery-report topic');
         t.equal(key, report.key, 'invalid delivery-report key');
         t.ok(report.offset >= 0, 'invalid delivery-report offset');
