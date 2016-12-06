@@ -298,7 +298,7 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Metadata* metadata) {
       v8::Local<v8::Array> current_isrs = Nan::New<v8::Array>();
 
       for (i_it = isrs->begin(); i_it != isrs->end(); ++i_it, i_i++) {
-        current_isrs->Set(r_i, Nan::New<v8::Int32>(*i_it));
+        current_isrs->Set(i_i, Nan::New<v8::Int32>(*i_it));
       }
 
       Nan::Set(current_partition, Nan::New("replicas").ToLocalChecked(),
