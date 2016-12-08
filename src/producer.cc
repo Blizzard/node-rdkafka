@@ -344,14 +344,17 @@ NAN_METHOD(Producer::NodeProduce) {
 NAN_METHOD(Producer::NodeOnDelivery) {
   Nan::HandleScope scope;
 
-  if (info.Length() < 1 || !info[0]->IsFunction()) {
+  if (info.Length() < 2 || !info[0]->IsFunction() || !info[1]->IsBoolean()) {
     // Just throw an exception
-    return Nan::ThrowError("Need to specify a callback");
+    return Nan::ThrowError("Need to specify a callback and a boolean");
   }
 
   Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
   v8::Local<v8::Function> cb = info[0].As<v8::Function>();
 
+  v8::Local<v8::Boolean> dr_copy_payload = info[1].As<v8::Boolean>();
+
+  producer->m_dr_cb.dispatcher.dr_copy_payload = dr_copy_payload->Value();
   producer->m_dr_cb.dispatcher.AddCallback(cb);
   info.GetReturnValue().Set(Nan::True());
 }

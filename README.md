@@ -73,7 +73,7 @@ The library will throw an error if the value you send in is invalid.
 
 The library currently supports the following callbacks:
 * `partitioner_cb`
-* `dr_cb`
+* `dr_cb` or `dr_msg_cb`
 * `event_cb`
 
 ### SASL Support
