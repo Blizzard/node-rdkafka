@@ -406,6 +406,9 @@ Getting metadata on any connection returns the following data structure:
 
 The following example illustrates how to use the `getMetadata` method.
 
+When fetching metadata for a specific topic, if a topic reference does not exist, one is created using the default config.
+Please see the documentation on `Client.getMetadata` if you want to set configuration parameters, e.g. `acks`, on a topic to produce messages to.
+
 ```js
 var opts = {
   topic: 'librdtesting-01',
