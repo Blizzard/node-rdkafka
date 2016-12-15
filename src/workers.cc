@@ -283,7 +283,7 @@ void ConsumerConsumeLoop::Execute(const ExecutionMessageBus& bus) {
       // when in consume loop mode
       // Randomise the wait time to avoid contention on different
       // slow topics
-      usleep((int) (rand() * 1000 * 1000 / RAND_MAX));
+      usleep(static_cast<int>(rand_r() * 1000 * 1000 / RAND_MAX));
     } else if (b.err() == RdKafka::ERR__TIMED_OUT) {
       // If it is timed out this could just mean there were no
       // new messages fetched quickly enough. This isn't really
