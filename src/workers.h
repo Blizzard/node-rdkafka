@@ -227,6 +227,7 @@ class ConsumerConsumeLoop : public MessageWorker {
  private:
   NodeKafka::Consumer * consumer;
   const int m_timeout_ms;
+  unsigned int m_rand_seed;
 };
 
 class ConsumerConsume : public ErrorAwareWorker {

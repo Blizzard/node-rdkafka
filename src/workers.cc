@@ -268,7 +268,8 @@ ConsumerConsumeLoop::ConsumerConsumeLoop(Nan::Callback *callback,
                                      const int & timeout_ms) :
   MessageWorker(callback),
   consumer(consumer),
-  m_timeout_ms(timeout_ms) {}
+  m_timeout_ms(timeout_ms),
+  m_rand_seed(time(NULL)) {}
 
 ConsumerConsumeLoop::~ConsumerConsumeLoop() {}
 
@@ -281,7 +282,9 @@ void ConsumerConsumeLoop::Execute(const ExecutionMessageBus& bus) {
       // EOF means there are no more messages to read.
       // We should wait a little bit for more messages to come in
       // when in consume loop mode
-      usleep(1000*1000);
+      // Randomise the wait time to avoid contention on different
+      // slow topics
+      usleep(static_cast<int>(rand_r(&m_rand_seed) * 1000 * 1000 / RAND_MAX));
     } else if (b.err() == RdKafka::ERR__TIMED_OUT) {
       // If it is timed out this could just mean there were no
       // new messages fetched quickly enough. This isn't really
