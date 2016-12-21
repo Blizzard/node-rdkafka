@@ -279,7 +279,7 @@ Messages that are returned by the `KafkaConsumer` have the following structure.
 
 ```js
 {
-  message: new Buffer('hi'), // message contents as a Buffer
+  value: new Buffer('hi'), // message contents as a Buffer
   size: 2, // size of the message, in bytes
   topic: 'librdtesting-01', // topic the message comes from
   offset: 1337, // offset the message was read from
