@@ -39,9 +39,7 @@ describe('Consumer/Producer', function() {
   });
 
   beforeEach(function(done) {
-    var md5hash = crypto.createHash('md5');
-    md5hash.update(crypto.randomBytes(20).toString());
-    var grp = 'kafka-mocha-grp-' + md5hash.digest('hex');
+    var grp = 'kafka-mocha-grp-' + crypto.randomBytes(20).toString('hex');
 
     consumer = new Kafka.KafkaConsumer({
       'metadata.broker.list': kafkaBrokerList,
@@ -123,12 +121,12 @@ describe('Consumer/Producer', function() {
 
     });
   });
-  
+
   it('should be able to produce and consume messages: consumeLoop', function(done) {
     this.timeout(20000);
     var topic = 'test';
     var key = 'key';
-    
+
     crypto.randomBytes(4096, function(ex, buffer) {
 
       var tt = setInterval(function() {
@@ -151,7 +149,7 @@ describe('Consumer/Producer', function() {
         t.ok(message.offset >= 0, 'invalid message offset');
         done();
       });
-      
+
       consumer.consume([topic]);
 
       setTimeout(function() {

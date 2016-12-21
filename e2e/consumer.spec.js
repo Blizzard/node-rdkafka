@@ -19,7 +19,7 @@ describe('Consumer', function() {
   var gcfg;
 
   beforeEach(function() {
-    var grp = 'kafka-mocha-grp-' + crypto.randomBytes(20).toString();
+    var grp = 'kafka-mocha-grp-' + crypto.randomBytes(20).toString('hex');
      gcfg = {
       'bootstrap.servers': kafkaBrokerList,
       'group.id': grp,

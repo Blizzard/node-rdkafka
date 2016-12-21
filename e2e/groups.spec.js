@@ -18,9 +18,8 @@ describe('Consumer group/Producer', function() {
 
   var producer;
   var consumer;
-  var md5hash = crypto.createHash('md5');
-  md5hash.update(crypto.randomBytes(20).toString());
-  var grp = 'kafka-mocha-grp' + md5hash.digest('hex');
+  var grp = 'kafka-mocha-grp-' + crypto.randomBytes(20).toString('hex');
+
   var config = {
     'metadata.broker.list': kafkaBrokerList,
     'group.id': grp,
@@ -50,7 +49,7 @@ describe('Consumer group/Producer', function() {
   });
 
   beforeEach(function(done) {
-    
+
 
     consumer = new Kafka.KafkaConsumer(config, {
       'auto.offset.reset': 'largest'
@@ -124,7 +123,7 @@ describe('Consumer group/Producer', function() {
     consumer.consume([topic]);
 
   });
-  
+
   it('should be able to commitSync and restart from the committed offset', function(done) {
     this.timeout(30000);
     var topic = 'test';
@@ -175,7 +174,7 @@ describe('Consumer group/Producer', function() {
           consumer.unsubscribe();
           consumer.disconnect();
         });
-        
+
       }
     });
 
