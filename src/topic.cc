@@ -30,7 +30,8 @@ namespace NodeKafka {
  */
 
 Topic::Topic(std::string topic_name, RdKafka::Conf* config, Connection * handle) {  // NOLINT
-  Baton b = handle->CreateTopic(topic_name, config);
+  Baton b = config ?
+    handle->CreateTopic(topic_name, config) : handle->CreateTopic(topic_name);
 
   if (b.err() != RdKafka::ERR_NO_ERROR) {
     m_topic = NULL;
@@ -67,35 +68,40 @@ void Topic::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
     return Nan::ThrowError("non-constructor invocation not supported");
   }
 
-  if (info.Length() < 3) {
-    return Nan::ThrowError("Handle, topic name, configuration required");
+  if (info.Length() < 2) {
+    return Nan::ThrowError("Handle and topic name are required");
   }
 
-  if (!info[0]->IsString()) {
+  if (!info[1]->IsString()) {
     return Nan::ThrowError("Topic name must be a string");
   }
 
-  Nan::Utf8String parameterValue(info[0]->ToString());
-  std::string topic_name(*parameterValue);
-
-  if (!info[1]->IsObject()) {
-    return Nan::ThrowError("Configuration data must be specified");
-  }
-
-  std::string errstr;
-
-  RdKafka::Conf* config =
-    Conf::create(RdKafka::Conf::CONF_TOPIC, info[1]->ToObject(), errstr);
-
-  if (!config) {
-    return Nan::ThrowError(errstr.c_str());
-  }
-
-  if (!info[2]->IsObject()) {
+  if (!info[0]->IsObject()) {
     return Nan::ThrowError("Client is not of valid type.");
   }
 
-  Connection* connection = ObjectWrap::Unwrap<Connection>(info[2]->ToObject());
+  RdKafka::Conf* config = NULL;
+
+  if (info.Length() >= 3 && !info[2]->IsUndefined() && !info[2]->IsNull()) {
+    // If they gave us two parameters, or the 3rd parameter is null or
+    // undefined, we want to pass null in for the config
+
+    std::string errstr;
+    if (!info[2]->IsObject()) {
+      return Nan::ThrowError("Configuration data must be specified");
+    }
+
+    config = Conf::create(RdKafka::Conf::CONF_TOPIC, info[2]->ToObject(), errstr);  // NOLINT
+
+    if (!config) {
+      return Nan::ThrowError(errstr.c_str());
+    }
+  }
+
+  Nan::Utf8String parameterValue(info[1]->ToString());
+  std::string topic_name(*parameterValue);
+
+  Connection* connection = ObjectWrap::Unwrap<Connection>(info[0]->ToObject());
 
   if (!connection->IsConnected()) {
     return Nan::ThrowError("Client is not connected");
