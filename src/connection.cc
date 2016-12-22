@@ -94,7 +94,7 @@ Baton Connection::CreateTopic(std::string topic_name, RdKafka::Conf* conf) {
   if (IsConnected()) {
     scoped_mutex_lock lock(m_connection_lock);
     if (IsConnected()) {
-    topic = RdKafka::Topic::create(m_client, topic_name, conf, errstr);
+      topic = RdKafka::Topic::create(m_client, topic_name, conf, errstr);
     } else {
       return Baton(RdKafka::ErrorCode::ERR__STATE);
     }

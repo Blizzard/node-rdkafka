@@ -97,7 +97,7 @@ describe('Producer', function() {
 
     producer.produce('test', null, new Buffer(''), '');
   });
-  
+
   it('should produce a message with a payload and key', function(done) {
     this.timeout(3000);
 
@@ -118,7 +118,7 @@ describe('Producer', function() {
 
     producer.produce('test', null, new Buffer('value'), 'key');
   });
-  
+
   it('should get 100% deliverability', function(done) {
     this.timeout(3000);
 
@@ -162,7 +162,7 @@ describe('Producer', function() {
      'request.required.acks': 1
      //'produce.offset.report': true
     });
-    
+
     producer.once('delivery-report', function(err, report) {
       clearInterval(tt);
       t.ifError(err);
@@ -176,5 +176,5 @@ describe('Producer', function() {
 
     producer.produce(topic, null, new Buffer('value'), 'key');
   });
-  
+
 });
