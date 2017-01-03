@@ -161,6 +161,7 @@
         "librdkafka/src/rdaddr.c",
         "librdkafka/src/rdrand.c",
         "librdkafka/src/rdlist.c",
+        "librdkafka/src/rdstring.c",
         "librdkafka/src/tinycthread.c",
         "librdkafka/src/rdlog.c",
         "librdkafka/src/snappy.c"
