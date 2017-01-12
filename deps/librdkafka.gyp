@@ -1,6 +1,7 @@
 {
   'variables': {
-    "WITH_SASL%": "<!(echo ${WITH_SASL:-1})"
+    "WITH_SASL%": "<!(echo ${WITH_SASL:-1})",
+    "WITH_LZ4%": "<!(echo ${WITH_LZ4:-0})"
   },
   'targets': [
     {
@@ -133,12 +134,19 @@
               'librdkafka/src/rdkafka_sasl.c'
             ]
           }
+        ],
+        [ "<(WITH_LZ4)==1",
+          {
+            'sources': [
+              'librdkafka/src/xxhash.c'
+            ]
+          }
         ]
       ],
       'sources': [
-        "librdkafka/src/rdgz.c",
+        "librdkafka/src/snappy.c",
+        "librdkafka/src/rdgz.c", # This is included by default in node
         "librdkafka/src/rdkafka.c",
-        "librdkafka/src/rdkafka_feature.c",
         "librdkafka/src/rdkafka_broker.c",
         "librdkafka/src/rdkafka_msg.c",
         "librdkafka/src/rdkafka_topic.c",
@@ -157,14 +165,17 @@
         "librdkafka/src/rdkafka_assignor.c",
         "librdkafka/src/rdkafka_range_assignor.c",
         "librdkafka/src/rdkafka_roundrobin_assignor.c",
+        "librdkafka/src/rdkafka_feature.c",
         "librdkafka/src/rdcrc32.c",
         "librdkafka/src/rdaddr.c",
         "librdkafka/src/rdrand.c",
         "librdkafka/src/rdlist.c",
-        "librdkafka/src/rdstring.c",
         "librdkafka/src/tinycthread.c",
         "librdkafka/src/rdlog.c",
-        "librdkafka/src/snappy.c"
+        "librdkafka/src/rdstring.c",
+        "librdkafka/src/rdkafka_event.c",
+        "librdkafka/src/rdkafka_metadata.c",
+        "librdkafka/src/rdregex.c"
       ],
       'cflags!': [ '-fno-rtti' ],
     },
