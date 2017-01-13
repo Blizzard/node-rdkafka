@@ -1,6 +1,7 @@
 {
   'variables': {
-    "WITH_SASL%": "<!(echo ${WITH_SASL:-1})"
+    "WITH_SASL%": "<!(echo ${WITH_SASL:-1})",
+    "WITH_LZ4%": "<!(echo ${WITH_LZ4:-0})"
   },
   'targets': [
     {
@@ -14,17 +15,7 @@
         "librdkafka"
       ],
       'sources': [
-        "librdkafka/src-cpp/RdKafka.cpp",
-        "librdkafka/src-cpp/ConfImpl.cpp",
-        "librdkafka/src-cpp/HandleImpl.cpp",
-        "librdkafka/src-cpp/ConsumerImpl.cpp",
-        "librdkafka/src-cpp/ProducerImpl.cpp",
-        "librdkafka/src-cpp/KafkaConsumerImpl.cpp",
-        "librdkafka/src-cpp/TopicImpl.cpp",
-        "librdkafka/src-cpp/TopicPartitionImpl.cpp",
-        "librdkafka/src-cpp/MessageImpl.cpp",
-        "librdkafka/src-cpp/QueueImpl.cpp",
-        "librdkafka/src-cpp/MetadataImpl.cpp"
+         '<!@(find librdkafka/src-cpp -name *.cpp)'
       ],
       "conditions": [
         [
@@ -133,38 +124,17 @@
               'librdkafka/src/rdkafka_sasl.c'
             ]
           }
+        ],
+        [ "<(WITH_LZ4)==1",
+          {
+            'sources': [
+              'librdkafka/src/xxhash.c'
+            ]
+          }
         ]
       ],
       'sources': [
-        "librdkafka/src/rdgz.c",
-        "librdkafka/src/rdkafka.c",
-        "librdkafka/src/rdkafka_feature.c",
-        "librdkafka/src/rdkafka_broker.c",
-        "librdkafka/src/rdkafka_msg.c",
-        "librdkafka/src/rdkafka_topic.c",
-        "librdkafka/src/rdkafka_conf.c",
-        "librdkafka/src/rdkafka_timer.c",
-        "librdkafka/src/rdkafka_offset.c",
-        "librdkafka/src/rdkafka_transport.c",
-        "librdkafka/src/rdkafka_buf.c",
-        "librdkafka/src/rdkafka_queue.c",
-        "librdkafka/src/rdkafka_op.c",
-        "librdkafka/src/rdkafka_request.c",
-        "librdkafka/src/rdkafka_cgrp.c",
-        "librdkafka/src/rdkafka_pattern.c",
-        "librdkafka/src/rdkafka_partition.c",
-        "librdkafka/src/rdkafka_subscription.c",
-        "librdkafka/src/rdkafka_assignor.c",
-        "librdkafka/src/rdkafka_range_assignor.c",
-        "librdkafka/src/rdkafka_roundrobin_assignor.c",
-        "librdkafka/src/rdcrc32.c",
-        "librdkafka/src/rdaddr.c",
-        "librdkafka/src/rdrand.c",
-        "librdkafka/src/rdlist.c",
-        "librdkafka/src/rdstring.c",
-        "librdkafka/src/tinycthread.c",
-        "librdkafka/src/rdlog.c",
-        "librdkafka/src/snappy.c"
+         '<!@(find librdkafka/src -name *.c ! -name rdkafka_sasl* ! -name xxhash*)'
       ],
       'cflags!': [ '-fno-rtti' ],
     },
