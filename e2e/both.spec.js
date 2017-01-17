@@ -74,7 +74,7 @@ describe('Consumer/Producer', function() {
     });
   });
 
-  it('should be able to produce and consume messages: subscribe/consumeOnce', function(done) {
+  it('should be able to produce, consume messages, read position: subscribe/consumeOnce', function(done) {
     this.timeout(20000);
     var topic = 'test';
 
@@ -112,6 +112,12 @@ describe('Consumer/Producer', function() {
           t.equal(consumer.assignments().length > 0, true, 'Should have at least one assignment');
           t.equal(buffer.toString(), message.value.toString(),
             'message is not equal to buffer');
+          
+          // test consumer.position as we have consumed
+          var position = consumer.position();
+          t.equal(position.length, 1);
+          t.deepStrictEqual(position[0].partition, 0);
+          t.ok(position[0].offset >= 0);
           done();
         });
       };

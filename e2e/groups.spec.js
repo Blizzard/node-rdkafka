@@ -70,7 +70,7 @@ describe('Consumer group/Producer', function() {
     });
   });
 
-  it('should be able to commit and restart from the committed offset', function(done) {
+  it('should be able to commit, read committed, and restart from the committed offset', function(done) {
     this.timeout(30000);
     var topic = 'test';
     var key = 'key';
@@ -114,8 +114,15 @@ describe('Consumer group/Producer', function() {
         consumer.commit(message, function(err) {
           t.ifError(err);
           offsets.committed = message.offset;
-          consumer.unsubscribe();
-          consumer.disconnect();
+          consumer.committed(5000, function(err, topicPartitions) {
+            // test consumer.committed( ) API
+            t.equal(topicPartitions.length, 1);
+            t.deepStrictEqual(topicPartitions[0].offset, message.offset);
+            t.deepStrictEqual(topicPartitions[0].topic, topic);
+            t.deepStrictEqual(topicPartitions[0].partition, 0);
+            consumer.unsubscribe();
+            consumer.disconnect();
+          });
         });
       }
     });
@@ -124,7 +131,7 @@ describe('Consumer group/Producer', function() {
 
   });
 
-  it('should be able to commitSync and restart from the committed offset', function(done) {
+  it('should be able to commitSync, read committed and restart from the committed offset', function(done) {
     this.timeout(30000);
     var topic = 'test';
     var key = 'key';
@@ -147,7 +154,7 @@ describe('Consumer group/Producer', function() {
       consumer2.on('data', function(message) {
         if (offsets.first) {
           offsets.first = false;
-          t.equal(offsets.committed, message.offset);
+          t.deepStrictEqual(offsets.committed, message.offset);
           clearInterval(tt);
           consumer2.unsubscribe();
           consumer2.disconnect(function() {
@@ -166,10 +173,11 @@ describe('Consumer group/Producer', function() {
       count++;
       if (count === 3) {
         consumer.commitSync(message);
+        // test consumer.committed( ) API
         consumer.committed(5000, function(err, topicPartitions) {
           t.ifError(err);
-          // See https://github.com/Blizzard/node-rdkafka/issues/65
-          //t.equal(1, topicPartitions.length);
+          t.deepStrictEqual(topicPartitions.length, 1);
+          t.deepStrictEqual(topicPartitions[0].offset, message.offset);
           offsets.committed = message.offset;
           consumer.unsubscribe();
           consumer.disconnect();

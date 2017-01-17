@@ -224,7 +224,7 @@ Baton Consumer::Committed(int timeout_ms) {
     dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
 
   std::vector<RdKafka::TopicPartition*> * partitions =
-    new std::vector<RdKafka::TopicPartition*>;
+    new std::vector<RdKafka::TopicPartition*>(m_partitions);
 
   RdKafka::ErrorCode err = consumer->committed(*partitions, timeout_ms);
 
@@ -245,7 +245,7 @@ Baton Consumer::Position() {
     dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
 
   std::vector<RdKafka::TopicPartition*> * partitions =
-    new std::vector<RdKafka::TopicPartition*>;
+    new std::vector<RdKafka::TopicPartition*>(m_partitions);
 
   RdKafka::ErrorCode err = consumer->position(*partitions);
 
@@ -498,6 +498,13 @@ NAN_METHOD(Consumer::NodeCommitted) {
   Nan::Callback *callback = new Nan::Callback(cb);
 
   Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
+  Baton b = consumer->RefreshAssignments();
+
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    // Let the JS library throw if we need to so the error can be more rich
+    int error_code = static_cast<int>(b.err());
+    return info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
+  }
 
   Nan::AsyncQueueWorker(
     new Workers::ConsumerCommitted(callback, consumer, timeout_ms));
@@ -529,6 +536,13 @@ NAN_METHOD(Consumer::NodePosition) {
   Nan::HandleScope scope;
 
   Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
+  Baton br = consumer->RefreshAssignments();
+
+  if (br.err() != RdKafka::ERR_NO_ERROR) {
+    // Let the JS library throw if we need to so the error can be more rich
+    int error_code = static_cast<int>(br.err());
+    return info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
+  }
 
   Baton b = consumer->Position();
 
