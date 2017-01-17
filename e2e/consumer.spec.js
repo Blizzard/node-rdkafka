@@ -91,12 +91,20 @@ describe('Consumer', function() {
       });
     });
 
-    it('should be able to subscribe', function() {
+    it('should be able to subscribe', function(done) {
       t.equal(0, consumer.subscription().length);
       consumer.subscribe(['test']);
       t.equal(1, consumer.subscription().length);
       t.equal('test', consumer.subscription()[0]);
-      t.equal(0, consumer.assignments().length);
+      // Wait for assignments() to be updated
+      var interval = setInterval(function() {
+        var assignments = consumer.assignments();
+        if (assignments.length === 1) {
+          t.equal(assignments[0].topic, 'test');
+          clearInterval(interval);
+          done();
+        }
+      }, 500);
     });
 
     it('should be able to unsusbcribe', function() {
