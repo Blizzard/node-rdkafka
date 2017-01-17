@@ -74,8 +74,7 @@ describe('Consumer/Producer', function() {
     });
   });
 
-  it('should be able to produce and consume messages: subscribe/consumeOnce', function(done) {
-    this.timeout(20000);
+  function testConsumeOne(done, doSubscribe) {
     var topic = 'test';
 
     crypto.randomBytes(4096, function(ex, buffer) {
@@ -84,15 +83,16 @@ describe('Consumer/Producer', function() {
         producer.poll();
       }, 100);
 
-      var offset;
-
       producer.once('delivery-report', function(err, report) {
         clearInterval(tt);
         t.ifError(err);
-        offset = report.offset;
       });
 
-      consumer.subscribe([topic]);
+      if (doSubscribe) {
+        consumer.subscribe([topic]);
+      } else {
+        consumer.assign([{ topic: 'test', partition:0 }]);
+      }
 
       var ct;
 
@@ -115,15 +115,12 @@ describe('Consumer/Producer', function() {
           done();
         });
       };
-
       // Consume until we get it or time out
       consumeOne();
-
     });
-  });
+  }
 
-  it('should be able to produce and consume messages: consumeLoop', function(done) {
-    this.timeout(20000);
+  function testConsumeLoop(done, doSubscribe) {
     var topic = 'test';
     var key = 'key';
 
@@ -150,6 +147,12 @@ describe('Consumer/Producer', function() {
         done();
       });
 
+      if (doSubscribe) {
+        consumer.subscribe([topic]);
+      } else {
+        consumer.assign([{ topic: 'test', partition:0 }]);
+      }
+
       consumer.consume([topic]);
 
       setTimeout(function() {
@@ -157,6 +160,25 @@ describe('Consumer/Producer', function() {
       }, 2000);
 
     });
+  }
+
+  it('should be able to produce and consume messages: subscribe/consumeOnce', function(done) {
+    this.timeout(20000);
+    testConsumeOne(done, true);
   });
 
+  it('should be able to produce and consume messages: assign/consumeOnce', function(done) {
+    this.timeout(20000);
+    testConsumeOne(done, false);
+  });
+
+  it('should be able to produce and consume messages: subscribe/consumeLoop', function(done) {
+    this.timeout(20000);
+    testConsumeLoop(done, true);
+  });
+
+  it('should be able to produce and consume messages: assign/consumeLoop', function(done) {
+    this.timeout(20000);
+    testConsumeLoop(done, false);
+  });
 });
