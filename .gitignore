@@ -9,3 +9,6 @@ deps/*
 !deps/*.gyp
 
 .DS_Store
+/.settings/
+/.cproject
+/.project
