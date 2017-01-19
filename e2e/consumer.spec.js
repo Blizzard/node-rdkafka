@@ -76,7 +76,7 @@ describe('Consumer', function() {
 
     it('after assign and commit, should get committed offsets', function(done) {
       consumer.assign([{topic:topic, partition:0}]);
-      consumer.commitSync({topic:topic, partition:0, offset:1000})
+      consumer.commitSync({topic:topic, partition:0, offset:1000});
       consumer.committed(1000, function(err, committed) {
         t.ifError(err);
         t.equal(committed.length, 1);
@@ -239,6 +239,28 @@ describe('Consumer', function() {
 
       });
 
+    });
+
+    it('should be able to consume an assignment with null as a parameter', function(cb) {
+      var consumer = new KafkaConsumer(gcfg, tcfg);
+
+      consumer.setDefaultConsumeTimeout(1000);
+
+      consumer.connect({ timeout: 2000 }, function(err, info) {
+        t.ifError(err);
+
+        consumer.assign([{topic:topic, partition:0}]);
+
+        consumer.consume(null, function(err, message) {
+          t.ifError(err);
+
+          consumer.disconnect(function() {
+            cb();
+          });
+
+        });
+
+      });
     });
 
     it('should happen without issue after consuming an error', function(cb) {
