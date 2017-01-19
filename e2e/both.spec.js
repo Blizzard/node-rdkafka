@@ -165,4 +165,48 @@ describe('Consumer/Producer', function() {
     });
   });
 
+  it('should be able to take an assignment with an offset (faking seek)', function(done) {
+    this.timeout(10000);
+    var numMsg = 10;
+    var offset1;
+    var offset2;
+    var tt;
+
+    producer.on('delivery-report', function(err, report) {
+      if (report.opaque === numMsg) {
+        clearInterval(tt);
+
+        // seek to somewhere in between
+        offset1 = report.offset -(numMsg/2);
+        offset2 = report.offset - numMsg;
+        consumer.assign([{ topic:'test', partition:0, offset: offset1 }]);
+        t.equal(1, consumer.assignments().length);
+
+        consumer.consume(1, function(err, messages) {
+          t.equal(1, messages.length, "first consume once should return one message");
+          t.equal(offset1, messages[0].offset);
+
+          // seek to somewhere else
+          consumer.unassign();
+          consumer.assign([{ topic:'test', partition:0, offset: offset2 }]);
+
+          consumer.consume(1, function(err, messages) {
+            t.equal(1, messages.length, "second consume once should return one message");
+            t.equal(offset2, messages[0].offset);
+            done();
+          });
+        });
+      }
+    });
+
+    for (var i = 1; i <= numMsg; i++) {
+      producer.produce('test', null, new Buffer('message' + i), 'key' + i, i);
+    }
+
+    tt = setInterval(function() {
+      producer.poll();
+    }, 100);
+
+  });
+
 });
