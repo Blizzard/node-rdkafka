@@ -176,6 +176,7 @@ describe('Consumer/Producer', function() {
     consumer.once('data', function(message) {
       t.equal(value.toString(), message.value.toString(), 'invalid message value');
       t.equal(key, message.key, 'invalid message key');
+      clearInterval(tt);
       done();
     });
 
@@ -198,6 +199,7 @@ describe('Consumer/Producer', function() {
     consumer.once('data', function(message) {
       t.equal(value, message.value, 'invalid message value');
       t.equal(key, message.key, 'invalid message key');
+      clearInterval(tt);
       done();
     });
 
