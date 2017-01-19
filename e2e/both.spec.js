@@ -97,7 +97,7 @@ describe('Consumer/Producer', function() {
       var ct;
 
       var consumeOne = function() {
-        consumer.consume(function(err, message) {
+        consumer.consume(1, function(err, message) {
           if (err && err.code === -191) {
             producer.produce(topic, null, buffer, null);
             ct = setTimeout(consumeOne, 100);
@@ -112,7 +112,7 @@ describe('Consumer/Producer', function() {
           t.equal(consumer.assignments().length > 0, true, 'Should have at least one assignment');
           t.equal(buffer.toString(), message.value.toString(),
             'message is not equal to buffer');
-          
+
           // test consumer.position as we have consumed
           var position = consumer.position();
           t.equal(position.length, 1);
@@ -155,7 +155,8 @@ describe('Consumer/Producer', function() {
         done();
       });
 
-      consumer.consume([topic]);
+      consumer.subscribe([topic]);
+      consumer.consume();
 
       setTimeout(function() {
         producer.produce(topic, null, buffer, key);
@@ -180,7 +181,8 @@ describe('Consumer/Producer', function() {
       done();
     });
 
-    consumer.consume([topic]);
+    consumer.subscribe([topic]);
+    consumer.consume();
 
     setTimeout(function() {
       producer.produce(topic, null, value, key);
@@ -203,7 +205,8 @@ describe('Consumer/Producer', function() {
       done();
     });
 
-    consumer.consume([topic]);
+    consumer.subscribe([topic]);
+    consumer.consume();
 
     setTimeout(function() {
       producer.produce(topic, null, value, key);

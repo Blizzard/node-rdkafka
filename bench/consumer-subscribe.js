@@ -29,13 +29,7 @@ var interval;
 
 consumer.connect()
   .once('ready', function() {
-    consumer.consume(function(err, message) {
-      console.log(err);
-      console.log(message);
-    });
-  })
-  .on('rebalance', function() {
-    console.log('rebalance');
+    consumer.consume();
   })
   .once('data', function() {
     interval = setInterval(function() {

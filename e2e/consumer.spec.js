@@ -229,7 +229,7 @@ describe('Consumer', function() {
 
         consumer.subscribe([topic]);
 
-        consumer.consume(function(err, message) {
+        consumer.consume(1, function(err, message) {
           t.ifError(err);
 
           consumer.disconnect(function() {
@@ -251,7 +251,7 @@ describe('Consumer', function() {
 
         consumer.subscribe([topic]);
 
-        consumer.consume(function(err, message) {
+        consumer.consume(1, function(err, message) {
           t.notEqual(err, undefined, 'Error should not be undefined.');
           t.notEqual(err, null, 'Error should not be null.');
           t.equal(message, undefined, 'Message should not be set');

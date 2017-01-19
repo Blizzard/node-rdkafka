@@ -316,10 +316,12 @@ consumer.connect();
 
 consumer
   .on('ready', function() {
+    consumer.subscribe('librdtesting-01');
+
     // Consume from the librdtesting-01 topic. This is what determines
-    // the mode we are running in. By consuming an entire topic,
-    // we will get messages from that topic as soon as they are available
-    consumer.consume('librdtesting-01');
+    // the mode we are running in. By not specifying a callback (or specifying
+    // only a callback) we get messages as soon as they are available.
+    consumer.consume();
   })
   .on('data', function(data) {
     // Output the actual message contents
@@ -339,7 +341,7 @@ consumer
 
     // Read one message every 1000 seconds
     setInterval(function() {
-      consumer.consume();
+      consumer.consume(1);
     }, 1000);
   })
   .on('data', function(data) {
@@ -356,8 +358,8 @@ The following table lists important methods for this API.
 |`consumer.disconnect()` | Disconnects from the broker. <br><br>The `disconnect()` method emits `disconnected` when it has disconnected or `error` if something went wrong.
 |`consumer.subscribe(topics)` | Subscribes to an array of topics. <br><br> `topics` can be either an array or a string for a single topic. |
 |`consumer.unsubscribe()` | Unsubscribes from the currently subscribed topics. <br><br>You cannot subscribe to different topics without calling the `unsubscribe()` method first. |
-|`consumer.consume(cb)` | Gets a message from the existing subscription. If `cb` is specified, invokes `cb(err, message)`. |
-|`consumer.consume(topics, cb)` | Creates a subscription and get messages as they become available.<br><br>The `consume()` method keeps a background thread running to do the work. If `cb` is specified, invokes `cb(err, message)`. |
+|`consumer.consume(cb)` | Gets messages from the existing subscription as quickly as possible. This method keeps a background thread running to do the work. If `cb` is specified, invokes `cb(err, message)`. |
+|`consumer.consume(number, cb)` | Gets `number` of messages from the existing subscription. If `cb` is specified, invokes `cb(err, message)`. |
 
 The following table lists events for this API.
 

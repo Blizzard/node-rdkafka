@@ -103,7 +103,8 @@ describe('Consumer group/Producer', function() {
       });
 
       consumer2.on('ready', function() {
-        consumer2.consume([topic]);
+        consumer2.subscribe([topic]);
+        consumer2.consume();
       });
       consumer2.connect();
     });
@@ -127,7 +128,8 @@ describe('Consumer group/Producer', function() {
       }
     });
 
-    consumer.consume([topic]);
+    consumer.subscribe([topic]);
+    consumer.consume();
 
   });
 
@@ -164,7 +166,8 @@ describe('Consumer group/Producer', function() {
       });
 
       consumer2.on('ready', function() {
-        consumer2.consume([topic]);
+        consumer2.subscribe([topic]);
+        consumer2.consume();
       });
       consumer2.connect();
     });
@@ -186,7 +189,8 @@ describe('Consumer group/Producer', function() {
       }
     });
 
-    consumer.consume([topic]);
+    consumer.subscribe([topic]);
+    consumer.consume();
 
   });
 
