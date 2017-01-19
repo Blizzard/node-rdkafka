@@ -13,6 +13,7 @@ var t = require('assert');
 var Kafka = require('../');
 var kafkaBrokerList = process.env.KAFKA_HOST || 'localhost:9092';
 var eventListener = require('./listener');
+var topic = 'test';
 
 describe('Consumer/Producer', function() {
 
@@ -76,7 +77,6 @@ describe('Consumer/Producer', function() {
 
   it('should be able to produce, consume messages, read position: subscribe/consumeOnce', function(done) {
     this.timeout(20000);
-    var topic = 'test';
 
     crypto.randomBytes(4096, function(ex, buffer) {
 
@@ -130,7 +130,6 @@ describe('Consumer/Producer', function() {
 
   it('should be able to produce and consume messages: consumeLoop', function(done) {
     this.timeout(20000);
-    var topic = 'test';
     var key = 'key';
 
     crypto.randomBytes(4096, function(ex, buffer) {
@@ -163,6 +162,52 @@ describe('Consumer/Producer', function() {
       }, 2000);
 
     });
+  });
+
+  it('should be able to produce and consume messages: empty key and empty value', function(done) {
+    this.timeout(20000);
+    var key = '';
+    var value = new Buffer('');
+
+    var tt = setInterval(function() {
+      producer.poll();
+    }, 100);
+
+    consumer.once('data', function(message) {
+      clearInterval(tt);
+      t.equal(value.toString(), message.value.toString(), 'invalid message value');
+      t.equal(key, message.key, 'invalid message key');
+      done();
+    });
+
+    consumer.consume([topic]);
+
+    setTimeout(function() {
+      producer.produce(topic, null, value, key);
+    }, 2000);
+  });
+
+  it('should be able to produce and consume messages: null key and null value', function(done) {
+    this.timeout(20000);
+    var key = null;
+    var value = null;
+
+    var tt = setInterval(function() {
+      producer.poll();
+    }, 100);
+
+    consumer.once('data', function(message) {
+      clearInterval(tt);
+      t.equal(value, message.value, 'invalid message value');
+      t.equal(key, message.key, 'invalid message key');
+      done();
+    });
+
+    consumer.consume([topic]);
+
+    setTimeout(function() {
+      producer.produce(topic, null, value, key);
+    }, 2000);
   });
 
 });
