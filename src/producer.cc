@@ -207,15 +207,16 @@ void Producer::Disconnect() {
  * @return - A baton object with error code set if it failed.
  */
 Baton Producer::Produce(void* message, size_t size, RdKafka::Topic* topic,
-  int32_t partition, std::string *key) {
+  int32_t partition, std::string *key, void* opaque) {
   RdKafka::ErrorCode response_code;
 
   if (IsConnected()) {
     scoped_mutex_lock lock(m_connection_lock);
     if (IsConnected()) {
       RdKafka::Producer* producer = dynamic_cast<RdKafka::Producer*>(m_client);
+      // Opaque should be null
       response_code = producer->produce(topic, partition,
-            RdKafka::Producer::RK_MSG_COPY, message, size, key, NULL);
+            RdKafka::Producer::RK_MSG_COPY, message, size, key, opaque);
 
       Poll();
     } else {
@@ -313,7 +314,7 @@ NAN_METHOD(Producer::NodeProduce) {
     message_buffer_data = node::Buffer::Data(message_buffer_object);
   }
 
-  // Last we have to get the key
+  // Next, get the key
   std::string * key;
 
   if (info[3]->IsNull() || info[3]->IsUndefined()) {
@@ -325,10 +326,19 @@ NAN_METHOD(Producer::NodeProduce) {
     key = new std::string(*keyUTF8);
   }
 
+  void* opaque = NULL;
+  // Opaque handling
+  if (info.Length() > 4 && !info[4]->IsUndefined()) {
+    // We need to create a persistent handle
+    opaque = new Nan::Persistent<v8::Value>(info[4]);
+    // To get the local from this later,
+    // v8::Local<v8::Object> object = Nan::New(persistent);
+  }
+
   Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
 
   Baton b = producer->Produce(message_buffer_data, message_buffer_length,
-    topic->toRDKafkaTopic(), partition, key);
+    topic->toRDKafkaTopic(), partition, key, opaque);
 
   // we can delete the key as librdkafka will take a copy of the message
   if (key) {
@@ -344,17 +354,14 @@ NAN_METHOD(Producer::NodeProduce) {
 NAN_METHOD(Producer::NodeOnDelivery) {
   Nan::HandleScope scope;
 
-  if (info.Length() < 2 || !info[0]->IsFunction() || !info[1]->IsBoolean()) {
+  if (info.Length() < 1 || !info[0]->IsFunction()) {
     // Just throw an exception
-    return Nan::ThrowError("Need to specify a callback and a boolean");
+    return Nan::ThrowError("Need to specify a callback");
   }
 
   Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
   v8::Local<v8::Function> cb = info[0].As<v8::Function>();
 
-  v8::Local<v8::Boolean> dr_copy_payload = info[1].As<v8::Boolean>();
-
-  producer->m_dr_cb.dispatcher.dr_copy_payload = dr_copy_payload->Value();
   producer->m_dr_cb.dispatcher.AddCallback(cb);
   info.GetReturnValue().Set(Nan::True());
 }
