@@ -97,7 +97,6 @@ struct delivery_report_t {
   std::string topic_name;
   int32_t partition;
   int64_t offset;
-  std::string key;
   size_t len;
   void* opaque;
 
