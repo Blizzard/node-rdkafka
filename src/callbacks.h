@@ -39,9 +39,6 @@ class Dispatcher {
   void Activate();
   void Deactivate();
 
-  // if this flag is true, msg payload is added to the delivery report
-  bool dr_copy_payload = false;
-
  protected:
   std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > > callbacks;  // NOLINT
 
@@ -102,9 +99,9 @@ struct delivery_report_t {
   int64_t offset;
   std::string key;
   size_t len;
-  void* payload;
+  void* opaque;
 
-  explicit delivery_report_t(RdKafka::Message &, bool dr_copy_payload);
+  explicit delivery_report_t(RdKafka::Message &);
   ~delivery_report_t();
 };
 

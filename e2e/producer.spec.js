@@ -119,6 +119,28 @@ describe('Producer', function() {
     producer.produce('test', null, new Buffer('value'), 'key');
   });
 
+  it('should produce a message with an opaque', function(done) {
+    this.timeout(3000);
+
+    var tt = setInterval(function() {
+      producer.poll();
+    }, 200);
+
+    producer.once('delivery-report', function(err, report) {
+      clearInterval(tt);
+      t.ifError(err);
+      t.ok(report !== undefined);
+      t.ok(typeof report.topic === 'string');
+      t.ok(typeof report.partition === 'number');
+      t.ok(typeof report.offset === 'number');
+      t.equal(report.opaque, 'opaque');
+      done();
+    });
+
+    producer.produce('test', null, new Buffer('value'), null, 'opaque');
+  });
+
+
   it('should get 100% deliverability', function(done) {
     this.timeout(3000);
 
