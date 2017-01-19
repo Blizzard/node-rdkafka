@@ -335,14 +335,22 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Message *message) {
   if (message->err() == RdKafka::ERR_NO_ERROR) {
     v8::Local<v8::Object> pack = Nan::New<v8::Object>();
 
-    void* payload = malloc(message->len());
-    memcpy(payload, message->payload(), message->len());
+    void* message_payload = message->payload();
 
-    Nan::MaybeLocal<v8::Object> buff = Nan::NewBuffer(
-      static_cast<char*>(payload), static_cast<int>(message->len()));
+    if (message_payload) {
+      void* payload = malloc(message->len());
+      memcpy(payload, message_payload, message->len());
 
-    Nan::Set(pack, Nan::New<v8::String>("value").ToLocalChecked(),
-      buff.ToLocalChecked());
+      Nan::MaybeLocal<v8::Object> buff = Nan::NewBuffer(
+        static_cast<char*>(payload), static_cast<int>(message->len()));
+
+      Nan::Set(pack, Nan::New<v8::String>("value").ToLocalChecked(),
+        buff.ToLocalChecked());
+    } else {
+      Nan::Set(pack, Nan::New<v8::String>("value").ToLocalChecked(),
+        Nan::Null());
+    }
+
     Nan::Set(pack, Nan::New<v8::String>("size").ToLocalChecked(),
       Nan::New<v8::Number>(message->len()));
 
