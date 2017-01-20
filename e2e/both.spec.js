@@ -143,7 +143,6 @@ describe('Consumer/Producer', function() {
         clearInterval(tt);
         t.ifError(err);
         t.equal(topic, report.topic, 'invalid delivery-report topic');
-        t.equal(key, report.key, 'invalid delivery-report key');
         t.ok(report.offset >= 0, 'invalid delivery-report offset');
       });
 

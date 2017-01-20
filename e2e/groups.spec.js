@@ -14,7 +14,7 @@ var Kafka = require('../');
 var kafkaBrokerList = process.env.KAFKA_HOST || 'localhost:9092';
 var eventListener = require('./listener');
 
-describe('Consumer group/Producer', function() {
+describe('Consumer Group/Producer', function() {
 
   var producer;
   var consumer;

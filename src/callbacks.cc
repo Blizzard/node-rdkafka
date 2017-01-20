@@ -263,13 +263,6 @@ void DeliveryReportDispatcher::Flush() {
     Nan::Set(jsobj, Nan::New("offset").ToLocalChecked(),
             Nan::New<v8::Number>(event.offset));
 
-    if (event.key.empty()) {
-      Nan::Set(jsobj, Nan::New("key").ToLocalChecked(), Nan::Null());
-    } else {
-      Nan::Set(jsobj, Nan::New("key").ToLocalChecked(),
-              Nan::New<v8::String>(event.key).ToLocalChecked());
-    }
-
     if (event.opaque) {
       Nan::Persistent<v8::Value> * persistent =
         static_cast<Nan::Persistent<v8::Value> *>(event.opaque);
@@ -304,11 +297,6 @@ delivery_report_t::delivery_report_t(RdKafka::Message &message) {
   topic_name = message.topic_name();
   partition = message.partition();
   offset = message.offset();
-  if (message.key_len() > 0) {
-    key = *message.key();
-  } else {
-    key = "";
-  }
 
   if (message.msg_opaque()) {
     opaque = message.msg_opaque();
