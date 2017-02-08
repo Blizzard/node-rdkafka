@@ -64,14 +64,17 @@ describe('Consumer', function() {
 
     it('after assign, should get committed array without offsets ', function(done) {
       consumer.assign([{topic:topic, partition:0}]);
-      consumer.committed(1000, function(err, committed) {
-        t.ifError(err);
-        t.equal(committed.length, 1);
-        t.equal(typeof committed[0], 'object', 'TopicPartition should be an object');
-        t.deepStrictEqual(committed[0].partition, 0);
-        t.equal(committed[0].offset, undefined);
-        done();
-      });
+      // Defer this for a second
+      setTimeout(function() {
+        consumer.committed(1000, function(err, committed) {
+          t.ifError(err);
+          t.equal(committed.length, 1);
+          t.equal(typeof committed[0], 'object', 'TopicPartition should be an object');
+          t.deepStrictEqual(committed[0].partition, 0);
+          t.equal(committed[0].offset, undefined);
+          done();
+        });
+      }, 1000);
     });
 
     it('after assign and commit, should get committed offsets', function(done) {
@@ -229,7 +232,7 @@ describe('Consumer', function() {
 
         consumer.subscribe([topic]);
 
-        consumer.consume(1, function(err, message) {
+        consumer.consume(1, function(err, messages) {
           t.ifError(err);
 
           consumer.disconnect(function() {
@@ -251,10 +254,10 @@ describe('Consumer', function() {
 
         consumer.subscribe([topic]);
 
-        consumer.consume(1, function(err, message) {
-          t.notEqual(err, undefined, 'Error should not be undefined.');
-          t.notEqual(err, null, 'Error should not be null.');
-          t.equal(message, undefined, 'Message should not be set');
+        consumer.consume(1, function(err, messages) {
+
+          // Timeouts do not classify as errors anymore
+          t.equal(messages[0], undefined, 'Message should not be set');
 
           consumer.disconnect(function() {
             cb();

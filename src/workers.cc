@@ -359,7 +359,9 @@ void ConsumerConsumeNum::Execute() {
     if (b.err() != RdKafka::ERR_NO_ERROR) {
       if (b.err() != RdKafka::ERR__TIMED_OUT &&
           b.err() != RdKafka::ERR__PARTITION_EOF) {
-        SetErrorBaton(b);
+        if (i == 0) {
+          SetErrorBaton(b);
+        }
       }
       break;
     }

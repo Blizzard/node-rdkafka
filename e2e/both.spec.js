@@ -97,8 +97,8 @@ describe('Consumer/Producer', function() {
       var ct;
 
       var consumeOne = function() {
-        consumer.consume(1, function(err, message) {
-          if (err && err.code === -191) {
+        consumer.consume(1, function(err, messages) {
+          if (messages.length === 0 || (err && err.code === -191)) {
             producer.produce(topic, null, buffer, null);
             ct = setTimeout(consumeOne, 100);
             return;
@@ -106,6 +106,8 @@ describe('Consumer/Producer', function() {
             ct = setTimeout(consumeOne, 100);
             return;
           }
+
+          var message = messages[0];
 
           t.ifError(err);
           t.equal(Array.isArray(consumer.assignments()), true, 'Assignments should be an array');
