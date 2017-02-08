@@ -12,7 +12,7 @@ Copyright (c) 2016 Blizzard Entertainment.
 
 The `node-rdkafka` library is a high-performance NodeJS client for [Apache Kafka](http://kafka.apache.org/) that wraps the native  [librdkafka](https://github.com/edenhill/librdkafka) library.  All the complexity of balancing writes across partitions and managing (possibly ever-changing) brokers should be encapsulated in the library.
 
-__This library currently uses `librdkafka` version `0.9.1`.__
+__This library currently uses `librdkafka` version `0.9.3`.__
 
 ## Reference Docs
 
@@ -62,7 +62,7 @@ var Kafka = require('node-rdkafka');
 
 ## Configuration
 
-You can pass many configuration options to `librdkafka`.  A full list can be found in `librdkafka`'s [Configuration.md](https://github.com/edenhill/librdkafka/blob/2213fb29f98a7a73f22da21ef85e0783f6fd67c4/CONFIGURATION.md)
+You can pass many configuration options to `librdkafka`.  A full list can be found in `librdkafka`'s [Configuration.md](https://github.com/edenhill/librdkafka/blob/2f153ea92a521bf7d2eb6b3108f393caafab3809/CONFIGURATION.md)
 
 Configuration keys that have the suffix `_cb` are designated as callbacks. Some
 of these keys are informational and you can choose to opt-in (for example, `dr_cb`). Others are callbacks designed to
@@ -215,7 +215,7 @@ var producer = new Kafka.Producer({
   'dr_cb': true // Specifies that we want a delivery-report event to be generated
 });
 
-producer.on('delivery-report', function(report) {
+producer.on('delivery-report', function(err, report) {
   // Report of delivery statistics here:
   //
   console.log(report);
