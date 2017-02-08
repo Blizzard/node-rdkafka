@@ -44,7 +44,7 @@ Connection::Connection(Conf* gconfig, Conf* tconfig):
 
     m_client = NULL;
     m_is_closing = false;
-    uv_mutex_init(&m_connection_lock);
+    uv_rwlock_init(&m_connection_lock);
 
     // Try to set the event cb. Shouldn't be an error here, but if there
     // is, it doesn't get reported.
@@ -55,7 +55,7 @@ Connection::Connection(Conf* gconfig, Conf* tconfig):
   }
 
 Connection::~Connection() {
-  uv_mutex_destroy(&m_connection_lock);
+  uv_rwlock_destroy(&m_connection_lock);
 
   if (m_tconfig) {
     delete m_tconfig;
@@ -92,7 +92,7 @@ Baton Connection::CreateTopic(std::string topic_name, RdKafka::Conf* conf) {
   RdKafka::Topic* topic = NULL;
 
   if (IsConnected()) {
-    scoped_mutex_lock lock(m_connection_lock);
+    scoped_shared_read_lock lock(m_connection_lock);
     if (IsConnected()) {
       topic = RdKafka::Topic::create(m_client, topic_name, conf, errstr);
     } else {
@@ -131,7 +131,7 @@ Baton Connection::GetMetadata(std::string topic_name, int timeout_ms) {
   }
 
   if (IsConnected()) {
-    scoped_mutex_lock lock(m_connection_lock);
+    scoped_shared_read_lock lock(m_connection_lock);
     if (IsConnected()) {
       err = m_client->metadata(topic != NULL, topic, &metadata, timeout_ms);
     } else {

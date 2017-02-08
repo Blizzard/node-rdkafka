@@ -230,6 +230,12 @@ void DeliveryReportDispatcher::Add(const delivery_report_t &e) {
   events.push_back(e);
 }
 
+void DeliveryReportDispatcher::AddCallback(v8::Local<v8::Function> func) {
+  Nan::Persistent<v8::Function,
+                  Nan::CopyablePersistentTraits<v8::Function> > value(func);
+  callbacks.push_back(value);
+}
+
 void DeliveryReportDispatcher::Flush() {
   Nan::HandleScope scope;
   //
@@ -283,6 +289,15 @@ void DeliveryReportDispatcher::Flush() {
       delete persistent;
     }
 
+    if (event.payload) {
+      Nan::MaybeLocal<v8::Object> buff = Nan::NewBuffer(
+        static_cast<char*>(event.payload),
+        static_cast<int>(event.len));
+
+      Nan::Set(jsobj, Nan::New<v8::String>("value").ToLocalChecked(),
+        buff.ToLocalChecked());
+    }
+
     Nan::Set(jsobj, Nan::New<v8::String>("size").ToLocalChecked(),
             Nan::New<v8::Number>(event.len));
 
@@ -292,7 +307,7 @@ void DeliveryReportDispatcher::Flush() {
   }
 }
 
-delivery_report_t::delivery_report_t(RdKafka::Message &message) {
+delivery_report_t::delivery_report_t(RdKafka::Message &message, bool dr_copy_payload) {  // NOLINT
   if (message.err() == RdKafka::ERR_NO_ERROR) {
     is_error = false;
   } else {
@@ -317,6 +332,15 @@ delivery_report_t::delivery_report_t(RdKafka::Message &message) {
   }
 
   len = message.len();
+
+  if (len > 0 && dr_copy_payload) {
+    // this pointer will be owned and freed by the Nan::NewBuffer
+    // created in DeliveryReportDispatcher::Flush()
+    payload = malloc(len);
+    memcpy(payload, message.payload(), len);
+    } else {
+      payload = NULL;
+    }
 }
 
 delivery_report_t::~delivery_report_t() {}
@@ -324,15 +348,22 @@ delivery_report_t::~delivery_report_t() {}
 // Delivery Report
 
 Delivery::Delivery():
-  dispatcher() {}
+  dispatcher() {
+    m_dr_msg_cb = false;
+  }
 Delivery::~Delivery() {}
+
+
+void Delivery::SendMessageBuffer(bool send_dr_msg) {
+  m_dr_msg_cb = true;
+}
 
 void Delivery::dr_cb(RdKafka::Message &message) {
   if (!dispatcher.HasCallbacks()) {
     return;
   }
 
-  delivery_report_t msg(message);
+  delivery_report_t msg(message, m_dr_msg_cb);
   dispatcher.Add(msg);
   dispatcher.Execute();
 }
