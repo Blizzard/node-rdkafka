@@ -29,7 +29,8 @@ var interval;
 
 consumer.connect()
   .once('ready', function() {
-    consumer.consume([topic]);
+    consumer.subscribe([topic]);
+    consumer.consume();
   })
   .on('rebalance', function() {
     console.log('rebalance');
