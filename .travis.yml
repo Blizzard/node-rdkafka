@@ -4,9 +4,9 @@ sudo: required
 node_js:
 - '4'
 - '6'
-env:
-- WITH_SASL=0
-- WITH_SASL=1
+# env:
+# - WITH_SASL=0
+# - WITH_SASL=1
 cache:
   directories:
   - node_modules
