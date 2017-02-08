@@ -76,7 +76,7 @@ class Connection : public Nan::ObjectWrap {
   Conf* m_tconfig;
   std::string m_errstr;
 
-  uv_mutex_t m_connection_lock;
+  uv_rwlock_t m_connection_lock;
 
   RdKafka::Handle* m_client;
 

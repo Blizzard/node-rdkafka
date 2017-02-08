@@ -51,6 +51,42 @@ class scoped_mutex_lock {
   uv_mutex_t &async_lock;
 };
 
+/*
+int uv_rwlock_tryrdlock(uv_rwlock_t* rwlock)
+
+int uv_rwlock_trywrlock(uv_rwlock_t* rwlock)
+ */
+
+class scoped_shared_write_lock {
+ public:
+  explicit scoped_shared_write_lock(uv_rwlock_t& lock_) :  // NOLINT
+    async_lock(lock_) {
+      uv_rwlock_wrlock(&async_lock);
+    }
+
+  ~scoped_shared_write_lock() {
+    uv_rwlock_wrunlock(&async_lock);
+  }
+
+ private:
+  uv_rwlock_t &async_lock;
+};
+
+class scoped_shared_read_lock {
+ public:
+  explicit scoped_shared_read_lock(uv_rwlock_t& lock_) :  // NOLINT
+    async_lock(lock_) {
+      uv_rwlock_rdlock(&async_lock);
+    }
+
+  ~scoped_shared_read_lock() {
+    uv_rwlock_rdunlock(&async_lock);
+  }
+
+ private:
+  uv_rwlock_t &async_lock;
+};
+
 namespace Conversion {
 
 namespace Topic {

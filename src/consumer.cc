@@ -55,8 +55,10 @@ Baton Consumer::Connect() {
   }
 
   std::string errstr;
-
-  m_client = RdKafka::KafkaConsumer::create(m_gconfig, errstr);
+  {
+    scoped_shared_write_lock lock(m_connection_lock);
+    m_client = RdKafka::KafkaConsumer::create(m_gconfig, errstr);
+  }
 
   if (!m_client || !errstr.empty()) {
     return Baton(RdKafka::ERR__STATE, errstr);
@@ -87,7 +89,7 @@ Baton Consumer::Disconnect() {
   if (IsConnected()) {
     m_is_closing = true;
     {
-      scoped_mutex_lock lock(m_connection_lock);
+      scoped_shared_write_lock lock(m_connection_lock);
 
       RdKafka::KafkaConsumer* consumer =
         dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
@@ -309,7 +311,7 @@ Baton Consumer::Subscribe(std::vector<std::string> topics) {
 
 Baton Consumer::Consume(int timeout_ms) {
   if (IsConnected()) {
-    scoped_mutex_lock lock(m_connection_lock);
+    scoped_shared_read_lock lock(m_connection_lock);
     if (!IsConnected()) {
       return Baton(RdKafka::ERR__STATE, "Consumer is not connected");
     } else {

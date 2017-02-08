@@ -163,12 +163,14 @@ Baton Producer::Connect() {
   }
 
   std::string errstr;
-
-  m_client = RdKafka::Producer::create(m_gconfig, errstr);
+  {
+    scoped_shared_read_lock lock(m_connection_lock);
+    m_client = RdKafka::Producer::create(m_gconfig, errstr);
+  }
 
   if (!m_client) {
     // @todo implement errstr into this somehow
-    return Baton(RdKafka::ERR__STATE);
+    return Baton(RdKafka::ERR__STATE, errstr);
   }
 
   return Baton(RdKafka::ERR_NO_ERROR);
@@ -186,8 +188,7 @@ void Producer::DeactivateDispatchers() {
 
 void Producer::Disconnect() {
   if (IsConnected()) {
-    scoped_mutex_lock lock(m_connection_lock);
-    // @todo look at hanging
+    scoped_shared_write_lock lock(m_connection_lock);
     delete m_client;
     m_client = NULL;
   }
@@ -211,14 +212,13 @@ Baton Producer::Produce(void* message, size_t size, RdKafka::Topic* topic,
   RdKafka::ErrorCode response_code;
 
   if (IsConnected()) {
-    scoped_mutex_lock lock(m_connection_lock);
+    scoped_shared_read_lock lock(m_connection_lock);
     if (IsConnected()) {
       RdKafka::Producer* producer = dynamic_cast<RdKafka::Producer*>(m_client);
       // Opaque should be null
       response_code = producer->produce(topic, partition,
             RdKafka::Producer::RK_MSG_COPY, message, size, key, opaque);
-
-      Poll();
+      // Poll();
     } else {
       response_code = RdKafka::ERR__STATE;
     }
@@ -359,8 +359,19 @@ NAN_METHOD(Producer::NodeOnDelivery) {
     return Nan::ThrowError("Need to specify a callback");
   }
 
+  bool dr_msg_cb = false;
+
+  if (info.Length() >= 2) {
+    // We have to get the boolean
+    dr_msg_cb = Nan::To<bool>(info[1]).FromMaybe(false);
+  }
+
   Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
   v8::Local<v8::Function> cb = info[0].As<v8::Function>();
+
+  if (dr_msg_cb) {
+    producer->m_dr_cb.SendMessageBuffer(true);
+  }
 
   producer->m_dr_cb.dispatcher.AddCallback(cb);
   info.GetReturnValue().Set(Nan::True());
@@ -415,7 +426,7 @@ NAN_METHOD(Producer::NodePoll) {
 Baton Producer::Flush(int timeout_ms) {
   RdKafka::ErrorCode response_code;
   if (IsConnected()) {
-    scoped_mutex_lock lock(m_connection_lock);
+    scoped_shared_read_lock lock(m_connection_lock);
     if (IsConnected()) {
       RdKafka::Producer* producer = dynamic_cast<RdKafka::Producer*>(m_client);
       response_code = producer->flush(timeout_ms);
