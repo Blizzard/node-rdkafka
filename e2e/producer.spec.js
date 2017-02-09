@@ -86,7 +86,7 @@ describe('Producer', function() {
         producer.poll();
       }, 200);
 
-      producer.once('delivery-report', function(report) {
+      producer.once('delivery-report', function(err, report) {
         clearInterval(tt);
         t.ok(report !== undefined);
         t.ok(typeof report.topic === 'string');
