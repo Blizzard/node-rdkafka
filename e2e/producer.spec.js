@@ -50,7 +50,7 @@ describe('Producer', function() {
 
         // Ensure it is in the correct format
         t.ok(metadata.orig_broker_name, 'Broker name is not set');
-        t.ok(metadata.orig_broker_id, 'Broker id is not set');
+        t.ok(metadata.orig_broker_id !== undefined, 'Broker id is not set');
         t.equal(Array.isArray(metadata.brokers), true);
         t.equal(Array.isArray(metadata.topics), true);
 
