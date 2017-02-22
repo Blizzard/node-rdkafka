@@ -1,6 +1,7 @@
 {
   'variables': {
-    "WITH_SASL%": "<!(echo ${WITH_SASL:-1})"
+    "WITH_SASL%": "<!(echo ${WITH_SASL:-1})",
+    "WITH_LZ4%": "<!(echo ${WITH_LZ4:-0})"
   },
   'targets': [
     {
@@ -122,10 +123,17 @@
               'librdkafka/src/rdkafka_sasl.c'
             ]
           }
+        ],
+        [ "<(WITH_LZ4)==1",
+          {
+            'sources': [
+              'librdkafka/src/xxhash.c'
+            ]
+          }
         ]
       ],
       'sources': [
-         '<!@(find librdkafka/src -name *.c ! -name rdkafka_sasl* )'
+         '<!@(find librdkafka/src -name *.c ! -name rdkafka_sasl* ! -name xxhash*)'
       ],
       'cflags!': [ '-fno-rtti' ],
     },

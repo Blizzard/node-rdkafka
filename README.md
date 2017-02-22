@@ -62,7 +62,7 @@ var Kafka = require('node-rdkafka');
 
 ## Configuration
 
-You can pass many configuration options to `librdkafka`.  A full list can be found in `librdkafka`'s [Configuration.md](https://github.com/edenhill/librdkafka/blob/2f153ea92a521bf7d2eb6b3108f393caafab3809/CONFIGURATION.md)
+You can pass many configuration options to `librdkafka`.  A full list can be found in `librdkafka`'s [Configuration.md](https://github.com/edenhill/librdkafka/blob/0.9.3.x/CONFIGURATION.md)
 
 Configuration keys that have the suffix `_cb` are designated as callbacks. Some
 of these keys are informational and you can choose to opt-in (for example, `dr_cb`). Others are callbacks designed to
@@ -93,7 +93,7 @@ var producer = new Kafka.Producer({
 });
 ```
 
-A `Producer` requires only `metadata.broker.list` (the Kafka brokers) to be created.  The values in this list are separated by commas.  For other configuration options, see the [Configuration.md](https://github.com/edenhill/librdkafka/blob/2213fb29f98a7a73f22da21ef85e0783f6fd67c4/CONFIGURATION.md) file described previously.  
+A `Producer` requires only `metadata.broker.list` (the Kafka brokers) to be created.  The values in this list are separated by commas.  For other configuration options, see the [Configuration.md](https://github.com/edenhill/librdkafka/blob/0.9.3.x/CONFIGURATION.md) file described previously. 
 
 The following example illustrates a list with several `librdkafka` options set.
 
@@ -233,7 +233,7 @@ The following table describes types of events.
 | `event.log` | The `event.log` event is emitted when logging events come in (if you opted into logging via the `event_cb` option). <br><br>You will need to set a value for `debug` if you want to send information. |
 | `event.status` | The  `event.status` event is emitted when `librdkafka` reports stats (if you opted in). |
 | `event.throttle` | The `event.throttle` event emitted  when `librdkafka` reports throttling. |
-| `delivery-report` | The `delivery-report` event is emitted when a delivery report has been found via polling. <br><br>To use this event, you must set `request.required.acks` to `1` or `-1` in topic configuration and `dr_cb` to `true` in the `Producer` constructor options. |
+| `delivery-report` | The `delivery-report` event is emitted when a delivery report has been found via polling. <br><br>To use this event, you must set `request.required.acks` to `1` or `-1` in topic configuration and `dr_cb` (or `dr_msg_db` if you want the report to contain the message payload) to `true` in the `Producer` constructor options. |
 
 ## Kafka.KafkaConsumer
 
