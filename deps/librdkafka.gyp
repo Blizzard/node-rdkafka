@@ -117,7 +117,8 @@
         [ "<(WITH_SASL)==1",
           {
             'sources': [
-              'librdkafka/src/rdkafka_sasl.c'
+              'librdkafka/src/rdkafka_sasl.c',
+              'librdkafka/src/rdkafka_sasl_cyrus.c'
             ]
           }
         ]
