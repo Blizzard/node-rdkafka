@@ -24,7 +24,7 @@ class Topic : public Nan::ObjectWrap {
   static void Init(v8::Local<v8::Object>);
   static v8::Local<v8::Object> NewInstance(v8::Local<v8::Value> arg);
 
-  RdKafka::Topic * toRDKafkaTopic();
+  Baton toRDKafkaTopic(Connection *handle);
 
  protected:
   static Nan::Persistent<v8::Function> constructor;
@@ -32,15 +32,17 @@ class Topic : public Nan::ObjectWrap {
 
   static NAN_METHOD(NodeGetMetadata);
 
-  RdKafka::Topic * m_topic;
   // TopicConfig * config_;
 
   std::string errstr;
   std::string name();
 
  private:
-  Topic(std::string, RdKafka::Conf *, Connection *);
+  Topic(std::string, RdKafka::Conf *);
   ~Topic();
+
+  std::string m_topic_name;
+  RdKafka::Conf * m_config;
 
   static NAN_METHOD(NodeGetName);
   static NAN_METHOD(NodePartitionAvailable);

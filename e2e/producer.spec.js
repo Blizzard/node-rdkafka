@@ -119,7 +119,7 @@ describe('Producer', function() {
         done();
       });
 
-      producer.produce('test', null, new Buffer('value'), null, 'opaque');
+      producer.produce('test', null, new Buffer('value'), null, null, 'opaque');
     });
 
 

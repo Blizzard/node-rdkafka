@@ -29,22 +29,50 @@ namespace NodeKafka {
  * @sa NodeKafka::Connection
  */
 
-Topic::Topic(std::string topic_name, RdKafka::Conf* config, Connection * handle) {  // NOLINT
-  Baton b = config ?
-    handle->CreateTopic(topic_name, config) : handle->CreateTopic(topic_name);
-
-  if (b.err() != RdKafka::ERR_NO_ERROR) {
-    m_topic = NULL;
-  } else {
-    m_topic = b.data<RdKafka::Topic*>();
-  }
+Topic::Topic(std::string topic_name, RdKafka::Conf* config):
+  m_topic_name(topic_name),
+  m_config(config) {
+  // We probably want to copy the config. May require refactoring if we do not
 }
 
 Topic::~Topic() {
-  if (m_topic) {
-    delete m_topic;
+  if (m_config) {
+    delete m_config;
   }
 }
+
+std::string Topic::name() {
+  return m_topic_name;
+}
+
+Baton Topic::toRDKafkaTopic(Connection* handle) {
+  if (m_config) {
+    return handle->CreateTopic(m_topic_name, m_config);
+  } else {
+    return handle->CreateTopic(m_topic_name);
+  }
+}
+
+/*
+
+bool partition_available(int32_t partition) {
+  return topic_->partition_available(partition);
+}
+
+Baton offset_store (int32_t partition, int64_t offset) {
+  RdKafka::ErrorCode err = topic_->offset_store(partition, offset);
+
+  switch (err) {
+    case RdKafka::ERR_NO_ERROR:
+
+      break;
+    default:
+
+      break;
+  }
+}
+
+*/
 
 Nan::Persistent<v8::Function> Topic::constructor;
 
@@ -68,46 +96,36 @@ void Topic::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
     return Nan::ThrowError("non-constructor invocation not supported");
   }
 
-  if (info.Length() < 2) {
-    return Nan::ThrowError("Handle and topic name are required");
+  if (info.Length() < 1) {
+    return Nan::ThrowError("topic name is required");
   }
 
-  if (!info[1]->IsString()) {
+  if (!info[0]->IsString()) {
     return Nan::ThrowError("Topic name must be a string");
-  }
-
-  if (!info[0]->IsObject()) {
-    return Nan::ThrowError("Client is not of valid type.");
   }
 
   RdKafka::Conf* config = NULL;
 
-  if (info.Length() >= 3 && !info[2]->IsUndefined() && !info[2]->IsNull()) {
+  if (info.Length() >= 2 && !info[1]->IsUndefined() && !info[1]->IsNull()) {
     // If they gave us two parameters, or the 3rd parameter is null or
     // undefined, we want to pass null in for the config
 
     std::string errstr;
-    if (!info[2]->IsObject()) {
+    if (!info[1]->IsObject()) {
       return Nan::ThrowError("Configuration data must be specified");
     }
 
-    config = Conf::create(RdKafka::Conf::CONF_TOPIC, info[2]->ToObject(), errstr);  // NOLINT
+    config = Conf::create(RdKafka::Conf::CONF_TOPIC, info[1]->ToObject(), errstr);  // NOLINT
 
     if (!config) {
       return Nan::ThrowError(errstr.c_str());
     }
   }
 
-  Nan::Utf8String parameterValue(info[1]->ToString());
+  Nan::Utf8String parameterValue(info[0]->ToString());
   std::string topic_name(*parameterValue);
 
-  Connection* connection = ObjectWrap::Unwrap<Connection>(info[0]->ToObject());
-
-  if (!connection->IsConnected()) {
-    return Nan::ThrowError("Client is not connected");
-  }
-
-  Topic* topic = new Topic(topic_name, config, connection);
+  Topic* topic = new Topic(topic_name, config);
 
   // Wrap it
   topic->Wrap(info.This());
@@ -133,35 +151,6 @@ v8::Local<v8::Object> Topic::NewInstance(v8::Local<v8::Value> arg) {
 
   return scope.Escape(instance);
 }
-
-std::string Topic::name() {
-  return m_topic->name();
-}
-
-RdKafka::Topic * Topic::toRDKafkaTopic() {
-  return m_topic;
-}
-
-/*
-
-bool partition_available(int32_t partition) {
-  return topic_->partition_available(partition);
-}
-
-Baton offset_store (int32_t partition, int64_t offset) {
-  RdKafka::ErrorCode err = topic_->offset_store(partition, offset);
-
-  switch (err) {
-    case RdKafka::ERR_NO_ERROR:
-
-      break;
-    default:
-
-      break;
-  }
-}
-
-*/
 
 NAN_METHOD(Topic::NodeGetName) {
   Nan::HandleScope scope;
