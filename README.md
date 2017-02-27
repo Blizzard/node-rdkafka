@@ -93,7 +93,7 @@ var producer = new Kafka.Producer({
 });
 ```
 
-A `Producer` requires only `metadata.broker.list` (the Kafka brokers) to be created.  The values in this list are separated by commas.  For other configuration options, see the [Configuration.md](https://github.com/edenhill/librdkafka/blob/0.9.3.x/CONFIGURATION.md) file described previously. 
+A `Producer` requires only `metadata.broker.list` (the Kafka brokers) to be created.  The values in this list are separated by commas.  For other configuration options, see the [Configuration.md](https://github.com/edenhill/librdkafka/blob/0.9.3.x/CONFIGURATION.md) file described previously.
 
 The following example illustrates a list with several `librdkafka` options set.
 
@@ -174,6 +174,11 @@ producer.on('ready', function() {
       new Buffer('Awesome message'),
       // for keyed messages, we also specify the key - note that this field is optional
       'Stormwind',
+      // you can send a timestamp here. If your broker version supports it,
+      // it will get added. Otherwise, we default to 0
+      Date.now(),
+      // you can send an opaque token here, which gets passed along
+      // to your delivery reports
     );
   } catch (err) {
     console.error('A problem occurred when sending our message');

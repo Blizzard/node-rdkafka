@@ -59,6 +59,7 @@ class Producer : public Connection {
   #endif
 
   Baton Produce(void*, size_t, RdKafka::Topic*, int32_t, std::string*, void*);
+  Baton Produce(void*, size_t, std::string, int32_t, std::string*, int64_t, void*);  // NOLINT
   std::string Name();
 
   void ActivateDispatchers();
