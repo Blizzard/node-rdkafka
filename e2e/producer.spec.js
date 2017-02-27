@@ -79,26 +79,6 @@ describe('Producer', function() {
       producer.produce('test', null, null, null);
     });
 
-    xit('should produce a message with an empty payload and empty key (https://github.com/Blizzard/node-rdkafka/issues/36)', function(done) {
-      this.timeout(3000);
-
-      var tt = setInterval(function() {
-        producer.poll();
-      }, 200);
-
-      producer.once('delivery-report', function(err, report) {
-        clearInterval(tt);
-        t.ok(report !== undefined);
-        t.ok(typeof report.topic === 'string');
-        t.ok(typeof report.partition === 'number');
-        t.ok(typeof report.offset === 'number');
-        t.ok( report.key === '', 'key should be an empty string');
-        done();
-      });
-
-      producer.produce('test', null, new Buffer(''), '');
-    });
-
     it('should produce a message with a payload and key', function(done) {
       this.timeout(3000);
 
@@ -224,7 +204,7 @@ describe('Producer', function() {
       });
     });
 
-    it('should produce a message with a null payload and null key', function(done) {
+    it('should produce a message with a payload and key', function(done) {
       this.timeout(3000);
 
       var tt = setInterval(function() {
@@ -238,12 +218,58 @@ describe('Producer', function() {
         t.ok(typeof report.topic === 'string');
         t.ok(typeof report.partition === 'number');
         t.ok(typeof report.offset === 'number');
-        t.ok( report.key === null);
+        t.ok( report.key === 'key');
         t.equal(report.value.toString(), 'hai');
         done();
       });
 
-      producer.produce('test', null, new Buffer('hai'), null);
+      producer.produce('test', null, new Buffer('hai'), 'key');
+    });
+
+    it('should produce a message with an empty payload and empty key (https://github.com/Blizzard/node-rdkafka/issues/117)', function(done) {
+      this.timeout(3000);
+
+      var tt = setInterval(function() {
+        producer.poll();
+      }, 200);
+
+      producer.once('delivery-report', function(err, report) {
+        clearInterval(tt);
+        t.ifError(err);
+        t.ok(report !== undefined);
+
+        t.ok(typeof report.topic === 'string');
+        t.ok(typeof report.partition === 'number');
+        t.ok(typeof report.offset === 'number');
+        t.ok( report.key === '', 'key should be an empty string');
+        t.ok(report.value.toString() === '', 'payload should be an empty string');
+        done();
+      });
+
+      producer.produce('test', null, new Buffer(''), '');
+    });
+
+    it('should produce a message with a null payload and null key  (https://github.com/Blizzard/node-rdkafka/issues/117)', function(done) {
+      this.timeout(3000);
+
+      var tt = setInterval(function() {
+        producer.poll();
+      }, 200);
+
+      producer.once('delivery-report', function(err, report) {
+        clearInterval(tt);
+        t.ifError(err);
+        t.ok(report !== undefined);
+
+        t.ok(typeof report.topic === 'string');
+        t.ok(typeof report.partition === 'number');
+        t.ok(typeof report.offset === 'number');
+        t.ok( report.key === null, 'key should be null');
+        t.ok(report.value === null, 'payload should be null');
+        done();
+      });
+
+      producer.produce('test', null, null, null);
     });
   });
 
