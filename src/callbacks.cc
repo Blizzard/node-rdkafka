@@ -225,7 +225,7 @@ void EventDispatcher::Flush() {
 DeliveryReportDispatcher::DeliveryReportDispatcher() {}
 DeliveryReportDispatcher::~DeliveryReportDispatcher() {}
 
-void DeliveryReportDispatcher::Add(const delivery_report_t &e) {
+void DeliveryReportDispatcher::Add(const DeliveryReport &e) {
   scoped_mutex_lock lock(async_lock);
   events.push_back(e);
 }
@@ -243,7 +243,7 @@ void DeliveryReportDispatcher::Flush() {
 
   const unsigned int argc = 2;
 
-  std::vector<delivery_report_t> events_list;
+  std::vector<DeliveryReport> events_list;
   {
     scoped_mutex_lock lock(async_lock);
     events.swap(events_list);
@@ -252,7 +252,7 @@ void DeliveryReportDispatcher::Flush() {
   for (size_t i = 0; i < events_list.size(); i++) {
     v8::Local<v8::Value> argv[argc] = {};
 
-    delivery_report_t event = events_list[i];
+    DeliveryReport event = events_list[i];
 
     if (event.is_error) {
         // If it is an error we need the first argument to be set
@@ -269,11 +269,11 @@ void DeliveryReportDispatcher::Flush() {
     Nan::Set(jsobj, Nan::New("offset").ToLocalChecked(),
             Nan::New<v8::Number>(event.offset));
 
-    if (event.key.empty()) {
-      Nan::Set(jsobj, Nan::New("key").ToLocalChecked(), Nan::Null());
-    } else {
+    if (!event.m_key_is_null) {
       Nan::Set(jsobj, Nan::New("key").ToLocalChecked(),
               Nan::New<v8::String>(event.key).ToLocalChecked());
+    } else {
+      Nan::Set(jsobj, Nan::New("key").ToLocalChecked(), Nan::Null());
     }
 
     if (event.opaque) {
@@ -289,13 +289,18 @@ void DeliveryReportDispatcher::Flush() {
       delete persistent;
     }
 
-    if (event.payload) {
-      Nan::MaybeLocal<v8::Object> buff = Nan::NewBuffer(
-        static_cast<char*>(event.payload),
-        static_cast<int>(event.len));
+    if (event.m_include_payload) {
+      if (event.payload) {
+        Nan::MaybeLocal<v8::Object> buff = Nan::NewBuffer(
+          static_cast<char*>(event.payload),
+          static_cast<int>(event.len));
 
-      Nan::Set(jsobj, Nan::New<v8::String>("value").ToLocalChecked(),
-        buff.ToLocalChecked());
+        Nan::Set(jsobj, Nan::New<v8::String>("value").ToLocalChecked(),
+          buff.ToLocalChecked());
+      } else {
+        Nan::Set(jsobj, Nan::New<v8::String>("value").ToLocalChecked(),
+          Nan::Null());
+      }
     }
 
     Nan::Set(jsobj, Nan::New<v8::String>("size").ToLocalChecked(),
@@ -307,7 +312,9 @@ void DeliveryReportDispatcher::Flush() {
   }
 }
 
-delivery_report_t::delivery_report_t(RdKafka::Message &message, bool dr_copy_payload) {  // NOLINT
+DeliveryReport::DeliveryReport(RdKafka::Message &message, bool include_payload) :  // NOLINT
+  m_include_payload(include_payload),
+  m_key_is_null(true) {
   if (message.err() == RdKafka::ERR_NO_ERROR) {
     is_error = false;
   } else {
@@ -319,10 +326,11 @@ delivery_report_t::delivery_report_t(RdKafka::Message &message, bool dr_copy_pay
   topic_name = message.topic_name();
   partition = message.partition();
   offset = message.offset();
-  if (message.key_len() > 0) {
+
+  // It is okay if this is null
+  if (message.key()) {
     key = *message.key();
-  } else {
-    key = "";
+    m_key_is_null = false;
   }
 
   if (message.msg_opaque()) {
@@ -333,17 +341,17 @@ delivery_report_t::delivery_report_t(RdKafka::Message &message, bool dr_copy_pay
 
   len = message.len();
 
-  if (len > 0 && dr_copy_payload) {
+  if (m_include_payload && message.payload()) {
     // this pointer will be owned and freed by the Nan::NewBuffer
     // created in DeliveryReportDispatcher::Flush()
     payload = malloc(len);
     memcpy(payload, message.payload(), len);
-    } else {
-      payload = NULL;
-    }
+  } else {
+    payload = NULL;
+  }
 }
 
-delivery_report_t::~delivery_report_t() {}
+DeliveryReport::~DeliveryReport() {}
 
 // Delivery Report
 
@@ -363,7 +371,7 @@ void Delivery::dr_cb(RdKafka::Message &message) {
     return;
   }
 
-  delivery_report_t msg(message, m_dr_msg_cb);
+  DeliveryReport msg(message, m_dr_msg_cb);
   dispatcher.Add(msg);
   dispatcher.Execute();
 }

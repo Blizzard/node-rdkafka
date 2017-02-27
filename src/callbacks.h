@@ -87,7 +87,13 @@ class Event : public RdKafka::EventCb {
   EventDispatcher dispatcher;
 };
 
-struct delivery_report_t {
+class DeliveryReport {
+ public:
+  DeliveryReport(RdKafka::Message &, bool);
+  ~DeliveryReport();
+
+  bool m_include_payload;
+
   // If it is an error these will be set
   bool is_error;
   std::string error_string;
@@ -97,13 +103,13 @@ struct delivery_report_t {
   std::string topic_name;
   int32_t partition;
   int64_t offset;
+
+  bool m_key_is_null;
   std::string key;
+
   size_t len;
   void* opaque;
   void* payload;
-
-  explicit delivery_report_t(RdKafka::Message &, bool);
-  ~delivery_report_t();
 };
 
 class DeliveryReportDispatcher : public Dispatcher {
@@ -111,10 +117,10 @@ class DeliveryReportDispatcher : public Dispatcher {
   DeliveryReportDispatcher();
   ~DeliveryReportDispatcher();
   void Flush();
-  void Add(const delivery_report_t &);
+  void Add(const DeliveryReport &);
   void AddCallback(v8::Local<v8::Function>);
  protected:
-  std::vector<delivery_report_t> events;
+  std::vector<DeliveryReport> events;
 };
 
 class Delivery : public RdKafka::DeliveryReportCb {
