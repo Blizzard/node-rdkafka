@@ -159,8 +159,16 @@ module.exports = {
       stream.on('end', function() {
         next();
       });
-    }
+    },
 
+    'calls the callback on close': function (next) {
 
-  },
+      fakeClient.unsubscribe = function () {};
+      var stream = new TopicReadable(fakeClient, 'topic');
+      stream.once('readable', function () {
+        stream.close(next);
+      });
+
+    },
+  }
 };
