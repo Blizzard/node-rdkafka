@@ -89,24 +89,6 @@ describe('Consumer', function() {
         done();
       });
     });
-    it('should async commit after consuming', function(done) {
-      consumer.subscribe([topic]);
-      consumer.consume(1, function(err, messages) {
-        consumer.commit(messages[0], function(err) {
-          t.ifError(err);
-          consumer.committed(1000, function(err, committed) {
-            t.ifError(err);
-            t.equal(committed.length, 1);
-            t.equal(typeof committed[0], 'object', 'TopicPartition should be an object');
-            t.deepStrictEqual(committed[0].partition, 0);
-            t.deepStrictEqual(committed[0].offset, 1000);
-            consumer.disconnect(function() {
-              done();
-            });
-          });
-        });
-      });
-    });
     xit('after assign, before consume, position should return an array without offsets (Timing out issue in this situation, so pending)', function(done) {
       consumer.assign([{topic:topic, partition:0}]);
       var position = consumer.position();
