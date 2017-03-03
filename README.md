@@ -201,7 +201,7 @@ To see the configuration options available to you, see the [Configuration](#conf
 |-------|----------|
 |`producer.connect()`| Connects to the broker. <br><br> The `connect()` method emits the `ready` event when it connects successfully or an `error` when it does not.|
 |`producer.disconnect()`| Disconnects from the broker. <br><br>The `disconnect()` method emits the `disconnected` event when it has disconnected or `error` if something went wrong. |
-|`producer.poll()` | Polls the producer for delivery reports or other events to be transmitted via the emitter. <br><br>This happens automatically on transactions such as `produce`. |
+|`producer.poll()` | Polls the producer for delivery reports or other events to be transmitted via the emitter. <br><br>In order to get the events in `librdkafka`'s queue to emit, you must call this regularly. |
 |`producer.produce(topic, partition, msg, key)`| Sends a message. <br><br>The `produce()` method throws when produce would return an error. Ordinarily, this is just if the queue is full. |
 
 ##### Events
