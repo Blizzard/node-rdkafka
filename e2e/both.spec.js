@@ -255,7 +255,7 @@ describe('Consumer/Producer', function() {
       var lastOffset = null;
       consumer.once('data', function(message) {
         lastOffset = message.offset;
-        consumer.commit(message, function(err) {
+        consumer.commitMessage(message, function(err) {
           consumer.disconnect(function() {
             consumer.connect({}, function(err, d) {
               t.ifError(err);
@@ -272,7 +272,7 @@ describe('Consumer/Producer', function() {
 
               setTimeout(function() {
                 done();
-              }, 10000);
+              }, 5000);
             });
           });
         });
@@ -292,7 +292,7 @@ describe('Consumer/Producer', function() {
       var lastOffset = null;
       consumer.once('data', function(message) {
         lastOffset = message.offset;
-        consumer.commitSync(message);
+        consumer.commitMessageSync(message);
         consumer.disconnect(function() {
           consumer.connect({}, function(err, d) {
             t.ifError(err);
@@ -309,7 +309,7 @@ describe('Consumer/Producer', function() {
 
             setTimeout(function() {
               done();
-            }, 10000);
+            }, 5000);
           });
         });
       });
