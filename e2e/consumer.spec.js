@@ -89,7 +89,6 @@ describe('Consumer', function() {
         done();
       });
     });
-
     xit('after assign, before consume, position should return an array without offsets (Timing out issue in this situation, so pending)', function(done) {
       consumer.assign([{topic:topic, partition:0}]);
       var position = consumer.position();
@@ -265,9 +264,6 @@ describe('Consumer', function() {
         });
 
       });
-
     });
-
   });
-
 });

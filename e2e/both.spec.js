@@ -215,4 +215,110 @@ describe('Consumer/Producer', function() {
     }, 2000);
   });
 
+  describe('Exceptional cases', function() {
+    var grp = 'kafka-mocha-grp-' + crypto.randomBytes(20).toString('hex');
+    var consumerOpts = {
+      'metadata.broker.list': kafkaBrokerList,
+      'group.id': grp,
+      'fetch.wait.max.ms': 1000,
+      'session.timeout.ms': 10000,
+      'enable.auto.commit': false,
+      'debug': 'all'
+      // paused: true,
+    };
+
+    beforeEach(function(done) {
+      consumer = new Kafka.KafkaConsumer(consumerOpts, {
+        'auto.offset.reset': 'largest',
+      });
+
+      consumer.connect({}, function(err, d) {
+        t.ifError(err);
+        t.equal(typeof d, 'object', 'metadata should be returned');
+        done();
+      });
+
+      eventListener(consumer);
+    });
+
+    afterEach(function(done) {
+      consumer.disconnect(function() {
+        done();
+      });
+    });
+
+    it('should async commit after consuming', function(done) {
+      this.timeout(20000);
+      var key = '';
+      var value = new Buffer('');
+
+      var lastOffset = null;
+      consumer.once('data', function(message) {
+        lastOffset = message.offset;
+        consumer.commitMessage(message, function(err) {
+          consumer.disconnect(function() {
+            consumer.connect({}, function(err, d) {
+              t.ifError(err);
+              t.equal(typeof d, 'object', 'metadata should be returned');
+
+              consumer.once('data', function(message) {
+                console.log('First message offset:', lastOffset, 'New message',
+                  'offset:', message.offset);
+                done(new Error('Should never be here'));
+              });
+
+              consumer.subscribe([topic]);
+              consumer.consume();
+
+              setTimeout(function() {
+                done();
+              }, 5000);
+            });
+          });
+        });
+      });
+      consumer.subscribe([topic]);
+      consumer.consume();
+
+      setTimeout(function() {
+        producer.produce(topic, null, value, key);
+      }, 2000);
+    });
+    it('should synchronous commit after consuming', function(done) {
+      this.timeout(20000);
+      var key = '';
+      var value = new Buffer('');
+
+      var lastOffset = null;
+      consumer.once('data', function(message) {
+        lastOffset = message.offset;
+        consumer.commitMessageSync(message);
+        consumer.disconnect(function() {
+          consumer.connect({}, function(err, d) {
+            t.ifError(err);
+            t.equal(typeof d, 'object', 'metadata should be returned');
+
+            consumer.once('data', function(message) {
+              console.log('First message offset:', lastOffset, 'New message',
+                'offset:', message.offset);
+              done(new Error('Should never be here'));
+            });
+
+            consumer.subscribe([topic]);
+            consumer.consume();
+
+            setTimeout(function() {
+              done();
+            }, 5000);
+          });
+        });
+      });
+      consumer.subscribe([topic]);
+      consumer.consume();
+
+      setTimeout(function() {
+        producer.produce(topic, null, value, key);
+      }, 2000);
+    });
+  });
 });
