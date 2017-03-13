@@ -681,9 +681,12 @@ NAN_METHOD(Consumer::NodeCommitSync) {
     std::string topic_name = GetParameter<std::string>(params, "topic", "");
     int partition = GetParameter<int>(params, "partition", 0);
     int64_t offset = GetParameter<int64_t>(params, "offset", -1);
-
+    // note that we commit offset+1, because librdkafka will receive our commit request
+    // as a vectory of offsets, which it takes literally. But committing a message requires
+    // +1, as librdkafka does when commiting a native message, here:
+    // https://github.com/edenhill/librdkafka/blob/8d96733529f6d9a788d1620760a4bf529cb00057/src/rdkafka_offset.c#L466
     // Do it sync i guess
-    Baton b = consumer->Commit(topic_name, partition, offset);
+    Baton b = consumer->Commit(topic_name, partition, offset + 1);
 
     if (b.err() != RdKafka::ERR_NO_ERROR) {
       info.GetReturnValue().Set(b.ToObject());
@@ -715,7 +718,11 @@ NAN_METHOD(Consumer::NodeCommit) {
     int partition = GetParameter<int>(params, "partition", 0);
     int64_t offset = GetParameter<int64_t>(params, "offset", -1);
 
-    consumer_commit_t commit_request(topic_name, partition, offset);
+    // note that we commit offset+1, because librdkafka will receive our commit request
+    // as a vectory of offsets, which it takes literally. But committing a message requires
+    // +1, as librdkafka does when commiting a native message, here:
+    // https://github.com/edenhill/librdkafka/blob/8d96733529f6d9a788d1620760a4bf529cb00057/src/rdkafka_offset.c#L466
+    consumer_commit_t commit_request(topic_name, partition, offset + 1);
     v8::Local<v8::Function> cb = info[1].As<v8::Function>();
 
     Nan::Callback *callback = new Nan::Callback(cb);
