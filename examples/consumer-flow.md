@@ -40,8 +40,9 @@ var numMessages = 5;
 consumer.on('ready', function(arg) {
   console.log('consumer ready.' + JSON.stringify(arg));
 
+  consumer.subscribe([topicName]);
   //start consuming messages
-  consumer.consume([topicName]); 
+  consumer.consume();
 });
 
 
