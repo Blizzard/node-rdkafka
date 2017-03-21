@@ -32,6 +32,9 @@ module.exports = {
         }.bind(this));
         return this;
       };
+      fakeClient.poll = function() {
+        return this;
+      };
     },
 
     'exports a stream class': function() {
@@ -43,7 +46,24 @@ module.exports = {
     },
 
     'properly reads off the fake client': function(done) {
+      var message;
 
+      fakeClient.produce = function(topic, partition, message, key) {
+        t.equal('topic', topic);
+        t.equal(message.toString(), 'Awesome');
+        t.equal(Buffer.isBuffer(message), true);
+        done();
+      };
+
+      var stream = new TopicWritable(fakeClient, 'topic', {});
+      stream.on('error', function(err) {
+        t.fail(err);
+      });
+
+      stream.write(new Buffer('Awesome'));
+    },
+
+    'can be given a topic config': function(done) {
       var message;
 
       fakeClient.produce = function(topic, partition, message, key) {
@@ -53,7 +73,11 @@ module.exports = {
         done();
       };
 
-      var stream = new TopicWritable(fakeClient, 'topic', {});
+      var stream = new TopicWritable(fakeClient, 'topic', {
+        topicOptions: {
+          'acks': true
+        }
+      });
       stream.on('error', function(err) {
         t.fail(err);
       });
@@ -68,7 +92,7 @@ module.exports = {
       var first = true;
 
       fakeClient.produce = function(topic, partition, message, key) {
-        t.deepEqual({ topicName: 'topic' }, topic);
+        t.equal('topic', topic);
         t.equal(message.toString(), 'Awesome');
         t.equal(Buffer.isBuffer(message), true);
         if (first) {
@@ -96,7 +120,7 @@ module.exports = {
 
       fakeClient.produce = function(topic, partition, message, key) {
         currentMessage++;
-        t.deepEqual({ topicName: 'topic' }, topic);
+        t.equal('topic', topic);
         t.equal(message.toString(), 'Awesome' + currentMessage);
         t.equal(Buffer.isBuffer(message), true);
         if (currentMessage === 2) {
@@ -133,7 +157,7 @@ module.exports = {
 
       fakeClient.produce = function(topic, partition, message, key) {
         currentMessage++;
-        t.deepEqual({ topicName: 'topic' }, topic);
+        t.equal('topic', topic);
         t.equal(message.toString(), 'Awesome' + currentMessage);
         t.equal(Buffer.isBuffer(message), true);
         if (currentMessage === 2) {
