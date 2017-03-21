@@ -16,9 +16,9 @@ var store = [];
 var host = process.argv[2] || '127.0.0.1:9092';
 var topicName = process.argv[3] || 'test';
 var compression = process.argv[4] || 'gzip';
-var MAX = process.argv[5] || 100000;
+var MAX = process.argv[5] || 1000000;
 
-var producer = new Kafka.Producer({
+var stream = Kafka.Producer.createWriteStream({
   'metadata.broker.list': host,
   'group.id': 'node-rdkafka-bench',
   'compression.codec': compression,
@@ -28,9 +28,12 @@ var producer = new Kafka.Producer({
   'queue.buffering.max.messages': 100000,
   'queue.buffering.max.ms': 1000,
   'batch.num.messages': 1000,
+}, {}, {
+  topic: topicName,
+  pollInterval: 20
 });
 
-producer.on('event.error', function(e) {
+stream.on('error', function(e) {
   console.log(e);
   process.exit(1);
 });
@@ -46,8 +49,6 @@ function log() {
 }
 
 crypto.randomBytes(4096, function(ex, buffer) {
-
-  var stream = producer.getWriteStream(topicName);
 
   var x = function(e) {
     if (e) {
@@ -107,14 +108,10 @@ function shutdown() {
 
   clearInterval(interval);
 
-  var killTimer = setTimeout(function() {
-    process.exit();
-  }, 5000);
+  stream.end();
 
-  producer.disconnect(function() {
-    clearTimeout(killTimer);
+  stream.on('close', function() {
     console.log('total: %d', total);
-    process.exit();
   });
 
 }

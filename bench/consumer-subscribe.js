@@ -29,6 +29,7 @@ var interval;
 
 consumer.connect()
   .once('ready', function() {
+    consumer.subscribe([topic]);
     consumer.consume();
   })
   .once('data', function() {

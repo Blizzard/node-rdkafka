@@ -7,7 +7,7 @@
  * of the MIT license.  See the LICENSE.txt file for details.
  */
 
-var TopicReadable = require('../lib/topic-readable');
+var KafkaConsumerStream = require('../lib/kafka-consumer-stream');
 var t = require('assert');
 var Writable = require('stream').Writable;
 var Emitter = require('events');
@@ -15,11 +15,24 @@ var Emitter = require('events');
 var fakeClient;
 
 module.exports = {
-  'TopicReadable stream': {
+  'KafkaConsumerStream stream': {
     'beforeEach': function() {
       fakeClient = new Emitter();
+      fakeClient._isConnecting = false;
+      fakeClient._isConnected = true;
       fakeClient.isConnected = function() {
         return true;
+      };
+      fakeClient.unsubscribe = function() {
+        this.emit('unsubscribed');
+        return true;
+      };
+      fakeClient.disconnect = function(cb) {
+        this.emit('disconnected');
+        if (cb) {
+          t.equal(typeof cb, 'function');
+          setImmediate(cb);
+        }
       };
       fakeClient.consume = function(size, cb) {
         if (!size) {
@@ -43,15 +56,19 @@ module.exports = {
     },
 
     'exports a stream class': function() {
-      t.equal(typeof(TopicReadable), 'function');
+      t.equal(typeof(KafkaConsumerStream), 'function');
     },
 
     'can be instantiated': function() {
-      t.equal(typeof new TopicReadable(fakeClient, 'topic', {}), 'object');
+      t.equal(typeof new KafkaConsumerStream(fakeClient, {
+        topics: 'topic'
+      }), 'object');
     },
 
     'properly reads off the fake client': function(cb) {
-      var stream = new TopicReadable(fakeClient, 'topic', {});
+      var stream = new KafkaConsumerStream(fakeClient, {
+        topics: 'topic'
+      });
       stream.on('error', function(err) {
         t.fail(err);
       });
@@ -84,7 +101,9 @@ module.exports = {
         } else {
         }
       };
-      var stream = new TopicReadable(fakeClient, 'topic', {});
+      var stream = new KafkaConsumerStream(fakeClient, {
+        topics: 'topic'
+      });
       stream.on('error', function(err) {
         // Ignore
       });
@@ -102,7 +121,9 @@ module.exports = {
     },
 
     'can be piped around': function(cb) {
-      var stream = new TopicReadable(fakeClient, 'topic', {});
+      var stream = new KafkaConsumerStream(fakeClient, {
+        topics: 'topic'
+      });
       var writable = new Writable({
         write: function(message, encoding, next) {
           t.notEqual(message, null);
@@ -139,7 +160,9 @@ module.exports = {
         }
       };
 
-      var stream = new TopicReadable(fakeClient, 'topic', {});
+      var stream = new KafkaConsumerStream(fakeClient, {
+        topics: 'topic'
+      });
       stream.on('error', function(err) {
         // Ignore
       });
@@ -161,12 +184,15 @@ module.exports = {
       });
     },
 
-    'calls the callback on close': function (next) {
+    'calls the callback on destroy': function (next) {
 
       fakeClient.unsubscribe = function () {};
-      var stream = new TopicReadable(fakeClient, 'topic');
+      var stream = new KafkaConsumerStream(fakeClient, {
+        topics: 'topic'
+      });
       stream.once('readable', function () {
-        stream.close(next);
+        stream.destroy();
+        stream.once('close', next);
       });
 
     },

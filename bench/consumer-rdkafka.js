@@ -16,7 +16,7 @@ var store = [];
 var host = process.argv[2] || 'localhost:9092';
 var topic = process.argv[3] || 'test';
 
-var consumer = new Kafka.KafkaConsumer({
+var stream = Kafka.KafkaConsumer.createReadStream({
   'metadata.broker.list': host,
   'group.id': 'node-rdkafka-bench',
   'fetch.wait.max.ms': 100,
@@ -25,14 +25,14 @@ var consumer = new Kafka.KafkaConsumer({
   // paused: true,
 }, {
   'auto.offset.reset': 'earliest'
+}, {
+  fetchSize: 16,
+  topics: [topic]
 });
 
 // Track how many messages we see per second
 var interval;
 
-var stream = consumer.getReadStream(topic, {
-  fetchSize: 16
-});
 var isShuttingDown = false;
 
 stream
@@ -41,7 +41,7 @@ stream
     console.log(err.stack);
     shutdown();
   })
-  .once('data', function() {
+  .once('data', function(d) {
     interval = setInterval(function() {
       if (isShuttingDown) {
         clearInterval(interval);
@@ -62,14 +62,9 @@ stream
   })
   .pipe(new Writable({
     objectMode: true,
-    write: function(batchMessages, encoding, cb) {
-      if (Array.isArray(batchMessages)) {
-        count += batchMessages.length;
-        total += batchMessages.length;
-      } else {
-        count += 1;
-        total += 1;
-      }
+    write: function(message, encoding, cb) {
+      count += 1;
+      total += 1;
       setImmediate(cb);
     }
   }));
@@ -95,11 +90,10 @@ function shutdown() {
     console.log('%d messages per second on average', mps);
   }
 
-  var killTimer = setTimeout(function() {
-    process.exit();
-  }, 5000).unref();
+  // Destroy the stream
+  stream.destroy();
 
-  consumer.disconnect(function() {
+  stream.once('end', function() {
     console.log('total: %d', total);
   });
 
