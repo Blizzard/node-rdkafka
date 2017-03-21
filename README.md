@@ -325,7 +325,7 @@ consumer.connect();
 
 consumer
   .on('ready', function() {
-    consumer.subscribe('librdtesting-01');
+    consumer.subscribe(['librdtesting-01']);
 
     // Consume from the librdtesting-01 topic. This is what determines
     // the mode we are running in. By not specifying a callback (or specifying
@@ -346,7 +346,7 @@ consumer
   .on('ready', function() {
     // Subscribe to the librdtesting-01 topic
     // This makes subsequent consumes read from that topic.
-    consumer.subscribe('librdtesting-01');
+    consumer.subscribe(['librdtesting-01']);
 
     // Read one message every 1000 seconds
     setInterval(function() {
@@ -365,7 +365,7 @@ The following table lists important methods for this API.
 |-------|----------|
 |`consumer.connect()` | Connects to the broker. <br><br>The `connect()` emits the event `ready` when it has successfully connected, or an `error` when it has not. |
 |`consumer.disconnect()` | Disconnects from the broker. <br><br>The `disconnect()` method emits `disconnected` when it has disconnected or `error` if something went wrong.
-|`consumer.subscribe(topics)` | Subscribes to an array of topics. <br><br> `topics` can be either an array or a string for a single topic. |
+|`consumer.subscribe(topics)` | Subscribes to an array of topics. |
 |`consumer.unsubscribe()` | Unsubscribes from the currently subscribed topics. <br><br>You cannot subscribe to different topics without calling the `unsubscribe()` method first. |
 |`consumer.consume(cb)` | Gets messages from the existing subscription as quickly as possible. This method keeps a background thread running to do the work. If `cb` is specified, invokes `cb(err, message)`. |
 |`consumer.consume(number, cb)` | Gets `number` of messages from the existing subscription. If `cb` is specified, invokes `cb(err, message)`. |
