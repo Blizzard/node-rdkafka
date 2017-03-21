@@ -202,6 +202,7 @@ To see the configuration options available to you, see the [Configuration](#conf
 |`producer.connect()`| Connects to the broker. <br><br> The `connect()` method emits the `ready` event when it connects successfully or an `error` when it does not.|
 |`producer.disconnect()`| Disconnects from the broker. <br><br>The `disconnect()` method emits the `disconnected` event when it has disconnected or `error` if something went wrong. |
 |`producer.poll()` | Polls the producer for delivery reports or other events to be transmitted via the emitter. <br><br>In order to get the events in `librdkafka`'s queue to emit, you must call this regularly. |
+|`producer.setPollInterval(interval)` | Polls the producer on this interval, handling disconnections and reconnection. Set it to 0 to turn it off. |
 |`producer.produce(topic, partition, msg, key)`| Sends a message. <br><br>The `produce()` method throws when produce would return an error. Ordinarily, this is just if the queue is full. |
 
 ##### Events
@@ -219,6 +220,9 @@ var producer = new Kafka.Producer({
   'metadata.broker.list': 'localhost:9092', // Connect to a Kafka instance on localhost
   'dr_cb': true // Specifies that we want a delivery-report event to be generated
 });
+
+// Poll for events every 100 ms
+producer.setPollInterval(100);
 
 producer.on('delivery-report', function(err, report) {
   // Report of delivery statistics here:

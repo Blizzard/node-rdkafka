@@ -41,6 +41,8 @@ if (cluster.isMaster) {
     'dr_cb': true
   });
 
+  producer.setPollInterval(100);
+
   var total = 0;
   var totalSent = 0;
   var max = 20000;
