@@ -21,11 +21,46 @@ describe('Consumer', function() {
 
   beforeEach(function() {
     var grp = 'kafka-mocha-grp-' + crypto.randomBytes(20).toString('hex');
-     gcfg = {
+    gcfg = {
       'bootstrap.servers': kafkaBrokerList,
       'group.id': grp,
       'debug': 'all'
     };
+  });
+
+  describe('rebalance_cb', function() {
+    var consumer;
+
+    afterEach(function(done) {
+      consumer.disconnect(function(err, info) {
+        done();
+      });
+    });
+
+    it('should emit events with conf.rebalance_cb=true', function(done) {
+      this.timeout(5000);
+
+      gcfg.rebalance_cb = true;
+      consumer = new KafkaConsumer(gcfg, {});
+      eventListener(consumer);
+      
+      consumer.on('rebalance', function(e) {
+        if (e.code === 500 || e.code === 501) {
+          t.ok ( e.assignment[0].topic === topic);
+          t.ok ( e.assignment[0].partition === 0);
+          if (e.code === 500) {
+            done();
+          }
+        } else {
+          t.fail(e.toString(), 'unexpected rebalance callback');
+        }
+      });
+      
+      consumer.connect({ timeout: 2000 }, function(err, info) {
+        t.ifError(err);
+        consumer.consume([topic]);
+      });
+    });
   });
 
   describe('committed and position', function() {
