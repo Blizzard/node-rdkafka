@@ -1,0 +1,89 @@
+.project-container {
+  padding-top: 40px;
+}
+
+.top-link {
+  padding-top: 10px;
+  text-align: right;
+}
+
+h4.name {
+  font-size: 18px;
+}
+
+.navbar-right > li {
+  float: right;
+}
+
+dl dd {
+  margin-left: 0px;
+}
+
+.navigation-sidebar {
+  margin-right: 40px;
+}
+
+.navigation-sidebar > ul {
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.navigation-sidebar > ul > li > a {
+  border-top: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.03);
+  display: block;
+  width: 100%;
+  height: 40px;
+  line-height: 40px;
+  padding: 0 40px 0 10px;
+  position: relative;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  -webkit-transition: color .2s,background-color .2s;
+  transition: color .2s,background-color .2s;
+}
+
+.navigation-sidebar > ul > li:last-child {
+  margin-bottom: 10px;
+}
+
+.navigation-sidebar > ul > li > a:after {
+  /*content: "";*/
+  display: block;
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  overflow: hidden;
+  right: 7px;
+  top: 12px;
+  background-image: url("../toolkit/images/toolkit/themes/bnet/icons/sprite-16-blue.png");
+  background-position: 0 0;
+  background-repeat: no-repeat;
+  background-position: -80px -256px;
+}
+
+.navigation-sidebar > ul > li > ul > li > a {
+  display: block;
+  height: 20px;
+  white-space: nowrap;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 20px;
+  padding: 0 10px;
+  color: rgba(255,255,255,0.5);
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+.navigation-sidebar > ul > li > ul > li:first-child {
+  margin-top: 10px;
+}
+
+.navigation-sidebar > ul > li > ul > li {
+  margin: 0;
+}
+
+.navigation-sidebar > ul > li > ul > li:last-child {
+  margin-bottom: 0px;
+}
