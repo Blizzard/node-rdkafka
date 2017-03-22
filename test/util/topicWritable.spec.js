@@ -35,6 +35,9 @@ module.exports = {
       fakeClient.poll = function() {
         return this;
       };
+      fakeClient.setPollInterval = function() {
+        return this;
+      };
     },
 
     'exports a stream class': function() {
