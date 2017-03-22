@@ -673,8 +673,14 @@ NAN_METHOD(Consumer::NodeCommitSync) {
     return;
   }
 
+  int error_code;
+
   // If we are provided a message object
-  if (info.Length() >= 1 && info[0]->IsObject()) {
+  if (info.Length() >= 1 && !info[0]->IsNull() && !info[0]->IsUndefined()) {
+    if (!info[0]->IsObject()) {
+      Nan::ThrowError("Parameter, when provided, must be an object");
+      return;
+    }
     v8::Local<v8::Object> params = info[0].As<v8::Object>();
 
     // This one is a buffer
@@ -684,22 +690,13 @@ NAN_METHOD(Consumer::NodeCommitSync) {
 
     // Do it sync i guess
     Baton b = consumer->Commit(topic_name, partition, offset);
-
-    if (b.err() != RdKafka::ERR_NO_ERROR) {
-      info.GetReturnValue().Set(b.ToObject());
-      return;
-    }
-
+    error_code = static_cast<int>(b.err());
   } else {
     Baton b = consumer->Commit();
-
-    if (b.err() != RdKafka::ERR_NO_ERROR) {
-      info.GetReturnValue().Set(b.ToObject());
-      return;
-    }
-
-    info.GetReturnValue().Set(Nan::True());
+    error_code = static_cast<int>(b.err());
   }
+
+  info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
 }
 
 NAN_METHOD(Consumer::NodeCommit) {
@@ -707,7 +704,12 @@ NAN_METHOD(Consumer::NodeCommit) {
 
   Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
 
-  if (info.Length() >= 1 && info[0]->IsObject()) {
+  if (info.Length() >= 1 && !info[0]->IsNull() && !info[0]->IsUndefined()) {
+    if (!info[0]->IsObject()) {
+      Nan::ThrowError("Parameter, when provided, must be an object");
+      return;
+    }
+
     v8::Local<v8::Object> params = info[0].As<v8::Object>();
 
     // This one is a buffer
