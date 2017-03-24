@@ -30,7 +30,7 @@ var producer = new Kafka.Producer({
   'batch.num.messages': 1000,
 });
 
-producer.on('error', function(e) {
+producer.on('event.error', function(e) {
   console.log(e);
   process.exit(1);
 });

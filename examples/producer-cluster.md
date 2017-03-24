@@ -89,7 +89,7 @@ if (cluster.isMaster) {
 
   }, 1000);
   producer.connect()
-    .on('error', function(e) {
+    .on('event.error', function(e) {
       errors++;
       errorsArr.push(e);
     })

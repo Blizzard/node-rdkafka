@@ -11,20 +11,20 @@
 var Kafka = require('../');
 
 var producer = new Kafka.Producer({
-  //'debug' : 'all',  
+  //'debug' : 'all',
   'metadata.broker.list': 'localhost:9092',
   'dr_cb': true  //delivery report callback
 });
 
 var topicName = 'test';
 
-//logging debug messages, if debug is enabled 
+//logging debug messages, if debug is enabled
 producer.on('event.log', function(log) {
   console.log(log);
 });
 
 //logging all errors
-producer.on('error', function(err) {
+producer.on('event.error', function(err) {
   console.error('Error from producer');
   console.error(err);
 });
@@ -63,7 +63,7 @@ producer.on('ready', function(arg) {
       if (counter === maxMessages) {
         clearInterval(pollLoop);
         producer.disconnect();
-      } 
+      }
     }, 1000);
 
 });

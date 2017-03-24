@@ -94,7 +94,7 @@ crypto.randomBytes(4096, function(ex, buffer) {
       sendMessage();
 
     })
-    .on('error', function(err) {
+    .on('event.error', function(err) {
       console.error(err);
       process.exit(1);
     })

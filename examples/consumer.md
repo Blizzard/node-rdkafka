@@ -50,7 +50,7 @@ stream
   }))
   .pipe(process.stdout);
 
-consumer.on('error', function(err) {
+consumer.on('event.error', function(err) {
   console.log(err);
 });
 ```

@@ -21,7 +21,7 @@ producer.connect()
     console.log(i);
     console.log(producer.getMetadata());
   })
-  .on('error', function(err) {
+  .on('event.error', function(err) {
     console.log(err);
   });
 ```

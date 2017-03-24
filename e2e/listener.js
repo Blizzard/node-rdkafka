@@ -14,7 +14,7 @@ function eventListener(client) {
   }
 
   client
-    .on('error', function (err) {
+    .on('event.error', function (err) {
       console.error(err);
     })
     .on('event.log', function(event) {
