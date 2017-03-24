@@ -439,7 +439,8 @@ void ConsumerConsume::Execute() {
   Baton b = consumer->Consume(m_timeout_ms);
   if (b.err() != RdKafka::ERR_NO_ERROR) {
     if (b.err() != RdKafka::ERR__TIMED_OUT ||
-      b.err() != RdKafka::ERR__PARTITION_EOF) {
+      b.err() != RdKafka::ERR__PARTITION_EOF ||
+      b.err() != RdKafka::ERR__TIMED_OUT_QUEUE) {
       SetErrorBaton(b);
     }
   } else {
