@@ -17,16 +17,6 @@ using Nan::FunctionCallbackInfo;
 
 namespace NodeKafka {
 
-consumer_commit_t::consumer_commit_t(std::string topic_name, int partition, int64_t offset) {  // NOLINT
-  m_topic_name = topic_name;
-  m_partition = partition;
-  m_offset = offset;
-}
-
-consumer_commit_t::consumer_commit_t() {
-  m_topic_name = "";
-}
-
 /**
  * @brief Consumer v8 wrapped object.
  *
@@ -195,7 +185,7 @@ Baton Consumer::Commit(std::string topic_name, int partition, int64_t offset) {
   // Need to put topic in a vector for it to work
   std::vector<RdKafka::TopicPartition*> offsets = {topic};
 
-  RdKafka::ErrorCode err = consumer->commitSync(offsets);
+  RdKafka::ErrorCode err = consumer->commitAsync(offsets);
 
   // We are done. Clean up our mess
   delete topic;
@@ -212,10 +202,49 @@ Baton Consumer::Commit() {
   RdKafka::KafkaConsumer* consumer =
     dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
 
+  RdKafka::ErrorCode err = consumer->commitAsync();
+
+  return Baton(err);
+}
+
+// Synchronous commit events
+Baton Consumer::CommitSync(std::string topic_name, int partition, int64_t offset) {  // NOLINT
+  if (!IsConnected()) {
+    return Baton(RdKafka::ERR__STATE);
+  }
+
+  RdKafka::KafkaConsumer* consumer =
+    dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
+
+  RdKafka::TopicPartition* topic =
+    RdKafka::TopicPartition::create(topic_name, partition);
+  topic->set_offset(offset);
+
+  // Need to put topic in a vector for it to work
+  std::vector<RdKafka::TopicPartition*> offsets = {topic};
+
+  RdKafka::ErrorCode err = consumer->commitSync(offsets);
+
+  // We are done. Clean up our mess
+  delete topic;
+
+  return Baton(err);
+}
+
+Baton Consumer::CommitSync() {
+  // sets an error message
+  if (!IsConnected()) {
+    return Baton(RdKafka::ERR__STATE, "Consumer is not connected");
+  }
+
+  RdKafka::KafkaConsumer* consumer =
+    dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
+
   RdKafka::ErrorCode err = consumer->commitSync();
 
   return Baton(err);
 }
+
 
 Baton Consumer::Committed(int timeout_ms) {
   if (!IsConnected()) {
@@ -663,7 +692,7 @@ NAN_METHOD(Consumer::NodeUnsubscribe) {
   info.GetReturnValue().Set(Nan::New<v8::Number>(static_cast<int>(b.err())));
 }
 
-NAN_METHOD(Consumer::NodeCommitSync) {
+NAN_METHOD(Consumer::NodeCommit) {
   Nan::HandleScope scope;
 
   Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
@@ -699,17 +728,24 @@ NAN_METHOD(Consumer::NodeCommitSync) {
   info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
 }
 
-NAN_METHOD(Consumer::NodeCommit) {
+NAN_METHOD(Consumer::NodeCommitSync) {
   Nan::HandleScope scope;
 
   Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
 
+  if (!consumer->IsConnected()) {
+    Nan::ThrowError("Consumer is disconnected");
+    return;
+  }
+
+  int error_code;
+
+  // If we are provided a message object
   if (info.Length() >= 1 && !info[0]->IsNull() && !info[0]->IsUndefined()) {
     if (!info[0]->IsObject()) {
       Nan::ThrowError("Parameter, when provided, must be an object");
       return;
     }
-
     v8::Local<v8::Object> params = info[0].As<v8::Object>();
 
     // This one is a buffer
@@ -717,26 +753,15 @@ NAN_METHOD(Consumer::NodeCommit) {
     int partition = GetParameter<int>(params, "partition", 0);
     int64_t offset = GetParameter<int64_t>(params, "offset", -1);
 
-    consumer_commit_t commit_request(topic_name, partition, offset);
-    v8::Local<v8::Function> cb = info[1].As<v8::Function>();
-
-    Nan::Callback *callback = new Nan::Callback(cb);
-
-    Nan::AsyncQueueWorker(
-      new Workers::ConsumerCommit(callback, consumer, commit_request));
-
-    info.GetReturnValue().Set(Nan::Null());
-
+    // Do it sync i guess
+    Baton b = consumer->CommitSync(topic_name, partition, offset);
+    error_code = static_cast<int>(b.err());
   } else {
-    v8::Local<v8::Function> cb = info[0].As<v8::Function>();
-
-    Nan::Callback *callback = new Nan::Callback(cb);
-    // These workers likely need to be tracked so we can stop them when we
-    //  disconnect or run unubscribe
-    Nan::AsyncQueueWorker(new Workers::ConsumerCommit(callback, consumer));
-
-    info.GetReturnValue().Set(Nan::Null());
+    Baton b = consumer->CommitSync();
+    error_code = static_cast<int>(b.err());
   }
+
+  info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
 }
 
 NAN_METHOD(Consumer::NodeSubscribe) {

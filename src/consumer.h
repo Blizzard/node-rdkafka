@@ -24,15 +24,6 @@
 
 namespace NodeKafka {
 
-struct consumer_commit_t {
-  int64_t m_offset;
-  int m_partition;
-  std::string m_topic_name;
-
-  consumer_commit_t(std::string, int, int64_t);
-  consumer_commit_t();
-};
-
 
 /**
  * @brief Consumer v8 wrapped object.
@@ -56,8 +47,14 @@ class Consumer : public Connection {
   Baton Unsubscribe();
   bool IsSubscribed();
 
+  // Asynchronous commit events
   Baton Commit(std::string, int, int64_t);
   Baton Commit();
+
+  // Synchronous commit events
+  Baton CommitSync(std::string, int, int64_t);
+  Baton CommitSync();
+
   Baton Committed(int timeout_ms);
   Baton Position();
 

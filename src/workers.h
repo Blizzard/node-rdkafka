@@ -273,23 +273,6 @@ class ConsumerConsumeNum : public ErrorAwareWorker {
   std::vector<RdKafka::Message*> m_messages;
 };
 
-class ConsumerCommit : public ErrorAwareWorker {
- public:
-  ConsumerCommit(
-    Nan::Callback*, NodeKafka::Consumer*);
-  ConsumerCommit(
-    Nan::Callback*, NodeKafka::Consumer*, consumer_commit_t);
-  ~ConsumerCommit();
-
-  void Execute();
-  void HandleOKCallback();
-  void HandleErrorCallback();
- private:
-  NodeKafka::Consumer * consumer;
-  consumer_commit_t m_conf;
-  bool committing_message;
-};
-
 }  // namespace Workers
 
 }  // namespace NodeKafka
