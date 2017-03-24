@@ -242,6 +242,7 @@ describe('Consumer/Producer', function() {
     });
 
     afterEach(function(done) {
+      this.timeout(10000);
       consumer.disconnect(function() {
         done();
       });
@@ -253,46 +254,11 @@ describe('Consumer/Producer', function() {
       var value = new Buffer('');
 
       var lastOffset = null;
+
       consumer.once('data', function(message) {
         lastOffset = message.offset;
-        consumer.commitMessage(message, function(err) {
-          consumer.disconnect(function() {
-            consumer.connect({}, function(err, d) {
-              t.ifError(err);
-              t.equal(typeof d, 'object', 'metadata should be returned');
+        consumer.commitMessage(message);
 
-              consumer.once('data', function(message) {
-                console.log('First message offset:', lastOffset, 'New message',
-                  'offset:', message.offset);
-                done(new Error('Should never be here'));
-              });
-
-              consumer.subscribe([topic]);
-              consumer.consume();
-
-              setTimeout(function() {
-                done();
-              }, 5000);
-            });
-          });
-        });
-      });
-      consumer.subscribe([topic]);
-      consumer.consume();
-
-      setTimeout(function() {
-        producer.produce(topic, null, value, key);
-      }, 2000);
-    });
-    it('should synchronous commit after consuming', function(done) {
-      this.timeout(20000);
-      var key = '';
-      var value = new Buffer('');
-
-      var lastOffset = null;
-      consumer.once('data', function(message) {
-        lastOffset = message.offset;
-        consumer.commitMessageSync(message);
         consumer.disconnect(function() {
           consumer.connect({}, function(err, d) {
             t.ifError(err);
@@ -313,6 +279,7 @@ describe('Consumer/Producer', function() {
           });
         });
       });
+
       consumer.subscribe([topic]);
       consumer.consume();
 
@@ -320,5 +287,6 @@ describe('Consumer/Producer', function() {
         producer.produce(topic, null, value, key);
       }, 2000);
     });
+
   });
 });

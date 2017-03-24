@@ -28,7 +28,7 @@ describe('Consumer', function() {
     };
   });
 
-  describe('commit and commitSync', function() {
+  describe('commit', function() {
     var consumer;
     beforeEach(function(done) {
       consumer = new KafkaConsumer(gcfg, {});
@@ -44,14 +44,6 @@ describe('Consumer', function() {
     afterEach(function(done) {
       consumer.disconnect(function() {
         done();
-      });
-    });
-
-    it('commitSync throws an error when answered with one', function() {
-      t.throws(function () {
-        consumer.commitSync({
-          offset: -10000, topic:topic, partition: 0
-        });
       });
     });
 

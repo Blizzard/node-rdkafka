@@ -285,7 +285,9 @@ void ConsumerConsumeLoop::Execute(const ExecutionMessageBus& bus) {
       // Randomise the wait time to avoid contention on different
       // slow topics
       usleep(static_cast<int>(rand_r(&m_rand_seed) * 1000 * 1000 / RAND_MAX));
-    } else if (b.err() == RdKafka::ERR__TIMED_OUT) {
+    } else if (
+      b.err() == RdKafka::ERR__TIMED_OUT ||
+      b.err() == RdKafka::ERR__TIMED_OUT_QUEUE) {
       // If it is timed out this could just mean there were no
       // new messages fetched quickly enough. This isn't really
       // an error that should kill us.
@@ -358,7 +360,8 @@ void ConsumerConsumeNum::Execute() {
     Baton b = m_consumer->Consume(m_timeout_ms);
     if (b.err() != RdKafka::ERR_NO_ERROR) {
       if (b.err() != RdKafka::ERR__TIMED_OUT &&
-          b.err() != RdKafka::ERR__PARTITION_EOF) {
+          b.err() != RdKafka::ERR__PARTITION_EOF &&
+          b.err() != RdKafka::ERR__TIMED_OUT_QUEUE) {
         if (i == 0) {
           SetErrorBaton(b);
         }
@@ -514,58 +517,6 @@ void ConsumerCommitted::HandleErrorCallback() {
 
   const unsigned int argc = 1;
   v8::Local<v8::Value> argv[argc] = { GetErrorObject() };
-
-  callback->Call(argc, argv);
-}
-
-// Commit
-
-ConsumerCommit::ConsumerCommit(Nan::Callback *callback,
-                                     Consumer* consumer,
-                                     consumer_commit_t config) :
-  ErrorAwareWorker(callback),
-  consumer(consumer),
-  m_conf(config) {
-    committing_message = true;
-  }
-
-ConsumerCommit::ConsumerCommit(Nan::Callback *callback,
-                                     Consumer* consumer) :
-  ErrorAwareWorker(callback),
-  consumer(consumer) {
-    committing_message = false;
-  }
-
-ConsumerCommit::~ConsumerCommit() {}
-
-void ConsumerCommit::Execute() {
-  Baton b(NULL);
-
-  if (committing_message) {
-    b = consumer->Commit(m_conf.m_topic_name, m_conf.m_partition, m_conf.m_offset);  // NOLINT
-  } else {
-    b = consumer->Commit();
-  }
-
-  if (b.err() != RdKafka::ERR_NO_ERROR) {
-    SetErrorCode(b.err());
-  }
-}
-
-void ConsumerCommit::HandleOKCallback() {
-  Nan::HandleScope scope;
-
-  const unsigned int argc = 1;
-  v8::Local<v8::Value> argv[argc] = { Nan::Null() };
-
-  callback->Call(argc, argv);
-}
-
-void ConsumerCommit::HandleErrorCallback() {
-  Nan::HandleScope scope;
-
-  const unsigned int argc = 1;
-  v8::Local<v8::Value> argv[argc] = { Nan::Error(ErrorMessage()) };
 
   callback->Call(argc, argv);
 }
