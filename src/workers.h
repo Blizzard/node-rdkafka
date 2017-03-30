@@ -58,10 +58,10 @@ class ErrorAwareWorker : public Nan::AsyncWorker {
   Baton m_baton;
 };
 
-class MessageWorker : public Nan::AsyncWorker {
+class MessageWorker : public ErrorAwareWorker {
  public:
   explicit MessageWorker(Nan::Callback* callback_)
-      : Nan::AsyncWorker(callback_), m_asyncdata() {
+      : ErrorAwareWorker(callback_), m_asyncdata() {
     m_async = new uv_async_t;
     uv_async_init(
       uv_default_loop(),

@@ -43,7 +43,7 @@ void ConnectionMetadata::Execute() {
     // the string to create the object
     m_metadata = b.data<RdKafka::Metadata*>();
   } else {
-    SetErrorCode(b.err());
+    SetErrorBaton(b);
   }
 }
 
@@ -89,7 +89,7 @@ void ProducerConnect::Execute() {
   Baton b = producer->Connect();
 
   if (b.err() != RdKafka::ERR_NO_ERROR) {
-    SetErrorCode(b.err());
+    SetErrorBaton(b);
   }
 }
 
@@ -216,7 +216,7 @@ void ConsumerDisconnect::Execute() {
   Baton b = consumer->Disconnect();
 
   if (b.err() != RdKafka::ERR_NO_ERROR) {
-    SetErrorCode(b.err());
+    SetErrorBaton(b);
   }
 }
 
@@ -296,7 +296,7 @@ void ConsumerConsumeLoop::Execute(const ExecutionMessageBus& bus) {
       bus.Send(b.data<RdKafka::Message*>());
     } else {
       // Unknown error. We need to break out of this
-      SetErrorMessage(b.errstr().c_str());
+      SetErrorBaton(b);
       break;
     }
   }
