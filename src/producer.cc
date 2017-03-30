@@ -83,6 +83,8 @@ void Producer::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(tpl, "setPartitioner", NodeSetPartitioner);
   Nan::SetPrototypeMethod(tpl, "produce", NodeProduce);
 
+  Nan::SetPrototypeMethod(tpl, "flush", NodeFlush);
+
     // connect. disconnect. resume. pause. get meta data
   constructor.Reset(tpl->GetFunction());
 
