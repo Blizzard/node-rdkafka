@@ -204,6 +204,7 @@ To see the configuration options available to you, see the [Configuration](#conf
 |`producer.poll()` | Polls the producer for delivery reports or other events to be transmitted via the emitter. <br><br>In order to get the events in `librdkafka`'s queue to emit, you must call this regularly. |
 |`producer.setPollInterval(interval)` | Polls the producer on this interval, handling disconnections and reconnection. Set it to 0 to turn it off. |
 |`producer.produce(topic, partition, msg, key)`| Sends a message. <br><br>The `produce()` method throws when produce would return an error. Ordinarily, this is just if the queue is full. |
+|`producer.flush(timeout, callback)`| Flush the librdkafka internal queue, sending all messages. Default timeout is 500ms |
 
 ##### Events
 

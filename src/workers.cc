@@ -119,6 +119,12 @@ void ProducerConnect::HandleErrorCallback() {
   callback->Call(argc, argv);
 }
 
+/**
+ * @brief Producer disconnect worker
+ *
+ * Easy Nan::AsyncWorker for disconnecting from clients
+ */
+
 ProducerDisconnect::ProducerDisconnect(Nan::Callback *callback,
   Producer* producer):
   ErrorAwareWorker(callback),
@@ -145,6 +151,41 @@ void ProducerDisconnect::HandleOKCallback() {
 void ProducerDisconnect::HandleErrorCallback() {
   // This should never run
   assert(0);
+}
+
+/**
+ * @brief Producer flush worker
+ *
+ * Easy Nan::AsyncWorker for flushing a producer.
+ */
+
+ProducerFlush::ProducerFlush(Nan::Callback *callback,
+  Producer* producer, int timeout_ms):
+  ErrorAwareWorker(callback),
+  producer(producer),
+  timeout_ms(timeout_ms) {}
+
+ProducerFlush::~ProducerFlush() {}
+
+void ProducerFlush::Execute() {
+  if (!producer->IsConnected()) {
+    SetErrorMessage("Producer is disconnected");
+    return;
+  }
+
+  Baton b = producer->Flush(timeout_ms);
+  if (b.err() != RdKafka::ErrorCode::ERR_NO_ERROR) {
+    SetErrorBaton(b);
+  }
+}
+
+void ProducerFlush::HandleOKCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc] = { Nan::Null() };
+
+  callback->Call(argc, argv);
 }
 
 /**

@@ -535,30 +535,21 @@ Baton Producer::Flush(int timeout_ms) {
 NAN_METHOD(Producer::NodeFlush) {
   Nan::HandleScope scope;
 
-  if (info.Length() < 1 || !info[0]->IsFunction()) {
+  if (info.Length() < 2 || !info[1]->IsFunction() || !info[0]->IsNumber()) {
     // Just throw an exception
-    return Nan::ThrowError("Need to specify a callback");
+    return Nan::ThrowError("Need to specify a timeout and a callback");
   }
 
-  int timeout_ms;
+  int timeout_ms = Nan::To<int>(info[0]).FromJust();
 
-  if (info[0]->IsNull() || info[0]->IsUndefined()) {
-    timeout_ms = 1000;
-  } else {
-    timeout_ms = Nan::To<int>(info[0]).FromJust();
-  }
+  v8::Local<v8::Function> cb = info[1].As<v8::Function>();
+  Nan::Callback *callback = new Nan::Callback(cb);
 
   Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
 
-  if (!producer->IsConnected()) {
-    Nan::ThrowError("Producer is disconnected");
-  } else {
-    Baton b = producer->Flush(timeout_ms);
-    if (b.err() != RdKafka::ErrorCode::ERR_NO_ERROR) {
-      return Nan::ThrowError(b.errstr().c_str());
-    }
-    info.GetReturnValue().Set(Nan::True());
-  }
+  Nan::AsyncQueueWorker(new Workers::ProducerFlush(callback, producer, timeout_ms));
+
+  info.GetReturnValue().Set(Nan::Null());
 }
 
 NAN_METHOD(Producer::NodeDisconnect) {

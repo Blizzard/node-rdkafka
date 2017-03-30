@@ -32,7 +32,14 @@ class ErrorAwareWorker : public Nan::AsyncWorker {
 
   virtual void Execute() = 0;
   virtual void HandleOKCallback() = 0;
-  virtual void HandleErrorCallback() = 0;
+  void HandleErrorCallback() {
+    Nan::HandleScope scope;
+
+    const unsigned int argc = 1;
+    v8::Local<v8::Value> argv[argc] = { Nan::Error(ErrorMessage()) };
+
+    callback->Call(argc, argv);
+  }
 
  protected:
   void SetErrorCode(const int & code) {
@@ -187,6 +194,19 @@ class ProducerDisconnect : public ErrorAwareWorker {
 
  private:
   NodeKafka::Producer * producer;
+};
+
+class ProducerFlush : public ErrorAwareWorker {
+ public:
+  ProducerFlush(Nan::Callback*, NodeKafka::Producer*, int);
+  ~ProducerFlush();
+
+  void Execute();
+  void HandleOKCallback();
+
+ private:
+  NodeKafka::Producer * producer;
+  int timeout_ms;
 };
 
 class ConsumerConnect : public ErrorAwareWorker {
