@@ -33,7 +33,7 @@ producer.on('error', function(err) {
 var counter = 0;
 var maxMessages = 10;
 
-producer.on('delivery-report', function(report) {
+producer.on('delivery-report', function(err, report) {
   console.log('delivery-report: ' + JSON.stringify(report));
   counter++;
 });
