@@ -547,7 +547,8 @@ NAN_METHOD(Producer::NodeFlush) {
 
   Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
 
-  Nan::AsyncQueueWorker(new Workers::ProducerFlush(callback, producer, timeout_ms));
+  Nan::AsyncQueueWorker(
+    new Workers::ProducerFlush(callback, producer, timeout_ms));
 
   info.GetReturnValue().Set(Nan::Null());
 }
