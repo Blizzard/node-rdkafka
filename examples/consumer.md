@@ -15,42 +15,30 @@ var Transform = require('stream').Transform;
 
 var Kafka = require('../');
 
-var consumer = new Kafka.KafkaConsumer({
+var stream = Kafka.KafkaConsumer.createReadStream({
   'metadata.broker.list': 'localhost:9092',
   'group.id': 'librd-test',
   'socket.keepalive.enable': true,
   'enable.auto.commit': false
-});
-
-var stream = consumer.getReadStream('test', {
-  waitInterval: 0
+}, {}, {
+  topics: 'test',
+  waitInterval: 0,
+  objectMode: false
 });
 
 stream.on('error', function() {
   process.exit(1);
 });
 
-consumer.on('rebalance', function(e) {
-
-  if (e.code === Kafka.CODES.REBALANCE.PARTITION_ASSIGNMENT) {
-    console.log('Partition assignment');
-  } else {
-    console.log('Partition unassignment');
-  }
-});
-
 stream
-  .pipe(new Transform({
-    objectMode: true,
-    transform: function(data, encoding, callback) {
-      // consumer.commit(data, function(err) {});
-      // We want to force it to run async
-      callback(null, data.message);
-    }
-  }))
   .pipe(process.stdout);
 
-consumer.on('event.error', function(err) {
+stream.on('error', function(err) {
   console.log(err);
+  process.exit(1);
 });
+
+stream.consumer.on('event.error', function(err) {
+  console.log(err);
+})
 ```

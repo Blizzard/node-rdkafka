@@ -118,12 +118,12 @@ You can easily use the `Producer` as a writable stream immediately after creatio
 
 ```js
 // Our producer with its Kafka brokers
-var producer = new Kafka.Producer({
-  'metadata.broker.list': 'kafka-host1:9092,kafka-host2:9092'
-});
-
 // This call returns a new writable stream to our topic 'topic-name'
-var stream = producer.getWriteStream('topic-name');
+var stream = Kafka.Producer.createWriteStream({
+  'metadata.broker.list': 'kafka-host1:9092,kafka-host2:9092'
+}, {}, {
+  topic: 'topic-name'
+});
 
 // Writes a message to the stream
 var queuedSuccess = stream.write(new Buffer('Awesome message'));
@@ -142,8 +142,6 @@ stream.on('error', function (err) {
   console.error(err);
 })
 ```
-
-Note that `getWriteStream` will create a new stream on every call.  You should try to cache the returned stream for a topic after the first call.
 
 #### Standard API
 
@@ -305,11 +303,13 @@ The stream API is the easiest way to consume messages. The following example ill
 
 ```js
 // Read from the librdtesting-01 topic... note that this creates a new stream on each call!
-var stream = consumer.getReadStream('librdtesting-01');
+var stream = KafkaConsumer.createReadStream(globalConfig, topicConfig, {
+  topics: ['librdtesting-01']
+});
 
-stream.on('data', function(data) {
+stream.on('data', function(message) {
   console.log('Got message');
-  console.log(data.message.toString());
+  console.log(message.value.toString());
 });
 ```
 
