@@ -18,7 +18,7 @@
 
 #include "src/common.h"
 #include "src/producer.h"
-#include "src/consumer.h"
+#include "src/kafka-consumer.h"
 
 namespace NodeKafka {
 namespace Workers {
@@ -209,85 +209,88 @@ class ProducerFlush : public ErrorAwareWorker {
   int timeout_ms;
 };
 
-class ConsumerConnect : public ErrorAwareWorker {
+class KafkaConsumerConnect : public ErrorAwareWorker {
  public:
-  ConsumerConnect(Nan::Callback*, NodeKafka::Consumer*);
-  ~ConsumerConnect();
+  KafkaConsumerConnect(Nan::Callback*, NodeKafka::KafkaConsumer*);
+  ~KafkaConsumerConnect();
 
   void Execute();
   void HandleOKCallback();
   void HandleErrorCallback();
 
  private:
-  NodeKafka::Consumer * consumer;
+  NodeKafka::KafkaConsumer * consumer;
 };
 
-class ConsumerDisconnect : public ErrorAwareWorker {
+class KafkaConsumerDisconnect : public ErrorAwareWorker {
  public:
-  ConsumerDisconnect(Nan::Callback*, NodeKafka::Consumer*);
-  ~ConsumerDisconnect();
+  KafkaConsumerDisconnect(Nan::Callback*, NodeKafka::KafkaConsumer*);
+  ~KafkaConsumerDisconnect();
 
   void Execute();
   void HandleOKCallback();
   void HandleErrorCallback();
 
  private:
-  NodeKafka::Consumer * consumer;
+  NodeKafka::KafkaConsumer * consumer;
 };
 
-class ConsumerConsumeLoop : public MessageWorker {
+class KafkaConsumerConsumeLoop : public MessageWorker {
  public:
-  ConsumerConsumeLoop(Nan::Callback*, NodeKafka::Consumer*, const int &);
-  ~ConsumerConsumeLoop();
+  KafkaConsumerConsumeLoop(Nan::Callback*,
+    NodeKafka::KafkaConsumer*, const int &);
+  ~KafkaConsumerConsumeLoop();
 
   void Execute(const ExecutionMessageBus&);
   void HandleOKCallback();
   void HandleErrorCallback();
   void HandleMessageCallback(RdKafka::Message*);
  private:
-  NodeKafka::Consumer * consumer;
+  NodeKafka::KafkaConsumer * consumer;
   const int m_timeout_ms;
   unsigned int m_rand_seed;
 };
 
-class ConsumerConsume : public ErrorAwareWorker {
+class KafkaConsumerConsume : public ErrorAwareWorker {
  public:
-  ConsumerConsume(Nan::Callback*, NodeKafka::Consumer*, const int &);
-  ~ConsumerConsume();
+  KafkaConsumerConsume(Nan::Callback*, NodeKafka::KafkaConsumer*, const int &);
+  ~KafkaConsumerConsume();
 
   void Execute();
   void HandleOKCallback();
   void HandleErrorCallback();
  private:
-  NodeKafka::Consumer * consumer;
+  NodeKafka::KafkaConsumer * consumer;
   const int m_timeout_ms;
   RdKafka::Message* m_message;
 };
 
-class ConsumerCommitted : public ErrorAwareWorker {
+class KafkaConsumerCommitted : public ErrorAwareWorker {
  public:
-  ConsumerCommitted(Nan::Callback*, NodeKafka::Consumer*, const int &);
-  ~ConsumerCommitted();
+  KafkaConsumerCommitted(Nan::Callback*,
+    NodeKafka::KafkaConsumer*, const int &);
+  ~KafkaConsumerCommitted();
 
   void Execute();
   void HandleOKCallback();
   void HandleErrorCallback();
  private:
-  NodeKafka::Consumer * m_consumer;
+  NodeKafka::KafkaConsumer * m_consumer;
   const int m_timeout_ms;
   std::vector<RdKafka::TopicPartition*> * m_topic_partitions;
 };
 
-class ConsumerConsumeNum : public ErrorAwareWorker {
+class KafkaConsumerConsumeNum : public ErrorAwareWorker {
  public:
-  ConsumerConsumeNum(Nan::Callback*, NodeKafka::Consumer*, const uint32_t &, const int &);  // NOLINT
-  ~ConsumerConsumeNum();
+  KafkaConsumerConsumeNum(Nan::Callback*, NodeKafka::KafkaConsumer*,
+    const uint32_t &, const int &);
+  ~KafkaConsumerConsumeNum();
 
   void Execute();
   void HandleOKCallback();
   void HandleErrorCallback();
  private:
-  NodeKafka::Consumer * m_consumer;
+  NodeKafka::KafkaConsumer * m_consumer;
   const uint32_t m_num_messages;
   const int m_timeout_ms;
   std::vector<RdKafka::Message*> m_messages;

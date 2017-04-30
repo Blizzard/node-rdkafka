@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-#include "src/consumer.h"
+#include "src/kafka-consumer.h"
 #include "src/workers.h"
 
 using Nan::FunctionCallbackInfo;
@@ -18,7 +18,7 @@ using Nan::FunctionCallbackInfo;
 namespace NodeKafka {
 
 /**
- * @brief Consumer v8 wrapped object.
+ * @brief KafkaConsumer v8 wrapped object.
  *
  * Specializes the connection to wrap a consumer object through compositional
  * inheritence. Establishes its prototype in node through `Init`
@@ -27,19 +27,19 @@ namespace NodeKafka {
  * @sa NodeKafka::Client
  */
 
-Consumer::Consumer(Conf* gconfig, Conf* tconfig):
+KafkaConsumer::KafkaConsumer(Conf* gconfig, Conf* tconfig):
   Connection(gconfig, tconfig) {
     std::string errstr;
 
     m_gconfig->set("default_topic_conf", m_tconfig, errstr);
   }
 
-Consumer::~Consumer() {
+KafkaConsumer::~KafkaConsumer() {
   // We only want to run this if it hasn't been run already
   Disconnect();
 }
 
-Baton Consumer::Connect() {
+Baton KafkaConsumer::Connect() {
   if (IsConnected()) {
     return Baton(RdKafka::ERR_NO_ERROR);
   }
@@ -61,7 +61,7 @@ Baton Consumer::Connect() {
   return Baton(RdKafka::ERR_NO_ERROR);
 }
 
-void Consumer::ActivateDispatchers() {
+void KafkaConsumer::ActivateDispatchers() {
   // Listen to global config
   m_gconfig->listen();
 
@@ -72,7 +72,7 @@ void Consumer::ActivateDispatchers() {
   m_event_cb.dispatcher.Activate();
 }
 
-Baton Consumer::Disconnect() {
+Baton KafkaConsumer::Disconnect() {
   // Only close client if it is connected
   RdKafka::ErrorCode err = RdKafka::ERR_NO_ERROR;
 
@@ -95,7 +95,7 @@ Baton Consumer::Disconnect() {
   return Baton(err);
 }
 
-void Consumer::DeactivateDispatchers() {
+void KafkaConsumer::DeactivateDispatchers() {
   // Stop listening to the config dispatchers
   m_gconfig->stop();
 
@@ -103,7 +103,7 @@ void Consumer::DeactivateDispatchers() {
   m_event_cb.dispatcher.Deactivate();
 }
 
-bool Consumer::IsSubscribed() {
+bool KafkaConsumer::IsSubscribed() {
   if (!IsConnected()) {
     return false;
   }
@@ -116,23 +116,23 @@ bool Consumer::IsSubscribed() {
 }
 
 
-bool Consumer::HasAssignedPartitions() {
+bool KafkaConsumer::HasAssignedPartitions() {
   return !m_partitions.empty();
 }
-int Consumer::AssignedPartitionCount() {
+int KafkaConsumer::AssignedPartitionCount() {
   return m_partition_cnt;
 }
 
-void Consumer::part_list_print(const std::vector<RdKafka::TopicPartition*> &partitions) {  // NOLINT
+void KafkaConsumer::part_list_print(const std::vector<RdKafka::TopicPartition*> &partitions) {  // NOLINT
   for (unsigned int i = 0 ; i < partitions.size() ; i++)
     std::cerr << partitions[i]->topic() <<
       "[" << partitions[i]->partition() << "], ";
   std::cerr << std::endl;
 }
 
-Baton Consumer::Assign(std::vector<RdKafka::TopicPartition*> partitions) {
+Baton KafkaConsumer::Assign(std::vector<RdKafka::TopicPartition*> partitions) {
   if (!IsConnected()) {
-    return Baton(RdKafka::ERR__STATE, "Consumer is disconnected");
+    return Baton(RdKafka::ERR__STATE, "KafkaConsumer is disconnected");
   }
 
   RdKafka::KafkaConsumer* consumer =
@@ -150,7 +150,7 @@ Baton Consumer::Assign(std::vector<RdKafka::TopicPartition*> partitions) {
   return Baton(RdKafka::ERR_NO_ERROR);
 }
 
-Baton Consumer::Unassign() {
+Baton KafkaConsumer::Unassign() {
   if (!IsConnected()) {
     return Baton(RdKafka::ERR__STATE);
   }
@@ -170,7 +170,7 @@ Baton Consumer::Unassign() {
   return Baton(RdKafka::ERR_NO_ERROR);
 }
 
-Baton Consumer::Commit(std::string topic_name, int partition, int64_t offset) {
+Baton KafkaConsumer::Commit(std::string topic_name, int partition, int64_t offset) {  // NOLINT
   if (!IsConnected()) {
     return Baton(RdKafka::ERR__STATE);
   }
@@ -193,10 +193,10 @@ Baton Consumer::Commit(std::string topic_name, int partition, int64_t offset) {
   return Baton(err);
 }
 
-Baton Consumer::Commit() {
+Baton KafkaConsumer::Commit() {
   // sets an error message
   if (!IsConnected()) {
-    return Baton(RdKafka::ERR__STATE, "Consumer is not connected");
+    return Baton(RdKafka::ERR__STATE, "KafkaConsumer is not connected");
   }
 
   RdKafka::KafkaConsumer* consumer =
@@ -208,7 +208,7 @@ Baton Consumer::Commit() {
 }
 
 // Synchronous commit events
-Baton Consumer::CommitSync(std::string topic_name, int partition, int64_t offset) {  // NOLINT
+Baton KafkaConsumer::CommitSync(std::string topic_name, int partition, int64_t offset) {  // NOLINT
   if (!IsConnected()) {
     return Baton(RdKafka::ERR__STATE);
   }
@@ -231,10 +231,10 @@ Baton Consumer::CommitSync(std::string topic_name, int partition, int64_t offset
   return Baton(err);
 }
 
-Baton Consumer::CommitSync() {
+Baton KafkaConsumer::CommitSync() {
   // sets an error message
   if (!IsConnected()) {
-    return Baton(RdKafka::ERR__STATE, "Consumer is not connected");
+    return Baton(RdKafka::ERR__STATE, "KafkaConsumer is not connected");
   }
 
   RdKafka::KafkaConsumer* consumer =
@@ -246,9 +246,9 @@ Baton Consumer::CommitSync() {
 }
 
 
-Baton Consumer::Committed(int timeout_ms) {
+Baton KafkaConsumer::Committed(int timeout_ms) {
   if (!IsConnected()) {
-    return Baton(RdKafka::ERR__STATE, "Consumer is not connected");
+    return Baton(RdKafka::ERR__STATE, "KafkaConsumer is not connected");
   }
 
   RdKafka::KafkaConsumer* consumer =
@@ -267,9 +267,9 @@ Baton Consumer::Committed(int timeout_ms) {
   return Baton(err);
 }
 
-Baton Consumer::Position() {
+Baton KafkaConsumer::Position() {
   if (!IsConnected()) {
-    return Baton(RdKafka::ERR__STATE, "Consumer is not connected");
+    return Baton(RdKafka::ERR__STATE, "KafkaConsumer is not connected");
   }
 
   RdKafka::KafkaConsumer* consumer =
@@ -288,7 +288,7 @@ Baton Consumer::Position() {
   return Baton(err);
 }
 
-Baton Consumer::Subscription() {
+Baton KafkaConsumer::Subscription() {
   if (!IsConnected()) {
     return Baton(RdKafka::ERR__STATE, "Consumer is not connected");
   }
@@ -309,7 +309,7 @@ Baton Consumer::Subscription() {
   return Baton(err);
 }
 
-Baton Consumer::Unsubscribe() {
+Baton KafkaConsumer::Unsubscribe() {
   if (IsConnected() && IsSubscribed()) {
     RdKafka::KafkaConsumer* consumer =
       dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
@@ -320,7 +320,7 @@ Baton Consumer::Unsubscribe() {
   return Baton(RdKafka::ERR_NO_ERROR);
 }
 
-Baton Consumer::Subscribe(std::vector<std::string> topics) {
+Baton KafkaConsumer::Subscribe(std::vector<std::string> topics) {
   if (!IsConnected()) {
     return Baton(RdKafka::ERR__STATE);
   }
@@ -338,11 +338,11 @@ Baton Consumer::Subscribe(std::vector<std::string> topics) {
   return Baton(RdKafka::ERR_NO_ERROR);
 }
 
-Baton Consumer::Consume(int timeout_ms) {
+Baton KafkaConsumer::Consume(int timeout_ms) {
   if (IsConnected()) {
     scoped_shared_read_lock lock(m_connection_lock);
     if (!IsConnected()) {
-      return Baton(RdKafka::ERR__STATE, "Consumer is not connected");
+      return Baton(RdKafka::ERR__STATE, "KafkaConsumer is not connected");
     } else {
       RdKafka::KafkaConsumer* consumer =
         dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
@@ -357,11 +357,11 @@ Baton Consumer::Consume(int timeout_ms) {
       return Baton(message);
     }
   } else {
-    return Baton(RdKafka::ERR__STATE, "Consumer is not connected");
+    return Baton(RdKafka::ERR__STATE, "KafkaConsumer is not connected");
   }
 }
 
-Baton Consumer::RefreshAssignments() {
+Baton KafkaConsumer::RefreshAssignments() {
   if (!IsConnected()) {
     return Baton(RdKafka::ERR__STATE);
   }
@@ -384,16 +384,16 @@ Baton Consumer::RefreshAssignments() {
   }
 }
 
-std::string Consumer::Name() {
+std::string KafkaConsumer::Name() {
   if (!IsConnected()) {
     return std::string("");
   }
   return std::string(m_client->name());
 }
 
-Nan::Persistent<v8::Function> Consumer::constructor;
+Nan::Persistent<v8::Function> KafkaConsumer::constructor;
 
-void Consumer::Init(v8::Local<v8::Object> exports) {
+void KafkaConsumer::Init(v8::Local<v8::Object> exports) {
   Nan::HandleScope scope;
 
   v8::Local<v8::FunctionTemplate> tpl = Nan::New<v8::FunctionTemplate>(New);
@@ -451,7 +451,7 @@ void Consumer::Init(v8::Local<v8::Object> exports) {
   exports->Set(Nan::New("KafkaConsumer").ToLocalChecked(), tpl->GetFunction());
 }
 
-void Consumer::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
+void KafkaConsumer::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
   if (!info.IsConstructCall()) {
     return Nan::ThrowError("non-constructor invocation not supported");
   }
@@ -485,7 +485,7 @@ void Consumer::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
     return Nan::ThrowError(errstr.c_str());
   }
 
-  Consumer* consumer = new Consumer(gconfig, tconfig);
+  KafkaConsumer* consumer = new KafkaConsumer(gconfig, tconfig);
 
   // Wrap it
   consumer->Wrap(info.This());
@@ -497,7 +497,7 @@ void Consumer::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
   info.GetReturnValue().Set(info.This());
 }
 
-v8::Local<v8::Object> Consumer::NewInstance(v8::Local<v8::Value> arg) {
+v8::Local<v8::Object> KafkaConsumer::NewInstance(v8::Local<v8::Value> arg) {
   Nan::EscapableHandleScope scope;
 
   const unsigned argc = 1;
@@ -512,7 +512,7 @@ v8::Local<v8::Object> Consumer::NewInstance(v8::Local<v8::Value> arg) {
 
 /* Node exposed methods */
 
-NAN_METHOD(Consumer::NodeCommitted) {
+NAN_METHOD(KafkaConsumer::NodeCommitted) {
   Nan::HandleScope scope;
 
   int timeout_ms;
@@ -528,7 +528,7 @@ NAN_METHOD(Consumer::NodeCommitted) {
   v8::Local<v8::Function> cb = info[1].As<v8::Function>();
   Nan::Callback *callback = new Nan::Callback(cb);
 
-  Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
+  KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
   Baton b = consumer->RefreshAssignments();
 
   if (b.err() != RdKafka::ERR_NO_ERROR) {
@@ -538,15 +538,15 @@ NAN_METHOD(Consumer::NodeCommitted) {
   }
 
   Nan::AsyncQueueWorker(
-    new Workers::ConsumerCommitted(callback, consumer, timeout_ms));
+    new Workers::KafkaConsumerCommitted(callback, consumer, timeout_ms));
 
   info.GetReturnValue().Set(Nan::Null());
 }
 
-NAN_METHOD(Consumer::NodeSubscription) {
+NAN_METHOD(KafkaConsumer::NodeSubscription) {
   Nan::HandleScope scope;
 
-  Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
+  KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
   Baton b = consumer->Subscription();
 
@@ -563,10 +563,10 @@ NAN_METHOD(Consumer::NodeSubscription) {
   delete topics;
 }
 
-NAN_METHOD(Consumer::NodePosition) {
+NAN_METHOD(KafkaConsumer::NodePosition) {
   Nan::HandleScope scope;
 
-  Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
+  KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
   Baton br = consumer->RefreshAssignments();
 
   if (br.err() != RdKafka::ERR_NO_ERROR) {
@@ -591,10 +591,10 @@ NAN_METHOD(Consumer::NodePosition) {
   delete partitions;
 }
 
-NAN_METHOD(Consumer::NodeAssignments) {
+NAN_METHOD(KafkaConsumer::NodeAssignments) {
   Nan::HandleScope scope;
 
-  Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
+  KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
   Baton b = consumer->RefreshAssignments();
 
@@ -608,7 +608,7 @@ NAN_METHOD(Consumer::NodeAssignments) {
     Conversion::TopicPartition::ToV8Array(consumer->m_partitions));
 }
 
-NAN_METHOD(Consumer::NodeAssign) {
+NAN_METHOD(KafkaConsumer::NodeAssign) {
   Nan::HandleScope scope;
 
   if (info.Length() < 1 || !info[0]->IsArray()) {
@@ -649,7 +649,7 @@ NAN_METHOD(Consumer::NodeAssign) {
     }
   }
 
-  Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
+  KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
   Baton b = consumer->Assign(topic_partitions);
 
@@ -663,13 +663,13 @@ NAN_METHOD(Consumer::NodeAssign) {
   info.GetReturnValue().Set(Nan::True());
 }
 
-NAN_METHOD(Consumer::NodeUnassign) {
+NAN_METHOD(KafkaConsumer::NodeUnassign) {
   Nan::HandleScope scope;
 
-  Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
+  KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
   if (!consumer->IsConnected()) {
-    Nan::ThrowError("Consumer is disconnected");
+    Nan::ThrowError("KafkaConsumer is disconnected");
     return;
   }
 
@@ -682,23 +682,23 @@ NAN_METHOD(Consumer::NodeUnassign) {
   info.GetReturnValue().Set(Nan::True());
 }
 
-NAN_METHOD(Consumer::NodeUnsubscribe) {
+NAN_METHOD(KafkaConsumer::NodeUnsubscribe) {
   Nan::HandleScope scope;
 
-  Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
+  KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
   Baton b = consumer->Unsubscribe();
 
   info.GetReturnValue().Set(Nan::New<v8::Number>(static_cast<int>(b.err())));
 }
 
-NAN_METHOD(Consumer::NodeCommit) {
+NAN_METHOD(KafkaConsumer::NodeCommit) {
   Nan::HandleScope scope;
 
-  Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
+  KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
   if (!consumer->IsConnected()) {
-    Nan::ThrowError("Consumer is disconnected");
+    Nan::ThrowError("KafkaConsumer is disconnected");
     return;
   }
 
@@ -728,13 +728,13 @@ NAN_METHOD(Consumer::NodeCommit) {
   info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
 }
 
-NAN_METHOD(Consumer::NodeCommitSync) {
+NAN_METHOD(KafkaConsumer::NodeCommitSync) {
   Nan::HandleScope scope;
 
-  Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
+  KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
   if (!consumer->IsConnected()) {
-    Nan::ThrowError("Consumer is disconnected");
+    Nan::ThrowError("KafkaConsumer is disconnected");
     return;
   }
 
@@ -764,7 +764,7 @@ NAN_METHOD(Consumer::NodeCommitSync) {
   info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
 }
 
-NAN_METHOD(Consumer::NodeSubscribe) {
+NAN_METHOD(KafkaConsumer::NodeSubscribe) {
   Nan::HandleScope scope;
 
   if (info.Length() < 1 || !info[0]->IsArray()) {
@@ -772,7 +772,7 @@ NAN_METHOD(Consumer::NodeSubscribe) {
     return Nan::ThrowError("First parameter must be an array");
   }
 
-  Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
+  KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
   v8::Local<v8::Array> topicsArray = info[0].As<v8::Array>();
   std::vector<std::string> topics = Conversion::Topic::ToStringVector(topicsArray);  // NOLINT
@@ -783,7 +783,7 @@ NAN_METHOD(Consumer::NodeSubscribe) {
   info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
 }
 
-NAN_METHOD(Consumer::NodeConsumeLoop) {
+NAN_METHOD(KafkaConsumer::NodeConsumeLoop) {
   Nan::HandleScope scope;
 
   if (info.Length() < 2) {
@@ -809,18 +809,18 @@ NAN_METHOD(Consumer::NodeConsumeLoop) {
     timeout_ms = static_cast<int>(maybeTimeout.FromJust());
   }
 
-  Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
+  KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
   v8::Local<v8::Function> cb = info[1].As<v8::Function>();
 
   Nan::Callback *callback = new Nan::Callback(cb);
   Nan::AsyncQueueWorker(
-    new Workers::ConsumerConsumeLoop(callback, consumer, timeout_ms));
+    new Workers::KafkaConsumerConsumeLoop(callback, consumer, timeout_ms));
 
   info.GetReturnValue().Set(Nan::Null());
 }
 
-NAN_METHOD(Consumer::NodeConsume) {
+NAN_METHOD(KafkaConsumer::NodeConsume) {
   Nan::HandleScope scope;
 
   if (info.Length() < 2) {
@@ -853,30 +853,30 @@ NAN_METHOD(Consumer::NodeConsume) {
       numMessages = numMessagesMaybe.FromJust();
     }
 
-    Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
+    KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
     v8::Local<v8::Function> cb = info[2].As<v8::Function>();
     Nan::Callback *callback = new Nan::Callback(cb);
     Nan::AsyncQueueWorker(
-      new Workers::ConsumerConsumeNum(callback, consumer, numMessages, timeout_ms));  // NOLINT
+      new Workers::KafkaConsumerConsumeNum(callback, consumer, numMessages, timeout_ms));  // NOLINT
 
   } else {
     if (!info[1]->IsFunction()) {
       return Nan::ThrowError("Need to specify a callback");
     }
 
-    Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
+    KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
     v8::Local<v8::Function> cb = info[1].As<v8::Function>();
     Nan::Callback *callback = new Nan::Callback(cb);
     Nan::AsyncQueueWorker(
-      new Workers::ConsumerConsume(callback, consumer, timeout_ms));
+      new Workers::KafkaConsumerConsume(callback, consumer, timeout_ms));
   }
 
   info.GetReturnValue().Set(Nan::Null());
 }
 
-NAN_METHOD(Consumer::NodeConnect) {
+NAN_METHOD(KafkaConsumer::NodeConnect) {
   Nan::HandleScope scope;
 
   if (info.Length() < 1 || !info[0]->IsFunction()) {
@@ -884,15 +884,15 @@ NAN_METHOD(Consumer::NodeConnect) {
     return Nan::ThrowError("Need to specify a callback");
   }
 
-  Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
+  KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
   Nan::Callback *callback = new Nan::Callback(info[0].As<v8::Function>());
-  Nan::AsyncQueueWorker(new Workers::ConsumerConnect(callback, consumer));
+  Nan::AsyncQueueWorker(new Workers::KafkaConsumerConnect(callback, consumer));
 
   info.GetReturnValue().Set(Nan::Null());
 }
 
-NAN_METHOD(Consumer::NodeDisconnect) {
+NAN_METHOD(KafkaConsumer::NodeDisconnect) {
   Nan::HandleScope scope;
 
   if (info.Length() < 1 || !info[0]->IsFunction()) {
@@ -902,9 +902,10 @@ NAN_METHOD(Consumer::NodeDisconnect) {
 
   v8::Local<v8::Function> cb = info[0].As<v8::Function>();
   Nan::Callback *callback = new Nan::Callback(cb);
-  Consumer* consumer = ObjectWrap::Unwrap<Consumer>(info.This());
+  KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
-  Nan::AsyncQueueWorker(new Workers::ConsumerDisconnect(callback, consumer));
+  Nan::AsyncQueueWorker(
+    new Workers::KafkaConsumerDisconnect(callback, consumer));
   info.GetReturnValue().Set(Nan::Null());
 }
 

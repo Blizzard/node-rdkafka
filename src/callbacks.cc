@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "src/callbacks.h"
-#include "src/consumer.h"
+#include "src/kafka-consumer.h"
 
 using v8::Local;
 using v8::Value;

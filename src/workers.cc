@@ -189,21 +189,22 @@ void ProducerFlush::HandleOKCallback() {
 }
 
 /**
- * @brief Consumer connect worker.
+ * @brief KafkaConsumer connect worker.
  *
  * Easy Nan::AsyncWorker for setting up client connections
  *
  * @sa RdKafka::KafkaConsumer::connect
- * @sa NodeKafka::Consumer::Connect
+ * @sa NodeKafka::KafkaConsumer::Connect
  */
 
-ConsumerConnect::ConsumerConnect(Nan::Callback *callback, Consumer* consumer):
+KafkaConsumerConnect::KafkaConsumerConnect(Nan::Callback *callback,
+  KafkaConsumer* consumer):
   ErrorAwareWorker(callback),
   consumer(consumer) {}
 
-ConsumerConnect::~ConsumerConnect() {}
+KafkaConsumerConnect::~KafkaConsumerConnect() {}
 
-void ConsumerConnect::Execute() {
+void KafkaConsumerConnect::Execute() {
   Baton b = consumer->Connect();
   // consumer->Wait();
 
@@ -212,7 +213,7 @@ void ConsumerConnect::Execute() {
   }
 }
 
-void ConsumerConnect::HandleOKCallback() {
+void KafkaConsumerConnect::HandleOKCallback() {
   Nan::HandleScope scope;
 
   const unsigned int argc = 2;
@@ -228,7 +229,7 @@ void ConsumerConnect::HandleOKCallback() {
   callback->Call(argc, argv);
 }
 
-void ConsumerConnect::HandleErrorCallback() {
+void KafkaConsumerConnect::HandleErrorCallback() {
   Nan::HandleScope scope;
 
   const unsigned int argc = 1;
@@ -238,22 +239,22 @@ void ConsumerConnect::HandleErrorCallback() {
 }
 
 /**
- * @brief Consumer disconnect worker.
+ * @brief KafkaConsumer disconnect worker.
  *
  * Easy Nan::AsyncWorker for disconnecting and cleaning up librdkafka artifacts
  *
  * @sa RdKafka::KafkaConsumer::disconnect
- * @sa NodeKafka::Consumer::Disconnect
+ * @sa NodeKafka::KafkaConsumer::Disconnect
  */
 
-ConsumerDisconnect::ConsumerDisconnect(Nan::Callback *callback,
-  Consumer* consumer):
+KafkaConsumerDisconnect::KafkaConsumerDisconnect(Nan::Callback *callback,
+  KafkaConsumer* consumer):
   ErrorAwareWorker(callback),
   consumer(consumer) {}
 
-ConsumerDisconnect::~ConsumerDisconnect() {}
+KafkaConsumerDisconnect::~KafkaConsumerDisconnect() {}
 
-void ConsumerDisconnect::Execute() {
+void KafkaConsumerDisconnect::Execute() {
   Baton b = consumer->Disconnect();
 
   if (b.err() != RdKafka::ERR_NO_ERROR) {
@@ -261,7 +262,7 @@ void ConsumerDisconnect::Execute() {
   }
 }
 
-void ConsumerDisconnect::HandleOKCallback() {
+void KafkaConsumerDisconnect::HandleOKCallback() {
   Nan::HandleScope scope;
 
   const unsigned int argc = 2;
@@ -272,7 +273,7 @@ void ConsumerDisconnect::HandleOKCallback() {
   callback->Call(argc, argv);
 }
 
-void ConsumerDisconnect::HandleErrorCallback() {
+void KafkaConsumerDisconnect::HandleErrorCallback() {
   Nan::HandleScope scope;
 
   const unsigned int argc = 1;
@@ -284,7 +285,7 @@ void ConsumerDisconnect::HandleErrorCallback() {
 }
 
 /**
- * @brief Consumer get messages worker.
+ * @brief KafkaConsumer get messages worker.
  *
  * A more complex Nan::AsyncProgressWorker. I made a custom superclass to deal
  * with more real-time progress points. Instead of using ProgressWorker, which
@@ -301,20 +302,20 @@ void ConsumerDisconnect::HandleErrorCallback() {
  * we are dealing with manipulating the `client`
  *
  * @sa RdKafka::KafkaConsumer::Consume
- * @sa NodeKafka::Consumer::GetMessage
+ * @sa NodeKafka::KafkaConsumer::GetMessage
  */
 
-ConsumerConsumeLoop::ConsumerConsumeLoop(Nan::Callback *callback,
-                                     Consumer* consumer,
+KafkaConsumerConsumeLoop::KafkaConsumerConsumeLoop(Nan::Callback *callback,
+                                     KafkaConsumer* consumer,
                                      const int & timeout_ms) :
   MessageWorker(callback),
   consumer(consumer),
   m_timeout_ms(timeout_ms),
   m_rand_seed(time(NULL)) {}
 
-ConsumerConsumeLoop::~ConsumerConsumeLoop() {}
+KafkaConsumerConsumeLoop::~KafkaConsumerConsumeLoop() {}
 
-void ConsumerConsumeLoop::Execute(const ExecutionMessageBus& bus) {
+void KafkaConsumerConsumeLoop::Execute(const ExecutionMessageBus& bus) {
   // Do one check here before we move forward
   while (consumer->IsConnected()) {
     Baton b = consumer->Consume(m_timeout_ms);
@@ -343,7 +344,7 @@ void ConsumerConsumeLoop::Execute(const ExecutionMessageBus& bus) {
   }
 }
 
-void ConsumerConsumeLoop::HandleMessageCallback(RdKafka::Message* msg) {
+void KafkaConsumerConsumeLoop::HandleMessageCallback(RdKafka::Message* msg) {
   Nan::HandleScope scope;
 
   const unsigned int argc = 2;
@@ -358,11 +359,11 @@ void ConsumerConsumeLoop::HandleMessageCallback(RdKafka::Message* msg) {
   callback->Call(argc, argv);
 }
 
-void ConsumerConsumeLoop::HandleOKCallback() {
+void KafkaConsumerConsumeLoop::HandleOKCallback() {
   Nan::HandleScope scope;
 }
 
-void ConsumerConsumeLoop::HandleErrorCallback() {
+void KafkaConsumerConsumeLoop::HandleErrorCallback() {
   Nan::HandleScope scope;
 
 
@@ -373,18 +374,18 @@ void ConsumerConsumeLoop::HandleErrorCallback() {
 }
 
 /**
- * @brief Consumer get messages worker.
+ * @brief KafkaConsumer get messages worker.
  *
  * This callback will get a number of message. Can be of use in streams or
  * places where you don't want an infinite loop managed in C++land and would
  * rather manage it in Node.
  *
  * @see RdKafka::KafkaConsumer::Consume
- * @see NodeKafka::Consumer::GetMessage
+ * @see NodeKafka::KafkaConsumer::GetMessage
  */
 
-ConsumerConsumeNum::ConsumerConsumeNum(Nan::Callback *callback,
-                                     Consumer* consumer,
+KafkaConsumerConsumeNum::KafkaConsumerConsumeNum(Nan::Callback *callback,
+                                     KafkaConsumer* consumer,
                                      const uint32_t & num_messages,
                                      const int & timeout_ms) :
   ErrorAwareWorker(callback),
@@ -392,9 +393,9 @@ ConsumerConsumeNum::ConsumerConsumeNum(Nan::Callback *callback,
   m_num_messages(num_messages),
   m_timeout_ms(timeout_ms) {}
 
-ConsumerConsumeNum::~ConsumerConsumeNum() {}
+KafkaConsumerConsumeNum::~KafkaConsumerConsumeNum() {}
 
-void ConsumerConsumeNum::Execute() {
+void KafkaConsumerConsumeNum::Execute() {
   const int max = static_cast<int>(m_num_messages);
   for (int i = 0; i < max; i++) {
     // Get a message
@@ -414,7 +415,7 @@ void ConsumerConsumeNum::Execute() {
   }
 }
 
-void ConsumerConsumeNum::HandleOKCallback() {
+void KafkaConsumerConsumeNum::HandleOKCallback() {
   Nan::HandleScope scope;
   const unsigned int argc = 2;
   v8::Local<v8::Value> argv[argc];
@@ -439,7 +440,7 @@ void ConsumerConsumeNum::HandleOKCallback() {
   callback->Call(argc, argv);
 }
 
-void ConsumerConsumeNum::HandleErrorCallback() {
+void KafkaConsumerConsumeNum::HandleErrorCallback() {
   Nan::HandleScope scope;
 
   if (m_messages.size() > 0) {
@@ -457,26 +458,26 @@ void ConsumerConsumeNum::HandleErrorCallback() {
 }
 
 /**
- * @brief Consumer get message worker.
+ * @brief KafkaConsumer get message worker.
  *
  * This callback will get a single message. Can be of use in streams or places
  * where you don't want an infinite loop managed in C++land and would rather
  * manage it in Node.
  *
  * @see RdKafka::KafkaConsumer::Consume
- * @see NodeKafka::Consumer::GetMessage
+ * @see NodeKafka::KafkaConsumer::GetMessage
  */
 
-ConsumerConsume::ConsumerConsume(Nan::Callback *callback,
-                                     Consumer* consumer,
+KafkaConsumerConsume::KafkaConsumerConsume(Nan::Callback *callback,
+                                     KafkaConsumer* consumer,
                                      const int & timeout_ms) :
   ErrorAwareWorker(callback),
   consumer(consumer),
   m_timeout_ms(timeout_ms) {}
 
-ConsumerConsume::~ConsumerConsume() {}
+KafkaConsumerConsume::~KafkaConsumerConsume() {}
 
-void ConsumerConsume::Execute() {
+void KafkaConsumerConsume::Execute() {
   Baton b = consumer->Consume(m_timeout_ms);
   if (b.err() != RdKafka::ERR_NO_ERROR) {
     if (b.err() != RdKafka::ERR__TIMED_OUT ||
@@ -489,7 +490,7 @@ void ConsumerConsume::Execute() {
   }
 }
 
-void ConsumerConsume::HandleOKCallback() {
+void KafkaConsumerConsume::HandleOKCallback() {
   Nan::HandleScope scope;
 
   const unsigned int argc = 2;
@@ -503,7 +504,7 @@ void ConsumerConsume::HandleOKCallback() {
   callback->Call(argc, argv);
 }
 
-void ConsumerConsume::HandleErrorCallback() {
+void KafkaConsumerConsume::HandleErrorCallback() {
   Nan::HandleScope scope;
 
   const unsigned int argc = 1;
@@ -513,7 +514,7 @@ void ConsumerConsume::HandleErrorCallback() {
 }
 
 /**
- * @brief Consumer get committed topic partitions worker.
+ * @brief KafkaConsumer get committed topic partitions worker.
  *
  * This callback will get a topic partition list of committed offsets
  * for each topic partition. It is done async because it has a timeout
@@ -522,16 +523,16 @@ void ConsumerConsume::HandleErrorCallback() {
  * @see RdKafka::KafkaConsumer::Committed
  */
 
-ConsumerCommitted::ConsumerCommitted(Nan::Callback *callback,
-                                     Consumer* consumer,
+KafkaConsumerCommitted::KafkaConsumerCommitted(Nan::Callback *callback,
+                                     KafkaConsumer* consumer,
                                      const int & timeout_ms) :
   ErrorAwareWorker(callback),
   m_consumer(consumer),
   m_timeout_ms(timeout_ms) {}
 
-ConsumerCommitted::~ConsumerCommitted() {}
+KafkaConsumerCommitted::~KafkaConsumerCommitted() {}
 
-void ConsumerCommitted::Execute() {
+void KafkaConsumerCommitted::Execute() {
   Baton b = m_consumer->Committed(m_timeout_ms);
   if (b.err() != RdKafka::ERR_NO_ERROR) {
     SetErrorBaton(b);
@@ -540,7 +541,7 @@ void ConsumerCommitted::Execute() {
   }
 }
 
-void ConsumerCommitted::HandleOKCallback() {
+void KafkaConsumerCommitted::HandleOKCallback() {
   Nan::HandleScope scope;
 
   const unsigned int argc = 2;
@@ -554,7 +555,7 @@ void ConsumerCommitted::HandleOKCallback() {
   callback->Call(argc, argv);
 }
 
-void ConsumerCommitted::HandleErrorCallback() {
+void KafkaConsumerCommitted::HandleErrorCallback() {
   Nan::HandleScope scope;
 
   const unsigned int argc = 1;

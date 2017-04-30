@@ -11,7 +11,7 @@
 #include "src/binding.h"
 
 using NodeKafka::Producer;
-using NodeKafka::Consumer;
+using NodeKafka::KafkaConsumer;
 using NodeKafka::Topic;
 
 using node::AtExit;
@@ -127,7 +127,7 @@ void ConstantsInit(v8::Local<v8::Object> exports) {
 
 void Init(v8::Local<v8::Object> exports, v8::Local<v8::Object> module) {
   AtExit(RdKafkaCleanup);
-  Consumer::Init(exports);
+  KafkaConsumer::Init(exports);
   Producer::Init(exports);
   Topic::Init(exports);
   ConstantsInit(exports);

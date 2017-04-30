@@ -7,8 +7,8 @@
  * of the MIT license.  See the LICENSE.txt file for details.
  */
 
-#ifndef SRC_CONSUMER_H_
-#define SRC_CONSUMER_H_
+#ifndef SRC_KAFKA_CONSUMER_H_
+#define SRC_KAFKA_CONSUMER_H_
 
 #include <nan.h>
 #include <uv.h>
@@ -26,7 +26,7 @@ namespace NodeKafka {
 
 
 /**
- * @brief Consumer v8 wrapped object.
+ * @brief KafkaConsumer v8 wrapped object.
  *
  * Specializes the connection to wrap a consumer object through compositional
  * inheritence. Establishes its prototype in node through `Init`
@@ -35,7 +35,7 @@ namespace NodeKafka {
  * @sa NodeKafka::Client
  */
 
-class Consumer : public Connection {
+class KafkaConsumer : public Connection {
  public:
   static void Init(v8::Local<v8::Object>);
   static v8::Local<v8::Object> NewInstance(v8::Local<v8::Value>);
@@ -78,8 +78,8 @@ class Consumer : public Connection {
   static Nan::Persistent<v8::Function> constructor;
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
 
-  Consumer(Conf *, Conf *);
-  ~Consumer();
+  KafkaConsumer(Conf *, Conf *);
+  ~KafkaConsumer();
 
  private:
   static void part_list_print(const std::vector<RdKafka::TopicPartition*>&);
@@ -108,4 +108,4 @@ class Consumer : public Connection {
 
 }  // namespace NodeKafka
 
-#endif  // SRC_CONSUMER_H_
+#endif  // SRC_KAFKA_CONSUMER_H_

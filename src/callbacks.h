@@ -23,7 +23,7 @@ typedef std::vector<PersistentCopyableFunction> CopyableFunctionList;
 
 namespace NodeKafka {
 
-class Consumer;
+class KafkaConsumer;
 
 namespace Callbacks {
 
