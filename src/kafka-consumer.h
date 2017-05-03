@@ -66,6 +66,8 @@ class KafkaConsumer : public Connection {
   Baton Assign(std::vector<RdKafka::TopicPartition*>);
   Baton Unassign();
 
+  Baton Seek(const RdKafka::TopicPartition &partition, int timeout_ms);
+
   std::string Name();
 
   Baton Subscribe(std::vector<std::string>);
@@ -101,6 +103,7 @@ class KafkaConsumer : public Connection {
   static NAN_METHOD(NodeCommitted);
   static NAN_METHOD(NodePosition);
   static NAN_METHOD(NodeSubscription);
+  static NAN_METHOD(NodeSeek);
 
   static NAN_METHOD(NodeConsumeLoop);
   static NAN_METHOD(NodeConsume);

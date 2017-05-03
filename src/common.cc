@@ -210,6 +210,26 @@ v8::Local<v8::Array> ToV8Array(
   return array;
 }
 
+/**
+ * @brief v8::Object to RdKafka::TopicPartition
+ *
+ */
+RdKafka::TopicPartition * FromV8Object(v8::Local<v8::Object> topic_partition) {
+  std::string topic = GetParameter<std::string>(topic_partition, "topic", "");
+  int partition = GetParameter<int>(topic_partition, "partition", -1);
+  int64_t offset = GetParameter<int64_t>(topic_partition, "offset", 0);
+
+  if (partition == -1) {
+    return NULL;
+  }
+
+  if (topic.empty()) {
+    return NULL;
+  }
+
+  return RdKafka::TopicPartition::create(topic, partition, offset);
+}
+
 }  // namespace TopicPartition
 
 namespace Metadata {

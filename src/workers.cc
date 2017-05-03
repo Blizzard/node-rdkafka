@@ -564,5 +564,58 @@ void KafkaConsumerCommitted::HandleErrorCallback() {
   callback->Call(argc, argv);
 }
 
+/**
+ * @brief KafkaConsumer seek
+ *
+ * This callback will take a topic partition list with offsets and
+ * seek messages from there
+ *
+ * @see RdKafka::KafkaConsumer::seek
+ *
+ * @remark Consumtion for the given partition must have started for the
+ *         seek to work. Use assign() to set the starting offset.
+ */
+
+KafkaConsumerSeek::KafkaConsumerSeek(Nan::Callback *callback,
+                                     KafkaConsumer* consumer,
+                                     const RdKafka::TopicPartition * partition,
+                                     const int & timeout_ms) :
+  ErrorAwareWorker(callback),
+  m_consumer(consumer),
+  m_partition(partition),
+  m_timeout_ms(timeout_ms) {}
+
+KafkaConsumerSeek::~KafkaConsumerSeek() {}
+
+void KafkaConsumerSeek::Execute() {
+  Baton b = m_consumer->Seek(*m_partition, m_timeout_ms);
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    SetErrorBaton(b);
+  }
+
+  // Delete it when we are done with it.
+  delete m_partition;
+}
+
+void KafkaConsumerSeek::HandleOKCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc];
+
+  argv[0] = Nan::Null();
+
+  callback->Call(argc, argv);
+}
+
+void KafkaConsumerSeek::HandleErrorCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc] = { GetErrorObject() };
+
+  callback->Call(argc, argv);
+}
+
 }  // namespace Workers
 }  // namespace NodeKafka

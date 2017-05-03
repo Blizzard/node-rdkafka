@@ -433,6 +433,7 @@ void KafkaConsumer::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(tpl, "unsubscribe", NodeUnsubscribe);
   Nan::SetPrototypeMethod(tpl, "consumeLoop", NodeConsumeLoop);
   Nan::SetPrototypeMethod(tpl, "consume", NodeConsume);
+  Nan::SetPrototypeMethod(tpl, "seek", NodeSeek);
 
   /*
    * @brief Methods to do with partition assignment / rebalancing
@@ -781,6 +782,53 @@ NAN_METHOD(KafkaConsumer::NodeSubscribe) {
 
   int error_code = static_cast<int>(b.err());
   info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
+}
+
+NAN_METHOD(KafkaConsumer::NodeSeek) {
+  Nan::HandleScope scope;
+
+  // If number of parameters is less than 3 (need topic partition, timeout,
+  // and callback), we can't call this thing
+  if (info.Length() < 3) {
+    return Nan::ThrowError("Must provide a topic partition, timeout, and callback");  // NOLINT
+  }
+
+  if (!info[0]->IsObject()) {
+    return Nan::ThrowError("Topic partition must be an object");
+  }
+
+  if (!info[1]->IsNumber() && !info[1]->IsNull()) {
+    return Nan::ThrowError("Timeout must be a number.");
+  }
+
+  if (!info[2]->IsFunction()) {
+    return Nan::ThrowError("Callback must be a function");
+  }
+
+  int timeout_ms;
+  Nan::Maybe<uint32_t> maybeTimeout =
+    Nan::To<uint32_t>(info[0].As<v8::Number>());
+
+  if (maybeTimeout.IsNothing()) {
+    timeout_ms = 1000;
+  } else {
+    timeout_ms = static_cast<int>(maybeTimeout.FromJust());
+  }
+
+  KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
+
+  const RdKafka::TopicPartition * toppar =
+    Conversion::TopicPartition::FromV8Object(info[0].As<v8::Object>());
+
+  if (!toppar) {
+    return Nan::ThrowError("Invalid topic partition provided");
+  }
+
+  Nan::Callback *callback = new Nan::Callback(info[2].As<v8::Function>());
+  Nan::AsyncQueueWorker(
+    new Workers::KafkaConsumerSeek(callback, consumer, toppar, timeout_ms));
+
+  info.GetReturnValue().Set(Nan::Null());
 }
 
 NAN_METHOD(KafkaConsumer::NodeConsumeLoop) {

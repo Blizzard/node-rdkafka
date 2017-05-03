@@ -280,6 +280,21 @@ class KafkaConsumerCommitted : public ErrorAwareWorker {
   std::vector<RdKafka::TopicPartition*> * m_topic_partitions;
 };
 
+class KafkaConsumerSeek : public ErrorAwareWorker {
+ public:
+  KafkaConsumerSeek(Nan::Callback*, NodeKafka::KafkaConsumer*,
+    const RdKafka::TopicPartition *, const int &);
+  ~KafkaConsumerSeek();
+
+  void Execute();
+  void HandleOKCallback();
+  void HandleErrorCallback();
+ private:
+  NodeKafka::KafkaConsumer * m_consumer;
+  const RdKafka::TopicPartition * m_partition;
+  const int m_timeout_ms;
+};
+
 class KafkaConsumerConsumeNum : public ErrorAwareWorker {
  public:
   KafkaConsumerConsumeNum(Nan::Callback*, NodeKafka::KafkaConsumer*,
