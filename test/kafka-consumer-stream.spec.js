@@ -42,11 +42,11 @@ module.exports = {
         t.equal(typeof cb, 'function',
           'Provided callback should always be a function');
         setImmediate(function() {
-          cb(null, {
+          cb(null, [{
             value: new Buffer('test'),
             key: 'testkey',
             offset: 1
-          });
+          }]);
         });
       };
       fakeClient.subscribe = function(topics) {
@@ -93,10 +93,10 @@ module.exports = {
         if (numSent < numMessages) {
           numSent++;
           setImmediate(function() {
-            cb(null, {
+            cb(null, [{
               value: new Buffer('test'),
               offset: 1
-            });
+            }]);
           });
         } else {
         }
@@ -151,10 +151,10 @@ module.exports = {
         if (numSent < numMessages) {
           numSent++;
           setImmediate(function() {
-            cb(null, {
+            cb(null, [{
               value: new Buffer('test'),
               offset: 1
-            });
+            }]);
           });
         } else {
         }
