@@ -17,9 +17,9 @@ var producer = new Kafka.Producer({
 });
 
 producer.connect()
-  .on('ready', function(i) {
+  .on('ready', function(i, metadata) {
     console.log(i);
-    console.log(producer.getMetadata());
+    console.log(metadata);
   })
   .on('event.error', function(err) {
     console.log(err);
