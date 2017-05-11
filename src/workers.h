@@ -152,7 +152,7 @@ class MessageWorker : public ErrorAwareWorker {
 
 class ConnectionMetadata : public ErrorAwareWorker {
  public:
-  ConnectionMetadata(Nan::Callback*, NodeKafka::Connection*, std::string, int);
+  ConnectionMetadata(Nan::Callback*, NodeKafka::Connection*, std::string, int, bool);
   ~ConnectionMetadata();
 
   void Execute();
@@ -160,10 +160,10 @@ class ConnectionMetadata : public ErrorAwareWorker {
   void HandleErrorCallback();
 
  private:
-  NodeKafka::Connection * connection_;
-
-  std::string topic_;
-  int timeout_ms_;
+  NodeKafka::Connection * m_connection;
+  std::string m_topic;
+  int m_timeout_ms;
+  bool m_all_topics;
 
   RdKafka::Metadata* m_metadata;
 

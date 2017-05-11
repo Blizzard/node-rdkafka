@@ -20,22 +20,18 @@ namespace Workers {
 
 ConnectionMetadata::ConnectionMetadata(
   Nan::Callback *callback, Connection* connection,
-  std::string topic, int timeout_ms) :
+  std::string topic, int timeout_ms, bool all_topics) :
   ErrorAwareWorker(callback),
-  connection_(connection),
-  topic_(topic),
-  timeout_ms_(timeout_ms),
+  m_connection(connection),
+  m_topic(topic),
+  m_timeout_ms(timeout_ms),
+  m_all_topics(all_topics),
   m_metadata(NULL) {}
 
 ConnectionMetadata::~ConnectionMetadata() {}
 
 void ConnectionMetadata::Execute() {
-  if (!connection_->IsConnected()) {
-    SetErrorMessage("You are not connected");
-    return;
-  }
-
-  Baton b = connection_->GetMetadata(topic_, timeout_ms_);
+  Baton b = m_connection->GetMetadata(m_all_topics, m_topic, m_timeout_ms);
 
   if (b.err() == RdKafka::ERR_NO_ERROR) {
     // No good way to do this except some stupid string delimiting.

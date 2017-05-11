@@ -111,7 +111,7 @@ Baton Connection::CreateTopic(std::string topic_name, RdKafka::Conf* conf) {
   return Baton(topic);
 }
 
-Baton Connection::GetMetadata(std::string topic_name, int timeout_ms) {
+Baton Connection::GetMetadata(bool all_topics, std::string topic_name, int timeout_ms) {
   RdKafka::Topic* topic = NULL;
   RdKafka::ErrorCode err;
 
@@ -133,7 +133,8 @@ Baton Connection::GetMetadata(std::string topic_name, int timeout_ms) {
   if (IsConnected()) {
     scoped_shared_read_lock lock(m_connection_lock);
     if (IsConnected()) {
-      err = m_client->metadata(topic != NULL, topic, &metadata, timeout_ms);
+      // Always send true - we
+      err = m_client->metadata(all_topics, topic, &metadata, timeout_ms);
     } else {
       err = RdKafka::ERR__STATE;
     }
@@ -172,12 +173,13 @@ NAN_METHOD(Connection::NodeGetMetadata) {
   v8::Local<v8::Function> cb = info[1].As<v8::Function>();
 
   std::string topic = GetParameter<std::string>(config, "topic", "");
+  bool allTopics = GetParameter<bool>(config, "allTopics", true);
   int timeout_ms = GetParameter<int64_t>(config, "timeout", 30000);
 
   Nan::Callback *callback = new Nan::Callback(cb);
 
   Nan::AsyncQueueWorker(new Workers::ConnectionMetadata(
-    callback, obj, topic, timeout_ms));
+    callback, obj, topic, timeout_ms, allTopics));
 
   info.GetReturnValue().Set(Nan::Null());
 }
