@@ -51,6 +51,7 @@ class Connection : public Nan::ObjectWrap {
   Baton CreateTopic(std::string);
   Baton CreateTopic(std::string, RdKafka::Conf*);
   Baton GetMetadata(bool, std::string, int);
+  Baton QueryWatermarkOffsets(std::string, int32_t, int64_t*, int64_t*, int);
 
   RdKafka::Handle* GetClient();
 
@@ -82,6 +83,7 @@ class Connection : public Nan::ObjectWrap {
 
   static NAN_METHOD(NodeOnEvent);
   static NAN_METHOD(NodeGetMetadata);
+  static NAN_METHOD(NodeQueryWatermarkOffsets);
 };
 
 }  // namespace NodeKafka

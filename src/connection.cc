@@ -111,6 +111,31 @@ Baton Connection::CreateTopic(std::string topic_name, RdKafka::Conf* conf) {
   return Baton(topic);
 }
 
+Baton Connection::QueryWatermarkOffsets(
+  std::string topic_name, int32_t partition,
+  int64_t* low_offset, int64_t* high_offset,
+  int timeout_ms) {
+  // Check if we are connected first
+
+  RdKafka::ErrorCode err;
+
+  if (IsConnected()) {
+    scoped_shared_read_lock lock(m_connection_lock);
+    if (IsConnected()) {
+      // Always send true - we
+      err = m_client->query_watermark_offsets(topic_name, partition,
+        low_offset, high_offset, timeout_ms);
+
+    } else {
+      err = RdKafka::ERR__STATE;
+    }
+  } else {
+    err = RdKafka::ERR__STATE;
+  }
+
+  return Baton(err);
+}
+
 Baton Connection::GetMetadata(
   bool all_topics, std::string topic_name, int timeout_ms) {
   RdKafka::Topic* topic = NULL;
@@ -181,6 +206,52 @@ NAN_METHOD(Connection::NodeGetMetadata) {
 
   Nan::AsyncQueueWorker(new Workers::ConnectionMetadata(
     callback, obj, topic, timeout_ms, allTopics));
+
+  info.GetReturnValue().Set(Nan::Null());
+}
+
+NAN_METHOD(Connection::NodeQueryWatermarkOffsets) {
+  Nan::HandleScope scope;
+
+  Connection* obj = ObjectWrap::Unwrap<Connection>(info.This());
+
+  if (!info[0]->IsString()) {
+    Nan::ThrowError("1st parameter must be a topic string");;
+    return;
+  }
+
+  if (!info[1]->IsNumber()) {
+    Nan::ThrowError("2nd parameter must be a partition number");
+    return;
+  }
+
+  if (!info[2]->IsNumber()) {
+    Nan::ThrowError("3rd parameter must be a number of milliseconds");
+    return;
+  }
+
+  if (!info[3]->IsFunction()) {
+    Nan::ThrowError("4th parameter must be a callback");
+    return;
+  }
+
+  // Get string pointer for the topic name
+  Nan::Utf8String topicUTF8(info[0]->ToString());
+  // The first parameter is the topic
+  std::string topic_name(*topicUTF8);
+
+  // Second parameter is the partition
+  int32_t partition = Nan::To<int32_t>(info[1]).FromJust();
+
+  // Third parameter is the timeout
+  int timeout_ms = Nan::To<int>(info[2]).FromJust();
+
+  // Fourth parameter is the callback
+  v8::Local<v8::Function> cb = info[3].As<v8::Function>();
+  Nan::Callback *callback = new Nan::Callback(cb);
+
+  Nan::AsyncQueueWorker(new Workers::ConnectionQueryWatermarkOffsets(
+    callback, obj, topic_name, partition, timeout_ms));
 
   info.GetReturnValue().Set(Nan::Null());
 }

@@ -51,6 +51,8 @@ class KafkaConsumer : public Connection {
   Baton Commit(std::string, int, int64_t);
   Baton Commit();
 
+  Baton GetWatermarkOffsets(std::string, int32_t, int64_t*, int64_t*);
+
   // Synchronous commit events
   Baton CommitSync(std::string, int, int64_t);
   Baton CommitSync();
@@ -104,7 +106,7 @@ class KafkaConsumer : public Connection {
   static NAN_METHOD(NodePosition);
   static NAN_METHOD(NodeSubscription);
   static NAN_METHOD(NodeSeek);
-
+  static NAN_METHOD(NodeGetWatermarkOffsets);
   static NAN_METHOD(NodeConsumeLoop);
   static NAN_METHOD(NodeConsume);
 };
