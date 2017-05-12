@@ -111,7 +111,8 @@ Baton Connection::CreateTopic(std::string topic_name, RdKafka::Conf* conf) {
   return Baton(topic);
 }
 
-Baton Connection::GetMetadata(bool all_topics, std::string topic_name, int timeout_ms) {
+Baton Connection::GetMetadata(
+  bool all_topics, std::string topic_name, int timeout_ms) {
   RdKafka::Topic* topic = NULL;
   RdKafka::ErrorCode err;
 

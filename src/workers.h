@@ -152,7 +152,8 @@ class MessageWorker : public ErrorAwareWorker {
 
 class ConnectionMetadata : public ErrorAwareWorker {
  public:
-  ConnectionMetadata(Nan::Callback*, NodeKafka::Connection*, std::string, int, bool);
+  ConnectionMetadata(Nan::Callback*, NodeKafka::Connection*,
+    std::string, int, bool);
   ~ConnectionMetadata();
 
   void Execute();
