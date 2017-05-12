@@ -119,8 +119,32 @@ bool KafkaConsumer::IsSubscribed() {
 bool KafkaConsumer::HasAssignedPartitions() {
   return !m_partitions.empty();
 }
+
 int KafkaConsumer::AssignedPartitionCount() {
   return m_partition_cnt;
+}
+
+Baton KafkaConsumer::GetWatermarkOffsets(
+  std::string topic_name, int32_t partition,
+  int64_t* low_offset, int64_t* high_offset) {
+  // Check if we are connected first
+
+  RdKafka::ErrorCode err;
+
+  if (IsConnected()) {
+    scoped_shared_read_lock lock(m_connection_lock);
+    if (IsConnected()) {
+      // Always send true - we
+      err = m_client->get_watermark_offsets(topic_name, partition,
+        low_offset, high_offset);
+    } else {
+      err = RdKafka::ERR__STATE;
+    }
+  } else {
+    err = RdKafka::ERR__STATE;
+  }
+
+  return Baton(err);
 }
 
 void KafkaConsumer::part_list_print(const std::vector<RdKafka::TopicPartition*> &partitions) {  // NOLINT
@@ -415,7 +439,8 @@ void KafkaConsumer::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(tpl, "connect", NodeConnect);
   Nan::SetPrototypeMethod(tpl, "disconnect", NodeDisconnect);
   Nan::SetPrototypeMethod(tpl, "getMetadata", NodeGetMetadata);
-  // Nan::SetPrototypeMethod(tpl, "poll", NodePoll);
+  Nan::SetPrototypeMethod(tpl, "queryWatermarkOffsets", NodeQueryWatermarkOffsets);  // NOLINT
+  Nan::SetPrototypeMethod(tpl, "getWatermarkOffsets", NodeGetWatermarkOffsets);
 
   /*
    * Lifecycle events specifically designated for RdKafka::KafkaConsumer
@@ -955,6 +980,51 @@ NAN_METHOD(KafkaConsumer::NodeDisconnect) {
   Nan::AsyncQueueWorker(
     new Workers::KafkaConsumerDisconnect(callback, consumer));
   info.GetReturnValue().Set(Nan::Null());
+}
+
+NAN_METHOD(KafkaConsumer::NodeGetWatermarkOffsets) {
+  Nan::HandleScope scope;
+
+  KafkaConsumer* obj = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
+
+  if (!info[0]->IsString()) {
+    Nan::ThrowError("1st parameter must be a topic string");;
+    return;
+  }
+
+  if (!info[1]->IsNumber()) {
+    Nan::ThrowError("2nd parameter must be a partition number");
+    return;
+  }
+
+  // Get string pointer for the topic name
+  Nan::Utf8String topicUTF8(info[0]->ToString());
+  // The first parameter is the topic
+  std::string topic_name(*topicUTF8);
+
+  // Second parameter is the partition
+  int32_t partition = Nan::To<int32_t>(info[1]).FromJust();
+
+  // Set these ints which will store the return data
+  int64_t low_offset;
+  int64_t high_offset;
+
+  Baton b = obj->GetWatermarkOffsets(
+    topic_name, partition, &low_offset, &high_offset);
+
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    // Let the JS library throw if we need to so the error can be more rich
+    int error_code = static_cast<int>(b.err());
+    return info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
+  } else {
+    v8::Local<v8::Object> offsetsObj = Nan::New<v8::Object>();
+    Nan::Set(offsetsObj, Nan::New<v8::String>("lowOffset").ToLocalChecked(),
+      Nan::New<v8::Number>(low_offset));
+    Nan::Set(offsetsObj, Nan::New<v8::String>("highOffset").ToLocalChecked(),
+      Nan::New<v8::Number>(high_offset));
+
+    return info.GetReturnValue().Set(offsetsObj);
+  }
 }
 
 }  // namespace NodeKafka

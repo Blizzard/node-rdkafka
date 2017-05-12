@@ -67,6 +67,62 @@ void ConnectionMetadata::HandleErrorCallback() {
 }
 
 /**
+ * @brief Client query watermark offsets worker
+ *
+ * Easy Nan::AsyncWorker for getting watermark offsets from a broker
+ *
+ * @sa RdKafka::Handle::query_watermark_offsets
+ * @sa NodeKafka::Connection::QueryWatermarkOffsets
+ */
+
+ConnectionQueryWatermarkOffsets::ConnectionQueryWatermarkOffsets(
+  Nan::Callback *callback, Connection* connection,
+  std::string topic, int32_t partition, int timeout_ms) :
+  ErrorAwareWorker(callback),
+  m_connection(connection),
+  m_topic(topic),
+  m_partition(partition),
+  m_timeout_ms(timeout_ms) {}
+
+ConnectionQueryWatermarkOffsets::~ConnectionQueryWatermarkOffsets() {}
+
+void ConnectionQueryWatermarkOffsets::Execute() {
+  Baton b = m_connection->QueryWatermarkOffsets(
+    m_topic, m_partition, &m_low_offset, &m_high_offset, m_timeout_ms);
+
+  // If we got any error here we need to bail out
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    SetErrorBaton(b);
+  }
+}
+
+void ConnectionQueryWatermarkOffsets::HandleOKCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 2;
+
+  v8::Local<v8::Object> offsetsObj = Nan::New<v8::Object>();
+  Nan::Set(offsetsObj, Nan::New<v8::String>("lowOffset").ToLocalChecked(),
+  Nan::New<v8::Number>(m_low_offset));
+  Nan::Set(offsetsObj, Nan::New<v8::String>("highOffset").ToLocalChecked(),
+  Nan::New<v8::Number>(m_high_offset));
+
+  // This is a big one!
+  v8::Local<v8::Value> argv[argc] = { Nan::Null(), offsetsObj};
+
+  callback->Call(argc, argv);
+}
+
+void ConnectionQueryWatermarkOffsets::HandleErrorCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc] = { GetErrorObject() };
+
+  callback->Call(argc, argv);
+}
+
+/**
  * @brief Producer connect worker.
  *
  * Easy Nan::AsyncWorker for setting up client connections

@@ -171,6 +171,26 @@ class ConnectionMetadata : public ErrorAwareWorker {
   // Now this is the data that will get translated in the OK callback
 };
 
+class ConnectionQueryWatermarkOffsets : public ErrorAwareWorker {
+ public:
+  ConnectionQueryWatermarkOffsets(Nan::Callback*, NodeKafka::Connection*,
+    std::string, int32_t, int);
+  ~ConnectionQueryWatermarkOffsets();
+
+  void Execute();
+  void HandleOKCallback();
+  void HandleErrorCallback();
+
+ private:
+  NodeKafka::Connection * m_connection;
+  std::string m_topic;
+  int32_t m_partition;
+  int m_timeout_ms;
+
+  int64_t m_high_offset;
+  int64_t m_low_offset;
+};
+
 class ProducerConnect : public ErrorAwareWorker {
  public:
   ProducerConnect(Nan::Callback*, NodeKafka::Producer*);
