@@ -269,6 +269,23 @@ Baton KafkaConsumer::CommitSync() {
   return Baton(err);
 }
 
+Baton KafkaConsumer::Seek(const RdKafka::TopicPartition &partition, int timeout_ms) {  // NOLINT
+  if (!IsConnected()) {
+    return Baton(RdKafka::ERR__STATE, "KafkaConsumer is not connected");
+  }
+
+  // This isn't supported yet...
+  #if RD_KAFKA_VERSION > 0x000905ff
+    RdKafka::KafkaConsumer* consumer =
+      dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
+
+    RdKafka::ErrorCode err = consumer->seek(partition, timeout_ms);
+  #else
+    RdKafka::ErrorCode err = RdKafka::ERR_UNKNOWN;
+  #endif
+
+  return Baton(err);
+}
 
 Baton KafkaConsumer::Committed(int timeout_ms) {
   if (!IsConnected()) {
