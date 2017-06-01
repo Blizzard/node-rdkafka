@@ -136,12 +136,12 @@ class Delivery : public RdKafka::DeliveryReportCb {
 
 // Rebalance dispatcher
 
-struct rebalance_topic_partition_t {
+struct event_topic_partition_t {
   std::string topic;
   int partition;
   int64_t offset;
 
-  rebalance_topic_partition_t(std::string p_topic, int p_partition, int64_t p_offset):  // NOLINT
+  event_topic_partition_t(std::string p_topic, int p_partition, int64_t p_offset):  // NOLINT
     topic(p_topic),
     partition(p_partition),
     offset(p_offset) {}
@@ -149,7 +149,7 @@ struct rebalance_topic_partition_t {
 
 struct rebalance_event_t {
   RdKafka::ErrorCode err;
-  std::vector<rebalance_topic_partition_t> partitions;
+  std::vector<event_topic_partition_t> partitions;
 
   rebalance_event_t(RdKafka::ErrorCode p_err,
         std::vector<RdKafka::TopicPartition*> p_partitions):
@@ -160,7 +160,31 @@ struct rebalance_event_t {
       RdKafka::TopicPartition* topic_partition =
         p_partitions[topic_partition_i];
 
-      rebalance_topic_partition_t tp(
+      event_topic_partition_t tp(
+        topic_partition->topic(),
+        topic_partition->partition(),
+        topic_partition->offset());
+
+      partitions.push_back(tp);
+    }
+  }
+};
+
+struct offset_commit_event_t {
+  RdKafka::ErrorCode err;
+  std::vector<event_topic_partition_t> partitions;
+
+  offset_commit_event_t(RdKafka::ErrorCode p_err,
+    const std::vector<RdKafka::TopicPartition*> &p_partitions):
+    err(p_err) {
+    // Iterate over the topic partitions because we won't have them later
+    for (size_t topic_partition_i = 0;
+      topic_partition_i < p_partitions.size(); topic_partition_i++) {
+      RdKafka::TopicPartition* topic_partition =
+        p_partitions[topic_partition_i];
+
+      // Just reuse this thing because it's the same exact thing we need
+      event_topic_partition_t tp(
         topic_partition->topic(),
         topic_partition->partition(),
         topic_partition->offset());
@@ -177,7 +201,7 @@ class RebalanceDispatcher : public Dispatcher {
   void Add(const rebalance_event_t &);
   void Flush();
  protected:
-  std::vector<rebalance_event_t> events;
+  std::vector<rebalance_event_t> m_events;
 };
 
 class Rebalance : public RdKafka::RebalanceCb {
@@ -189,6 +213,28 @@ class Rebalance : public RdKafka::RebalanceCb {
     std::vector<RdKafka::TopicPartition*> &);
 
   RebalanceDispatcher dispatcher;
+ private:
+  v8::Persistent<v8::Function> m_cb;
+};
+
+class OffsetCommitDispatcher : public Dispatcher {
+ public:
+  OffsetCommitDispatcher();
+  ~OffsetCommitDispatcher();
+  void Add(const offset_commit_event_t &);
+  void Flush();
+ protected:
+  std::vector<offset_commit_event_t> m_events;
+};
+
+class OffsetCommit : public RdKafka::OffsetCommitCb {
+ public:
+  explicit OffsetCommit(v8::Local<v8::Function>&);
+  ~OffsetCommit();
+
+  void offset_commit_cb(RdKafka::ErrorCode, std::vector<RdKafka::TopicPartition*> &);  // NOLINT
+
+  OffsetCommitDispatcher dispatcher;
  private:
   v8::Persistent<v8::Function> m_cb;
 };
