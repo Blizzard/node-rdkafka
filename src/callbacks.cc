@@ -23,6 +23,31 @@ using v8::Number;
 namespace NodeKafka {
 namespace Callbacks {
 
+v8::Local<v8::Array> TopicPartitionListToV8Array(
+  std::vector<event_topic_partition_t> parts) {
+
+  v8::Local<v8::Array> tp_array = Nan::New<v8::Array>();
+
+  for (size_t i = 0; i < parts.size(); i++) {
+    v8::Local<v8::Object> tp_obj = Nan::New<v8::Object>();
+    event_topic_partition_t tp = parts[i];
+
+    Nan::Set(tp_obj, Nan::New("topic").ToLocalChecked(),
+      Nan::New<v8::String>(tp.topic.c_str()).ToLocalChecked());
+    Nan::Set(tp_obj, Nan::New("partition").ToLocalChecked(),
+      Nan::New<v8::Number>(tp.partition));
+
+    if (tp.offset >= 0) {
+      Nan::Set(tp_obj, Nan::New("offset").ToLocalChecked(),
+        Nan::New<v8::Number>(tp.offset));
+    }
+
+    tp_array->Set(i, tp_obj);
+  }
+
+  return tp_array;
+}
+
 Dispatcher::Dispatcher() {
   async = NULL;
   uv_mutex_init(&async_lock);
@@ -383,7 +408,7 @@ RebalanceDispatcher::~RebalanceDispatcher() {}
 
 void RebalanceDispatcher::Add(const rebalance_event_t &e) {
   scoped_mutex_lock lock(async_lock);
-  events.push_back(e);
+  m_events.push_back(e);
 }
 
 void RebalanceDispatcher::Flush() {
@@ -392,55 +417,30 @@ void RebalanceDispatcher::Flush() {
   // generate a callback object for each, setting to the members
   // then
 
-  if (events.size() < 1) return;
+  if (m_events.size() < 1) return;
 
   const unsigned int argc = 1;
 
-  std::vector<rebalance_event_t> _events;
+  std::vector<rebalance_event_t> events;
   {
     scoped_mutex_lock lock(async_lock);
-    events.swap(_events);
+    m_events.swap(events);
   }
 
-  for (size_t i=0; i < _events.size(); i++) {
+  for (size_t i=0; i < events.size(); i++) {
     v8::Local<v8::Value> argv[argc] = {};
-    Local<Object> jsobj(Nan::New<Object>());
 
-    switch (_events[i].err) {
-      case RdKafka::ERR__ASSIGN_PARTITIONS:
-        Nan::Set(jsobj, Nan::New("code").ToLocalChecked(),
-          Nan::New(500));
-      break;
-      default:
-        Nan::Set(jsobj, Nan::New("code").ToLocalChecked(),
-          Nan::New(501));
-      break;
+    if (events[i].err == RdKafka::ERR_NO_ERROR) {
+      argv[0] = Nan::Undefined();
+    } else {
+      // ERR__ASSIGN_PARTITIONS? Special case? Nah
+      argv[0] = Nan::New(events[i].err);
     }
 
-    std::vector<rebalance_topic_partition_t> parts = _events[i].partitions;
+    std::vector<event_topic_partition_t> parts = events[i].partitions;
 
-    v8::Local<v8::Array> tp_array = Nan::New<v8::Array>();
-
-    for (size_t i = 0; i < parts.size(); i++) {
-      v8::Local<v8::Object> tp_obj = Nan::New<v8::Object>();
-      rebalance_topic_partition_t tp = parts[i];
-
-      Nan::Set(tp_obj, Nan::New("topic").ToLocalChecked(),
-        Nan::New<v8::String>(tp.topic.c_str()).ToLocalChecked());
-      Nan::Set(tp_obj, Nan::New("partition").ToLocalChecked(),
-        Nan::New<v8::Number>(tp.partition));
-
-      if (tp.offset >= 0) {
-        Nan::Set(tp_obj, Nan::New("offset").ToLocalChecked(),
-          Nan::New<v8::Number>(tp.offset));
-      }
-
-      tp_array->Set(i, tp_obj);
-    }
     // Now convert the TopicPartition list to a JS array
-    Nan::Set(jsobj, Nan::New("assignment").ToLocalChecked(), tp_array);
-
-    argv[0] = jsobj;
+    argv[1] = TopicPartitionListToV8Array(events[i].partitions);
 
     Dispatch(argc, argv);
   }
@@ -457,6 +457,59 @@ void Rebalance::rebalance_cb(RdKafka::KafkaConsumer *consumer,
   dispatcher.Execute();
 }
 
+// Offset Commit CB
+
+OffsetCommitDispatcher::OffsetCommitDispatcher() {}
+OffsetCommitDispatcher::~OffsetCommitDispatcher() {}
+
+void OffsetCommitDispatcher::Add(const offset_commit_event_t &e) {
+  scoped_mutex_lock lock(async_lock);
+  m_events.push_back(e);
+}
+
+void OffsetCommitDispatcher::Flush() {
+  Nan::HandleScope scope;
+  // Iterate through each of the currently stored events
+  // generate a callback object for each, setting to the members
+  // then
+
+  if (m_events.size() < 1) return;
+
+  const unsigned int argc = 2;
+
+  std::vector<offset_commit_event_t> events;
+  {
+    scoped_mutex_lock lock(async_lock);
+    m_events.swap(events);
+  }
+
+  for (size_t i = 0; i < events.size(); i++) {
+    v8::Local<v8::Value> argv[argc] = {};
+
+    if (events[i].err == RdKafka::ERR_NO_ERROR) {
+      argv[0] = Nan::Undefined();
+    } else {
+      argv[0] = Nan::New(events[i].err);
+    }
+
+    // Now convert the TopicPartition list to a JS array
+    argv[1] = TopicPartitionListToV8Array(events[i].partitions);
+
+    Dispatch(argc, argv);
+  }
+}
+
+OffsetCommit::OffsetCommit(v8::Local<v8::Function> &cb) {
+  dispatcher.AddCallback(cb);
+}
+OffsetCommit::~OffsetCommit() {}
+
+void OffsetCommit::offset_commit_cb(RdKafka::ErrorCode err,
+    std::vector<RdKafka::TopicPartition*> &offsets) {
+  dispatcher.Add(offset_commit_event_t(err, offsets));
+  dispatcher.Execute();
+}
+
 // Partitioner callback
 
 Partitioner::Partitioner() {}
@@ -466,7 +519,7 @@ int32_t Partitioner::partitioner_cb(const RdKafka::Topic *topic,
                                     const std::string *key,
                                     int32_t partition_cnt,
                                     void *msg_opaque) {
-  // Send this and get teh callback and parse the int
+  // Send this and get the callback and parse the int
   if (callback.IsEmpty()) {
     // default behavior
     return random(topic, partition_cnt);

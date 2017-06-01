@@ -66,6 +66,10 @@ Conf * Conf::create(RdKafka::Conf::ConfType type, v8::Local<v8::Object> object, 
         v8::Local<v8::Function> cb = value.As<v8::Function>();
         rdconf->m_rebalance_cb = new NodeKafka::Callbacks::Rebalance(cb);
         rdconf->set(string_key, rdconf->m_rebalance_cb, errstr);
+      } else if (string_key.compare("offset_commit_cb") == 0) {
+        v8::Local<v8::Function> cb = value.As<v8::Function>();
+        rdconf->m_offset_commit_cb = new NodeKafka::Callbacks::OffsetCommit(cb);
+        rdconf->set(string_key, rdconf->m_offset_commit_cb, errstr);
       }
     }
   }
@@ -77,11 +81,19 @@ void Conf::listen() {
   if (m_rebalance_cb) {
     m_rebalance_cb->dispatcher.Activate();
   }
+
+  if (m_offset_commit_cb) {
+    m_offset_commit_cb->dispatcher.Activate();
+  }
 }
 
 void Conf::stop() {
   if (m_rebalance_cb) {
     m_rebalance_cb->dispatcher.Deactivate();
+  }
+
+  if (m_offset_commit_cb) {
+    m_offset_commit_cb->dispatcher.Deactivate();
   }
 }
 
