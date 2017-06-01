@@ -267,13 +267,15 @@ Rebalancing is managed internally by `librdkafka` by default. If you would like 
 var consumer = new Kafka.KafkaConsumer({
   'group.id': 'kafka',
   'metadata.broker.list': 'localhost:9092',
-  'rebalance_cb': function(event) {
-    var assignment = event.assignment;
+  'rebalance_cb': function(err, assignment) {
 
-    if (event.code === Kafka.CODES.REBALANCE.PARTITION_ASSIGNMENT) {
+    if (err.code === Kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS) {
       this.assign(assignment);
-    } else {
+    } else if (err.code == Kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS){
       this.unassign();
+    } else {
+      // We had a real error
+      console.error(err);
     }
 
   }
@@ -281,6 +283,30 @@ var consumer = new Kafka.KafkaConsumer({
 ```
 
 `this` is bound to the `KafkaConsumer` you have created. By specifying a `rebalance_cb` you can also listen to the `rebalance` event as an emitted event. This event is not emitted when using the internal `librdkafka` rebalancer.
+
+### Commits
+
+When you commit in `node-rdkafka`, the standard way is to queue the commit request up with the next `librdkafka` request to the broker. When doing this, there isn't a way to know the result of the commit. Luckily there is another callback you can listen to to get this information
+
+```js
+var consumer = new Kafka.KafkaConsumer({
+  'group.id': 'kafka',
+  'metadata.broker.list': 'localhost:9092',
+  'offset_commit_cb': function(err, topicPartitions) {
+
+    if (err) {
+      // There was an error committing
+      console.error(err);
+    } else {
+      // Commit went through. Let's log the topic partitions
+      console.log(topicPartitions);
+    }
+
+  }
+})
+```
+
+`this` is bound to the `KafkaConsumer` you have created. By specifying an `offset_commit_cb` you can also listen to the `offset.commit` event as an emitted event. It also has an error parameter and a list of topic partitions. This is not emitted unless opted in.
 
 ### Message Structure
 
@@ -371,6 +397,9 @@ The following table lists important methods for this API.
 |`consumer.unsubscribe()` | Unsubscribes from the currently subscribed topics. <br><br>You cannot subscribe to different topics without calling the `unsubscribe()` method first. |
 |`consumer.consume(cb)` | Gets messages from the existing subscription as quickly as possible. This method keeps a background thread running to do the work. If `cb` is specified, invokes `cb(err, message)`. |
 |`consumer.consume(number, cb)` | Gets `number` of messages from the existing subscription. If `cb` is specified, invokes `cb(err, message)`. |
+|`consumer.commit()` | Commits all locally stored offsets |
+|`consumer.commit(topicPartition)` | Commits offsets specified by the topic partition |
+|`consumer.commitMessage(message)` | Commits the offsets specified by the message |
 
 The following table lists events for this API.
 

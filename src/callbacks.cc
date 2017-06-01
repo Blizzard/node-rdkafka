@@ -25,7 +25,6 @@ namespace Callbacks {
 
 v8::Local<v8::Array> TopicPartitionListToV8Array(
   std::vector<event_topic_partition_t> parts) {
-
   v8::Local<v8::Array> tp_array = Nan::New<v8::Array>();
 
   for (size_t i = 0; i < parts.size(); i++) {

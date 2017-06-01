@@ -175,9 +175,8 @@ struct offset_commit_event_t {
   std::vector<event_topic_partition_t> partitions;
 
   offset_commit_event_t(RdKafka::ErrorCode p_err,
-    std::vector<RdKafka::TopicPartition*> &p_partitions):
+    const std::vector<RdKafka::TopicPartition*> &p_partitions):
     err(p_err) {
-
     // Iterate over the topic partitions because we won't have them later
     for (size_t topic_partition_i = 0;
       topic_partition_i < p_partitions.size(); topic_partition_i++) {
