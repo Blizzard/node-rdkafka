@@ -210,10 +210,8 @@ void Producer::Disconnect() {
  * @return - A baton object with error code set if it failed.
  */
 Baton Producer::Produce(void* message, size_t size, RdKafka::Topic* topic,
-  int32_t partition, std::string *key, void* opaque) {
+  int32_t partition, const void *key, size_t key_len, void* opaque) {
   RdKafka::ErrorCode response_code;
-
-  // Key
 
   if (IsConnected()) {
     scoped_shared_read_lock lock(m_connection_lock);
@@ -221,7 +219,7 @@ Baton Producer::Produce(void* message, size_t size, RdKafka::Topic* topic,
       RdKafka::Producer* producer = dynamic_cast<RdKafka::Producer*>(m_client);
       response_code = producer->produce(topic, partition,
             RdKafka::Producer::RK_MSG_COPY,
-            message, size, key, opaque);
+            message, size, key, key_len, opaque);
     } else {
       response_code = RdKafka::ERR__STATE;
     }
@@ -260,6 +258,27 @@ Baton Producer::Produce(void* message, size_t size, RdKafka::Topic* topic,
  */
 Baton Producer::Produce(void* message, size_t size, std::string topic,
   int32_t partition, std::string *key, int64_t timestamp, void* opaque) {
+  return Produce(message, size, topic, partition,
+    key ? key->data() : NULL, key ? key->size() : 0,
+    timestamp, opaque);
+}
+
+/**
+ * [Producer::Produce description]
+ * @param message - pointer to the message we are sending. This method will
+ * create a copy of it, so you are still required to free it when done.
+ * @param size - size of the message. We are copying the memory so we need
+ * the size
+ * @param topic - String topic to use so we do not need to create
+ * an RdKafka::Topic*
+ * @param partition - partition to send it to. Send in
+ * RdKafka::Topic::PARTITION_UA to send to an unassigned topic
+ * @param key - a string pointer for the key, or null if there is none.
+ * @return - A baton object with error code set if it failed.
+ */
+Baton Producer::Produce(void* message, size_t size, std::string topic,
+  int32_t partition, const void *key, size_t key_len,
+  int64_t timestamp, void* opaque) {
   RdKafka::ErrorCode response_code;
 
   if (IsConnected()) {
@@ -270,7 +289,7 @@ Baton Producer::Produce(void* message, size_t size, std::string topic,
       response_code = producer->produce(topic, partition,
             RdKafka::Producer::RK_MSG_COPY,
             message, size,
-            key ? key->c_str() : NULL, key ? key->size() : 0,
+            key, key_len,
             timestamp, opaque);
     } else {
       response_code = RdKafka::ERR__STATE;
@@ -364,16 +383,35 @@ NAN_METHOD(Producer::NodeProduce) {
     message_buffer_data = node::Buffer::Data(message_buffer_object);
   }
 
-  // Next, get the key
-  std::string * key;
+  size_t key_buffer_length;
+  const void* key_buffer_data;
+  std::string * key = NULL;
 
   if (info[3]->IsNull() || info[3]->IsUndefined()) {
-    key = NULL;
+    // This is okay for whatever reason
+    key_buffer_length = 0;
+    key_buffer_data = NULL;
+  } else if (node::Buffer::HasInstance(info[3])) {
+    v8::Local<v8::Object> key_buffer_object = info[3]->ToObject();
+
+    // v8 handles the garbage collection here so we need to make a copy of
+    // the buffer or assign the buffer to a persistent handle.
+
+    // I'm not sure which would be the more performant option. I assume
+    // the persistent handle would be but for now we'll try this one
+    // which should be more memory-efficient and allow v8 to dispose of the
+    // buffer sooner
+
+    key_buffer_length = node::Buffer::Length(key_buffer_object);
+    key_buffer_data = node::Buffer::Data(key_buffer_object);
   } else {
     v8::Local<v8::String> val = info[3]->ToString();
     // Get string pointer for this thing
     Nan::Utf8String keyUTF8(val);
     key = new std::string(*keyUTF8);
+
+    key_buffer_data = key->data();
+    key_buffer_length = key->length();
   }
 
   int64_t timestamp;
@@ -408,7 +446,8 @@ NAN_METHOD(Producer::NodeProduce) {
     std::string topic_name(*topicUTF8);
 
     Baton b = producer->Produce(message_buffer_data, message_buffer_length,
-     topic_name, partition, key, timestamp, opaque);
+     topic_name, partition, key_buffer_data, key_buffer_length,
+     timestamp, opaque);
 
     error_code = static_cast<int>(b.err());
   } else {
@@ -428,7 +467,7 @@ NAN_METHOD(Producer::NodeProduce) {
     RdKafka::Topic* rd_topic = topic_baton.data<RdKafka::Topic*>();
 
     Baton b = producer->Produce(message_buffer_data, message_buffer_length,
-     rd_topic, partition, key, opaque);
+     rd_topic, partition, key_buffer_data, key_buffer_length, opaque);
 
     // Delete the topic when we are done.
     delete rd_topic;
@@ -436,8 +475,7 @@ NAN_METHOD(Producer::NodeProduce) {
     error_code = static_cast<int>(b.err());
   }
 
-  // we can delete the key as librdkafka will take a copy of the message
-  if (key) {
+  if (key != NULL) {
     delete key;
   }
 

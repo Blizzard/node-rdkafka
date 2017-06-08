@@ -58,8 +58,21 @@ class Producer : public Connection {
   Baton Flush(int timeout_ms);
   #endif
 
-  Baton Produce(void*, size_t, RdKafka::Topic*, int32_t, std::string*, void*);
-  Baton Produce(void*, size_t, std::string, int32_t, std::string*, int64_t, void*);  // NOLINT
+  Baton Produce(void* message, size_t message_size,
+    RdKafka::Topic* topic, int32_t partition,
+    const void* key, size_t key_len,
+    void* opaque);
+
+  Baton Produce(void* message, size_t message_size,
+    std::string topic, int32_t partition,
+    std::string* key,
+    int64_t timestamp, void* opaque);
+
+  Baton Produce(void* message, size_t message_size,
+    std::string topic, int32_t partition,
+    const void* key, size_t key_len,
+    int64_t timestamp, void* opaque);
+
   std::string Name();
 
   void ActivateDispatchers();

@@ -101,6 +101,28 @@ describe('Producer', function() {
       producer.produce('test', null, new Buffer('value'), 'key');
     });
 
+    it('should produce a message with a payload and key buffer', function(done) {
+      this.timeout(3000);
+
+      var tt = setInterval(function() {
+        producer.poll();
+      }, 200);
+
+      producer.once('delivery-report', function(err, report) {
+        clearInterval(tt);
+        t.ifError(err);
+        t.ok(report !== undefined);
+        t.ok(report.value === undefined);
+        t.ok(typeof report.topic === 'string');
+        t.ok(typeof report.partition === 'number');
+        t.ok(typeof report.offset === 'number');
+        t.equal(report.key.length > 3, true);
+        done();
+      });
+
+      producer.produce('test', null, new Buffer('value'), new Buffer('key\0s'));
+    });
+
     it('should produce a message with an opaque', function(done) {
       this.timeout(3000);
 
