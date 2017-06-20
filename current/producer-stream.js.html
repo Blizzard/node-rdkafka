@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: producer-stream.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="toolkit/css/toolkit/bnet-responsive.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/main.css">
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="navbar-static">
+  <header class="navbar header">
+    <div class="grid-container">
+      <div class="grid-25">
+        <a class="brand mark" href="index.html">
+          Source: producer-stream.js
+          <span class="tag">3.4.3</span>
+        </a>
+      </div>
+      <div class="grid-75">
+        <ul class="nav navbar-nav navbar-right">
+          <li class="dropdown"><a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#" onclick="return false;">Classes</a><ul class="dropdown-menu" role="menu"><li><a href="Client.html">Client</a></li><li><a href="KafkaConsumer.html">KafkaConsumer</a></li><li><a href="KafkaConsumerStream.html">KafkaConsumerStream</a></li><li><a href="LibrdKafkaError.html">LibrdKafkaError</a></li><li><a href="Producer.html">Producer</a></li><li><a href="ProducerStream.html">ProducerStream</a></li></ul></li><li class="dropdown"><a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#" onclick="return false;">Events</a><ul class="dropdown-menu" role="menu"><li><a href="Client.html#event:disconnected">disconnected</a></li><li><a href="Client.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:data">data</a></li><li><a href="KafkaConsumer.html#event:disconnected">disconnected</a></li><li><a href="KafkaConsumer.html#event:ready">ready</a></li><li><a href="Producer.html#event:disconnected">disconnected</a></li><li><a href="Producer.html#event:ready">ready</a></li></ul></li><li class="dropdown"><a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#" onclick="return false;">Tutorials</a><ul class="dropdown-menu" role="menu"><li><a href="tutorial-consumer-flow.html">consumer-flow</a></li><li><a href="tutorial-consumer.html">consumer</a></li><li><a href="tutorial-metadata.html">metadata</a></li><li><a href="tutorial-producer-cluster.html">producer-cluster</a></li><li><a href="tutorial-producer_.html">producer</a></li></ul></li>
+        </ul>
+      </div>
+    </div>
+  </header>
+</div>
+<!-- /HEADER -->
+
+<div class="body-content">
+  <div class="grid-container project-container">
+
+    <div class="grid-75 push-25">
+      <h1>Source: producer-stream.js</h1>
+
+      
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
+ * node-rdkafka - Node.js wrapper for RdKafka C/C++ library
+ *
+ * Copyright (c) 2016 Blizzard Entertainment
+ *
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE.txt file for details.
+ */
+
+'use strict';
+
+module.exports = ProducerStream;
+
+var Writable = require('stream').Writable;
+var util = require('util');
+var ErrorCode = require('./error').codes;
+
+util.inherits(ProducerStream, Writable);
+
+/**
+ * Writable stream integrating with the Kafka Producer.
+ *
+ * This class is used to write data to Kafka in a streaming way. It takes
+ * buffers of data and puts them into the appropriate Kafka topic. If you need
+ * finer control over partitions or keys, this is probably not the class for
+ * you. In that situation just use the Producer itself.
+ *
+ * The stream detects if Kafka is already connected. You can safely begin
+ * writing right away.
+ *
+ * This stream does not operate in Object mode and can only be given buffers.
+ *
+ * @param {Producer} producer - The Kafka Producer object.
+ * @param {array} topics - Array of topics
+ * @param {object} options - Topic configuration.
+ * @constructor
+ * @extends stream.Writable
+ */
+function ProducerStream(producer, options) {
+  if (!(this instanceof ProducerStream)) {
+    return new ProducerStream(producer, options);
+  }
+
+  if (options === undefined) {
+    options = {};
+  } else if (typeof options === 'string') {
+    options = { encoding: options };
+  } else if (options === null || typeof options !== 'object') {
+    throw new TypeError('"streamOptions" argument must be a string or an object');
+  }
+
+  if (!options.objectMode &amp;&amp; !options.topic) {
+    throw new TypeError('ProducerStreams not using objectMode must provide a topic to produce to.');
+  }
+
+  if (options.objectMode !== true) {
+    this._write = this._write_buffer;
+  } else {
+    this._write = this._write_message;
+  }
+
+  Writable.call(this, options);
+
+  this.producer = producer;
+  this.topicName = options.topic;
+
+  // If we have topic options, we need to make a topic object.
+  if (options.topicOptions) {
+    this.topicOptions = options.topicOptions;
+    // Need to defer creation of this because we need a ready client to do so
+    this.topic = undefined;
+    // Otherwise use the string which is also a valid entry
+  } else {
+    this.topic = this.topicName;
+  }
+  this.autoClose = options.autoClose === undefined ? true : !!options.autoClose;
+
+  this.producer.setPollInterval(options.pollInterval || 1000);
+
+  if (options.encoding) {
+    this.setDefaultEncoding(options.encoding);
+  }
+
+  // Connect to the producer. Unless we are already connected
+  if (!this.producer.isConnected()) {
+    this.connect();
+  }
+
+  var self = this;
+
+  this.once('finish', function() {
+    if (this.autoClose) {
+      this.close();
+    }
+  });
+
+}
+
+ProducerStream.prototype.connect = function() {
+  this.producer.connect({}, function(err, data) {
+    if (err) {
+      this.emit('error', err);
+      return;
+    }
+
+  }.bind(this));
+};
+
+/**
+ * Internal stream write method for ProducerStream when writing buffers.
+ *
+ * This method should never be called externally. It has some recursion to
+ * handle cases where the producer is not yet connected.
+ *
+ * @param  {buffer} chunk - Chunk to write.
+ * @param  {string} encoding - Encoding for the buffer
+ * @param  {Function} cb - Callback to call when the stream is done processing
+ * the data.
+ * @private
+ * @see https://github.com/nodejs/node/blob/master/lib/fs.js#L1901
+ */
+ProducerStream.prototype._write_buffer = function(data, encoding, cb) {
+  if (!(data instanceof Buffer)) {
+    this.emit('error', new Error('Invalid data. Can only produce buffers'));
+    return;
+  }
+
+  var self = this;
+
+  if (!this.producer.isConnected()) {
+    this.producer.once('ready', function() {
+      self._write(data, encoding, cb);
+    });
+    return;
+  }
+
+  if (self.topic === undefined) {
+    self.topic = self.producer.Topic(self.topicName, self.topicOptions);
+  }
+
+  try {
+    this.producer.produce(self.topic, null, data, null);
+    setImmediate(cb);
+  } catch (e) {
+    if (ErrorCode.ERR__QUEUE_FULL === e.code) {
+      // Poll for good measure
+      self.producer.poll();
+
+      // Just delay this thing a bit and pass the params
+      // backpressure will get exerted this way.
+      setTimeout(function() {
+        self._write(data, encoding, cb);
+      }, 500);
+    } else {
+      if (self.autoClose) {
+        self.close();
+      }
+      setImmediate(function() {
+        cb(e);
+      });
+    }
+  }
+};
+
+/**
+ * Internal stream write method for ProducerStream when writing objects.
+ *
+ * This method should never be called externally. It has some recursion to
+ * handle cases where the producer is not yet connected.
+ *
+ * @param  {object} message - Message to write.
+ * @param  {string} encoding - Encoding for the buffer
+ * @param  {Function} cb - Callback to call when the stream is done processing
+ * the data.
+ * @private
+ * @see https://github.com/nodejs/node/blob/master/lib/fs.js#L1901
+ */
+ProducerStream.prototype._write_message = function(message, encoding, cb) {
+  var self = this;
+
+  if (!this.producer.isConnected()) {
+    this.producer.once('ready', function() {
+      self._write(message, encoding, cb);
+    });
+    return;
+  }
+
+  try {
+    this.producer.produce(message.topic, message.partition, message.value, message.key, message.timestamp, message.opaque);
+    setImmediate(cb);
+  } catch (e) {
+    if (ErrorCode.ERR__QUEUE_FULL === e.code) {
+      // Poll for good measure
+      self.producer.poll();
+
+      // Just delay this thing a bit and pass the params
+      // backpressure will get exerted this way.
+      setTimeout(function() {
+        self._write(message, encoding, cb);
+      }, 500);
+    } else {
+      if (self.autoClose) {
+        self.close();
+      }
+      setImmediate(function() {
+        cb(e);
+      });
+    }
+  }
+};
+
+function writev(producer, topic, chunks, cb) {
+
+  // @todo maybe a produce batch method?
+  var doneCount = 0;
+  var err = null;
+
+  function maybeDone(e) {
+    if (e) {
+      err = e;
+    }
+    doneCount ++;
+    if (doneCount === chunks.length) {
+      cb(err);
+    }
+  }
+
+  for (var i = 0; i &lt; chunks.length; i++) {
+    producer.produce(topic, null, chunks[i], null);
+    maybeDone();
+  }
+
+}
+
+ProducerStream.prototype._writev = function(data, cb) {
+  if (!this.producer.isConnected()) {
+    this.once('ready', function() {
+      this._writev(data, cb);
+    });
+    return;
+  }
+
+  var self = this;
+  var len = data.length;
+  var chunks = new Array(len);
+  var size = 0;
+
+  for (var i = 0; i &lt; len; i++) {
+    var chunk = data[i].chunk;
+
+    chunks[i] = chunk;
+    size += chunk.length;
+  }
+
+  writev(this.producer, this.topic, chunks, function(err) {
+    if (err) {
+      self.close();
+      cb(err);
+      return;
+    }
+    cb();
+  });
+
+};
+
+ProducerStream.prototype.close = function(cb) {
+  var self = this;
+  if (cb) {
+    this.once('close', cb);
+  }
+
+  // Use interval variables in here
+  if (self.producer._isConnected) {
+    self.producer.disconnect(function() {
+      self.producer = null;
+      close();
+    });
+  } else if (self.producer._isConnecting){
+    self.producer.once('ready', function() {
+      // Don't pass CB this time because it has already been passed
+      self.close();
+    });
+  } else {
+    setImmediate(close);
+  }
+
+  function close() {
+    self.emit('close');
+  }
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+
+    </div>
+    <div class="grid-25 pull-75">
+      <div class="navigation-sidebar">
+        <ul class="nav nav-list">
+          <li><a href="javascript: void(0);">Classes</a><ul class="nav nav-list" role="menu"><li><a href="Client.html">Client</a></li><li><a href="KafkaConsumer.html">KafkaConsumer</a></li><li><a href="KafkaConsumerStream.html">KafkaConsumerStream</a></li><li><a href="LibrdKafkaError.html">LibrdKafkaError</a></li><li><a href="Producer.html">Producer</a></li><li><a href="ProducerStream.html">ProducerStream</a></li></ul></li><li><a href="javascript: void(0);">Events</a><ul class="nav nav-list" role="menu"><li><a href="Client.html#event:disconnected">disconnected</a></li><li><a href="Client.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:data">data</a></li><li><a href="KafkaConsumer.html#event:disconnected">disconnected</a></li><li><a href="KafkaConsumer.html#event:ready">ready</a></li><li><a href="Producer.html#event:disconnected">disconnected</a></li><li><a href="Producer.html#event:ready">ready</a></li></ul></li><li><a href="javascript: void(0);">Tutorials</a><ul class="nav nav-list" role="menu"><li><a href="tutorial-consumer-flow.html">consumer-flow</a></li><li><a href="tutorial-consumer.html">consumer</a></li><li><a href="tutorial-metadata.html">metadata</a></li><li><a href="tutorial-producer-cluster.html">producer-cluster</a></li><li><a href="tutorial-producer_.html">producer</a></li></ul></li>
+        </ul>
+        <!-- <ul class="nav nav-list collapse"> -->
+      </div>
+    </div>
+</div>
+
+  </div>
+</div> <!-- /.body-content -->
+
+<br class="clear">
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="grid-container">
+    <div class="footer-content">
+      <div class="grid-75">
+        <div class="legal">
+            Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc </a> on Tue Jun 20 2017 09:29:42 GMT-0700 (PDT)
+        </div>
+      </div>
+      <div class="grid-25">
+        <span class="blizzard">Blizzard® Entertainment</span>
+      </div>
+    </div>
+  </div>
+</footer>
+<!-- /FOOTER -->
+
+<script> prettyPrint(); </script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<script src="toolkit/js/toolkit/toolkit.min.js"> </script>
+</body>
+</html>
