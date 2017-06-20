@@ -166,9 +166,7 @@ producer.on('ready', function() {
       // optionally we can manually specify a partition for the message
       // this defaults to -1 - which will use librdkafka's default partitioner (consistent random for keyed messages, random for unkeyed messages)
       null,
-      // Message to send. If a string is supplied, it will be
-      // converted to a Buffer automatically, but we're being
-      // explicit here for the sake of example.
+      // Message to send. Must be a buffer
       new Buffer('Awesome message'),
       // for keyed messages, we also specify the key - note that this field is optional
       'Stormwind',
