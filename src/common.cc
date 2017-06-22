@@ -162,8 +162,7 @@ std::vector<std::string> ToStringVector(v8::Local<v8::Array> parameter) {
         Nan::Utf8String pVal(element.As<v8::RegExp>()->GetSource());
         std::string pString(*pVal);
 
-        // If it is a regular expression wrap it in that kafka decoration
-        std::string regexString = "\"" + pString + "\"";
+        Log(pString);
 
         newItem.push_back(pString);
       }
