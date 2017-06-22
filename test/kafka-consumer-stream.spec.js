@@ -84,6 +84,63 @@ module.exports = {
       });
     },
 
+    'properly reads off the fake with a topic function': function(cb) {
+      fakeClient._metadata = {
+        orig_broker_id: 1,
+        orig_broker_name: "broker_name",
+        brokers: [
+          {
+            id: 1,
+            host: 'localhost',
+            port: 40
+          }
+        ],
+        topics: [
+          {
+            name: 'awesome-topic',
+            partitions: [
+              {
+                id: 1,
+                leader: 20,
+                replicas: [1, 2],
+                isrs: [1, 2]
+              }
+            ]
+          }
+        ]
+      };
+
+      var stream = new KafkaConsumerStream(fakeClient, {
+        topics: function(metadata) {
+          var topics = metadata.topics.map(function(v) {
+            return v.name;
+          });
+
+          return topics;
+        }
+      });
+      fakeClient.subscribe = function(topics) {
+        t.equal(Array.isArray(topics), true);
+        t.equal(topics[0], 'awesome-topic');
+        t.equal(topics.length, 1);
+        return this;
+      };
+
+      stream.on('error', function(err) {
+        t.fail(err);
+      });
+      stream.once('readable', function() {
+        var message = stream.read();
+        t.notEqual(message, null);
+        t.ok(Buffer.isBuffer(message.value));
+        t.equal('test', message.value.toString());
+        t.equal('testkey', message.key);
+        t.equal(typeof message.offset, 'number');
+        stream.pause();
+        cb();
+      });
+    },
+
     'properly reads correct number of messages but does not stop': function(next) {
       var numMessages = 10;
       var numReceived = 0;
