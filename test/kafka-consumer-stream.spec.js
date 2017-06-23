@@ -199,6 +199,47 @@ module.exports = {
 
     },
 
+    'streams as batch when specified': function(next) {
+      var numMessages = 10;
+      var numReceived = 0;
+      var numSent = 0;
+
+      fakeClient.consume = function(size, cb) {
+        if (numSent < numMessages) {
+          numSent++;
+          setImmediate(function() {
+            cb(null, [{
+              value: new Buffer('test'),
+              offset: 1
+            }]);
+          });
+        } else {
+        }
+      };
+      var stream = new KafkaConsumerStream(fakeClient, {
+        topics: 'topic',
+        streamAsBatch: true
+      });
+      stream.on('error', function(err) {
+        // Ignore
+      });
+      stream.on('readable', function() {
+        var messages = stream.read();
+        numReceived++;
+        t.equal(Array.isArray(messages), true);
+        t.equal(messages.length, 1);
+        var message = messages[0];
+
+        t.notEqual(message, null);
+        t.ok(Buffer.isBuffer(message.value));
+        t.equal(typeof message.offset, 'number');
+        if (numReceived === numMessages) {
+          // give it a second to get an error
+          next();
+        }
+      });
+    },
+
     'stops reading on unsubscribe': function(next) {
       var numMessages = 10;
       var numReceived = 0;
