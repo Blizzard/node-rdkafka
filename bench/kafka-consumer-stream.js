@@ -16,7 +16,7 @@ var store = [];
 var host = process.argv[2] || 'localhost:9092';
 var topic = process.argv[3] || 'test';
 
-var stream = Kafka.KafkaConsumer.createReadStream({
+var stream = Kafka.createReadStream({
   'metadata.broker.list': host,
   'group.id': 'node-rdkafka-benchs',
   'fetch.wait.max.ms': 100,
