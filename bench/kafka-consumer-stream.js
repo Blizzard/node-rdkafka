@@ -18,7 +18,7 @@ var topic = process.argv[3] || 'test';
 
 var stream = Kafka.KafkaConsumer.createReadStream({
   'metadata.broker.list': host,
-  'group.id': 'node-rdkafka-bench',
+  'group.id': 'node-rdkafka-benchs',
   'fetch.wait.max.ms': 100,
   'fetch.message.max.bytes': 1024 * 1024,
   'enable.auto.commit': false
