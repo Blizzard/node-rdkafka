@@ -114,11 +114,17 @@
             },
           }
         ],
-        [ "<(WITH_SASL)==1",
+        [ 'OS!="win" and <(WITH_SASL)==1',
           {
             'sources': [
-              'librdkafka/src/rdkafka_sasl.c',
-              'librdkafka/src/rdkafka_sasl_cyrus.c'
+              '<!@(find librdkafka/src -name rdkafka_sasl*.c ! -name rdkafka_sasl_win32*.c )'
+            ]
+          }
+        ],
+        [ 'OS=="win" and <(WITH_SASL)==1',
+          {
+            'sources': [
+              '<!@(find librdkafka/src -name rdkafka_sasl*.c ! -name rdkafka_sasl_cyrus*.c )'
             ]
           }
         ]
