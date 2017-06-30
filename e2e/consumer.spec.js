@@ -111,7 +111,7 @@ describe('Consumer', function() {
         done();
       });
     });
-    xit('after assign, before consume, position should return an array without offsets (Timing out issue in this situation, so pending)', function(done) {
+    it('after assign, before consume, position should return an array without offsets', function(done) {
       consumer.assign([{topic:topic, partition:0}]);
       var position = consumer.position();
       t.equal(Array.isArray(position), true, 'Position should be an array');
