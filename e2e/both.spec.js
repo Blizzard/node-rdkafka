@@ -215,7 +215,7 @@ describe('Consumer/Producer', function() {
     }, 2000);
   });
 
-  describe('Exceptional cases', function() {
+  describe('Exceptional case -  manual commit', function() {
     var grp = 'kafka-mocha-grp-' + crypto.randomBytes(20).toString('hex');
     var consumerOpts = {
       'metadata.broker.list': kafkaBrokerList,
@@ -223,8 +223,8 @@ describe('Consumer/Producer', function() {
       'fetch.wait.max.ms': 1000,
       'session.timeout.ms': 10000,
       'enable.auto.commit': false,
-      'debug': 'all'
-      // paused: true,
+      'debug': 'all',
+      'offset_commit_cb': true
     };
 
     beforeEach(function(done) {
@@ -249,7 +249,7 @@ describe('Consumer/Producer', function() {
     });
 
     it('should async commit after consuming', function(done) {
-      this.timeout(20000);
+      this.timeout(25000);
       var key = '';
       var value = new Buffer('');
 
@@ -257,27 +257,32 @@ describe('Consumer/Producer', function() {
 
       consumer.once('data', function(message) {
         lastOffset = message.offset;
-        consumer.commitMessage(message);
+        
+        // disconnect in 
+        consumer.on('offset.commit', function(offsets) {
+          t.equal(typeof offsets, 'object', 'offsets should be returned');
+          
+          consumer.disconnect(function() {
+            consumer.connect({}, function(err, d) {
+              t.ifError(err);
+              t.equal(typeof d, 'object', 'metadata should be returned');
 
-        consumer.disconnect(function() {
-          consumer.connect({}, function(err, d) {
-            t.ifError(err);
-            t.equal(typeof d, 'object', 'metadata should be returned');
+              consumer.once('data', function(message) {
+                console.log('First message offset:', lastOffset, 'New message',
+                  'offset:', message.offset);
+                done(new Error('Should never be here'));
+              });
 
-            consumer.once('data', function(message) {
-              console.log('First message offset:', lastOffset, 'New message',
-                'offset:', message.offset);
-              done(new Error('Should never be here'));
+              consumer.subscribe([topic]);
+              consumer.consume();
+
+              setTimeout(function() {
+                done();
+              }, 5000);
             });
-
-            consumer.subscribe([topic]);
-            consumer.consume();
-
-            setTimeout(function() {
-              done();
-            }, 5000);
           });
-        });
+        }).commitMessage(message);
+        
       });
 
       consumer.subscribe([topic]);
