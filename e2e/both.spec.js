@@ -258,15 +258,17 @@ describe('Consumer/Producer', function() {
       consumer.once('data', function(message) {
         lastOffset = message.offset;
         
-        // disconnect in 
+        // disconnect in offset commit callback
         consumer.on('offset.commit', function(offsets) {
           t.equal(typeof offsets, 'object', 'offsets should be returned');
           
           consumer.disconnect(function() {
+            // reconnect in disconnect callback
             consumer.connect({}, function(err, d) {
               t.ifError(err);
               t.equal(typeof d, 'object', 'metadata should be returned');
 
+              // check that no new messages arrive, as the offset was committed
               consumer.once('data', function(message) {
                 console.log('First message offset:', lastOffset, 'New message',
                   'offset:', message.offset);
