@@ -215,7 +215,7 @@ describe('Consumer/Producer', function() {
     }, 2000);
   });
 
-  describe('Exceptional case -  manual commit', function() {
+  describe('Exceptional case -  offset_commit_cb true', function() {
     var grp = 'kafka-mocha-grp-' + crypto.randomBytes(20).toString('hex');
     var consumerOpts = {
       'metadata.broker.list': kafkaBrokerList,
@@ -283,8 +283,9 @@ describe('Consumer/Producer', function() {
               }, 5000);
             });
           });
-        }).commitMessage(message);
+        });
         
+        consumer.commitMessage(message);
       });
 
       consumer.subscribe([topic]);
@@ -294,6 +295,51 @@ describe('Consumer/Producer', function() {
         producer.produce(topic, null, value, key);
       }, 2000);
     });
-
   });
+  
+  describe('Exceptional case - offset_commit_cb function', function() {
+    var grp = 'kafka-mocha-grp-' + crypto.randomBytes(20).toString('hex');
+
+    afterEach(function(done) {
+      this.timeout(10000);
+      consumer.disconnect(function() {
+        done();
+      });
+    });
+
+    it('should callback offset_commit_cb after commit', function(done) {
+      this.timeout(20000);
+
+      var consumerOpts = {
+          'metadata.broker.list': kafkaBrokerList,
+          'group.id': grp,
+          'fetch.wait.max.ms': 1000,
+          'session.timeout.ms': 10000,
+          'enable.auto.commit': false,
+          'debug': 'all',
+          'offset_commit_cb': function(offset) {
+             done();
+        }
+      };
+      consumer = new Kafka.KafkaConsumer(consumerOpts, {
+        'auto.offset.reset': 'largest',
+      });
+      eventListener(consumer);
+
+      consumer.connect({}, function(err, d) {
+        t.ifError(err);
+        t.equal(typeof d, 'object', 'metadata should be returned');
+        consumer.subscribe([topic]);
+        consumer.consume();
+        setTimeout(function() {
+          producer.produce(topic, null, new Buffer(''), '');
+        }, 2000);
+      });
+      
+      consumer.once('data', function(message) {
+        consumer.commitMessage(message);
+      })
+    });
+  });
+  
 });
