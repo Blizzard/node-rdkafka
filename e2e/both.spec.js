@@ -215,7 +215,7 @@ describe('Consumer/Producer', function() {
     }, 2000);
   });
 
-  describe('Exceptional cases', function() {
+  describe('Exceptional case -  offset_commit_cb true', function() {
     var grp = 'kafka-mocha-grp-' + crypto.randomBytes(20).toString('hex');
     var consumerOpts = {
       'metadata.broker.list': kafkaBrokerList,
@@ -223,8 +223,8 @@ describe('Consumer/Producer', function() {
       'fetch.wait.max.ms': 1000,
       'session.timeout.ms': 10000,
       'enable.auto.commit': false,
-      'debug': 'all'
-      // paused: true,
+      'debug': 'all',
+      'offset_commit_cb': true
     };
 
     beforeEach(function(done) {
@@ -249,7 +249,7 @@ describe('Consumer/Producer', function() {
     });
 
     it('should async commit after consuming', function(done) {
-      this.timeout(20000);
+      this.timeout(25000);
       var key = '';
       var value = new Buffer('');
 
@@ -257,27 +257,35 @@ describe('Consumer/Producer', function() {
 
       consumer.once('data', function(message) {
         lastOffset = message.offset;
-        consumer.commitMessage(message);
+        
+        // disconnect in offset commit callback
+        consumer.on('offset.commit', function(offsets) {
+          t.equal(typeof offsets, 'object', 'offsets should be returned');
+          
+          consumer.disconnect(function() {
+            // reconnect in disconnect callback
+            consumer.connect({}, function(err, d) {
+              t.ifError(err);
+              t.equal(typeof d, 'object', 'metadata should be returned');
 
-        consumer.disconnect(function() {
-          consumer.connect({}, function(err, d) {
-            t.ifError(err);
-            t.equal(typeof d, 'object', 'metadata should be returned');
+              // check that no new messages arrive, as the offset was committed
+              consumer.once('data', function(message) {
+                console.log('First message offset:', lastOffset, 'New message',
+                  'offset:', message.offset);
+                done(new Error('Should never be here'));
+              });
 
-            consumer.once('data', function(message) {
-              console.log('First message offset:', lastOffset, 'New message',
-                'offset:', message.offset);
-              done(new Error('Should never be here'));
+              consumer.subscribe([topic]);
+              consumer.consume();
+
+              setTimeout(function() {
+                done();
+              }, 5000);
             });
-
-            consumer.subscribe([topic]);
-            consumer.consume();
-
-            setTimeout(function() {
-              done();
-            }, 5000);
           });
         });
+        
+        consumer.commitMessage(message);
       });
 
       consumer.subscribe([topic]);
@@ -287,6 +295,51 @@ describe('Consumer/Producer', function() {
         producer.produce(topic, null, value, key);
       }, 2000);
     });
-
   });
+  
+  describe('Exceptional case - offset_commit_cb function', function() {
+    var grp = 'kafka-mocha-grp-' + crypto.randomBytes(20).toString('hex');
+
+    afterEach(function(done) {
+      this.timeout(10000);
+      consumer.disconnect(function() {
+        done();
+      });
+    });
+
+    it('should callback offset_commit_cb after commit', function(done) {
+      this.timeout(20000);
+
+      var consumerOpts = {
+          'metadata.broker.list': kafkaBrokerList,
+          'group.id': grp,
+          'fetch.wait.max.ms': 1000,
+          'session.timeout.ms': 10000,
+          'enable.auto.commit': false,
+          'debug': 'all',
+          'offset_commit_cb': function(offset) {
+             done();
+        }
+      };
+      consumer = new Kafka.KafkaConsumer(consumerOpts, {
+        'auto.offset.reset': 'largest',
+      });
+      eventListener(consumer);
+
+      consumer.connect({}, function(err, d) {
+        t.ifError(err);
+        t.equal(typeof d, 'object', 'metadata should be returned');
+        consumer.subscribe([topic]);
+        consumer.consume();
+        setTimeout(function() {
+          producer.produce(topic, null, new Buffer(''), '');
+        }, 2000);
+      });
+      
+      consumer.once('data', function(message) {
+        consumer.commitMessage(message);
+      })
+    });
+  });
+  
 });
