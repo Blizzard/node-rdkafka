@@ -374,7 +374,7 @@ consumer
     // This makes subsequent consumes read from that topic.
     consumer.subscribe(['librdtesting-01']);
 
-    // Read one message every 1000 seconds
+    // Read one message every 1000 milliseconds
     setInterval(function() {
       consumer.consume(1);
     }, 1000);
