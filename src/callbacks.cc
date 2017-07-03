@@ -418,7 +418,7 @@ void RebalanceDispatcher::Flush() {
 
   if (m_events.size() < 1) return;
 
-  const unsigned int argc = 1;
+  const unsigned int argc = 2;
 
   std::vector<rebalance_event_t> events;
   {
