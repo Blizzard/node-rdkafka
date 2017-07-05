@@ -418,12 +418,12 @@ Some times you find yourself in the situation where you need to know the latest 
 ```js
 const timeout = 5000, partition = 0;
 consumer.queryWatermarkOffsets('my-topic', partition, timeout, function(err, offsets) {
-  const high = offsets.high;
-  const low = offsets.low;
+  const high = offsets.highOffest;
+  const low = offsets.lowOffset;
 });
 producer.queryWatermarkOffsets('my-topic', partition, timeout, function(err, offsets) {
-  const high = offsets.high;
-  const low = offsets.low;
+  const high = offsets.highOffest;
+  const low = offsets.lowOffset;
 });
 
 An error will be returned if the client was not connected or the request timed out within the specified interval.
