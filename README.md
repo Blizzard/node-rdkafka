@@ -416,14 +416,15 @@ The following table lists events for this API.
 Some times you find yourself in the situation where you need to know the latest (and earliest) offset for one of your topics. Connected producers and consumers both allow you to query for these through `queryWaterMarkOffsets` like follows:
 
 ```js
-const timeout = 5000, partition = 0;
+var timeout = 5000, partition = 0;
 consumer.queryWatermarkOffsets('my-topic', partition, timeout, function(err, offsets) {
-  const high = offsets.highOffest;
-  const low = offsets.lowOffset;
+  var high = offsets.highOffest;
+  var low = offsets.lowOffset;
 });
+
 producer.queryWatermarkOffsets('my-topic', partition, timeout, function(err, offsets) {
-  const high = offsets.highOffest;
-  const low = offsets.lowOffset;
+  var high = offsets.highOffest;
+  var low = offsets.lowOffset;
 });
 
 An error will be returned if the client was not connected or the request timed out within the specified interval.
