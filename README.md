@@ -436,6 +436,26 @@ The following table lists events for this API.
 |`event.stats` | The `event.stats` event is emitted when `librdkafka` reports stats (if you opted in). |
 |`event.throttle` | The `event.throttle` event is emitted when `librdkafka` reports throttling.|
 
+## Reading current offsets from the broker for a topic
+
+Some times you find yourself in the situation where you need to know the latest (and earliest) offset for one of your topics. Connected producers and consumers both allow you to query for these through `queryWaterMarkOffsets` like follows:
+
+```js
+var timeout = 5000, partition = 0;
+consumer.queryWatermarkOffsets('my-topic', partition, timeout, function(err, offsets) {
+  var high = offsets.highOffest;
+  var low = offsets.lowOffset;
+});
+
+producer.queryWatermarkOffsets('my-topic', partition, timeout, function(err, offsets) {
+  var high = offsets.highOffest;
+  var low = offsets.lowOffset;
+});
+
+An error will be returned if the client was not connected or the request timed out within the specified interval.
+
+```
+
 ## Metadata
 
 Both `Kafka.Producer` and `Kafka.KafkaConsumer` include a `getMetadata` method to retrieve metadata from Kafka.
