@@ -39,6 +39,20 @@ NAN_METHOD(NodeRdKafkaErr2Str) {
   info.GetReturnValue().Set(Nan::New<v8::String>(errstr).ToLocalChecked());
 }
 
+NAN_METHOD(NodeRdKafkaBuildInFeatures) {
+  RdKafka::Conf * config = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
+
+  std::string features;
+
+  if (RdKafka::Conf::CONF_OK == config->get("builtin.features", features)) {
+    info.GetReturnValue().Set(Nan::New<v8::String>(features).ToLocalChecked());
+  } else {
+    info.GetReturnValue().Set(Nan::Undefined());
+  }
+
+  delete config;
+}
+
 void ConstantsInit(v8::Local<v8::Object> exports) {
   v8::Local<v8::Object> constants = Nan::New<v8::Object>();
 
@@ -123,6 +137,9 @@ void ConstantsInit(v8::Local<v8::Object> exports) {
 
   exports->Set(Nan::New("err2str").ToLocalChecked(),
     Nan::GetFunction(Nan::New<v8::FunctionTemplate>(NodeRdKafkaErr2Str)).ToLocalChecked());  // NOLINT
+
+  exports->Set(Nan::New("features").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<v8::FunctionTemplate>(NodeRdKafkaBuildInFeatures)).ToLocalChecked());  // NOLINT
 }
 
 void Init(v8::Local<v8::Object> exports, v8::Local<v8::Object> module) {

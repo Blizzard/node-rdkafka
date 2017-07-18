@@ -83,6 +83,28 @@ disable `sasl` support, export `WITH_SASL=0` before you run `npm install`. (You 
 
 This means you are required to have `libsasl2` on the machine before you build it.
 
+### Librdkafka Methods
+
+This library includes two utility functions for detecting the status of your installation. Please try to include these when making issue reports where applicable.
+
+You can get the features supported by your compile of `librdkafka` by reading the variable "features" on the root of the `node-rdkafka` object.
+
+```js
+const kafka = require('node-rdkafka');
+console.log(kafka.features);
+
+// #=> [ 'gzip', 'snappy', 'ssl', 'sasl', 'regex', 'lz4' ]
+```
+
+You can also get the version of `librdkafka`
+
+```js
+const kafka = require('node-rdkafka');
+console.log(kafka.librdkafkaVersion);
+
+// #=> 0.9.5
+```
+
 ## Sending Messages
 
 A `Producer` sends messages to Kafka.  The `Producer` constructor takes a configuration object, as shown in the following example:
@@ -268,8 +290,11 @@ var consumer = new Kafka.KafkaConsumer({
   'rebalance_cb': function(err, assignment) {
 
     if (err.code === Kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS) {
+      // Note: this can throw when you are disconnected. Take care and wrap it in
+      // a try catch if that matters to you
       this.assign(assignment);
     } else if (err.code == Kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS){
+      // Same as above
       this.unassign();
     } else {
       // We had a real error
