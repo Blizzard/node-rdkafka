@@ -21,25 +21,25 @@ describe('Consumer/Producer', function() {
   var consumer;
 
   beforeEach(function(done) {
-    producer = new Kafka.Producer({
-      'client.id': 'kafka-mocha',
-      'metadata.broker.list': kafkaBrokerList,
-      'fetch.wait.max.ms': 1,
-      'debug': 'all',
-      'dr_cb': true
-    });
+    var finished = 0;
+    var called = false;
 
-    producer.connect({}, function(err, d) {
-      t.ifError(err);
-      t.equal(typeof d, 'object', 'metadata should be returned');
-      done();
-    });
+    function maybeDone(err) {
+      if (called) {
+        return;
+      }
 
-    eventListener(producer);
+      finished++;
+      if (err) {
+        called = true;
+        return done(err);
+      }
 
-  });
+      if (finished === 2) {
+        done();
+      }
+    }
 
-  beforeEach(function(done) {
     var grp = 'kafka-mocha-grp-' + crypto.randomBytes(20).toString('hex');
 
     consumer = new Kafka.KafkaConsumer({
@@ -57,59 +57,91 @@ describe('Consumer/Producer', function() {
     consumer.connect({}, function(err, d) {
       t.ifError(err);
       t.equal(typeof d, 'object', 'metadata should be returned');
-      done();
+      maybeDone(err);
     });
 
     eventListener(consumer);
-  });
 
-  afterEach(function(done) {
-    consumer.disconnect(function() {
-      done();
+    producer = new Kafka.Producer({
+      'client.id': 'kafka-mocha',
+      'metadata.broker.list': kafkaBrokerList,
+      'fetch.wait.max.ms': 1,
+      'debug': 'all',
+      'dr_cb': true
+    }, {
+      'produce.offset.report': true
     });
+
+    producer.connect({}, function(err, d) {
+      t.ifError(err);
+      t.equal(typeof d, 'object', 'metadata should be returned');
+      maybeDone(err);
+    });
+
+    eventListener(producer);
+
   });
 
   afterEach(function(done) {
+    var finished = 0;
+    var called = false;
+
+    function maybeDone(err) {
+      if (called) {
+        return;
+      }
+
+      finished++;
+      if (err) {
+        called = true;
+        return done(err);
+      }
+
+      if (finished === 2) {
+        done();
+      }
+    }
+
+    consumer.disconnect(function() {
+      maybeDone();
+    });
+
     producer.disconnect(function() {
-      done();
+      maybeDone();
     });
   });
 
   it('should be able to produce, consume messages, read position: subscribe/consumeOnce', function(done) {
-    this.timeout(20000);
-
     crypto.randomBytes(4096, function(ex, buffer) {
-
-      var tt = setInterval(function() {
-        producer.poll();
-      }, 100);
+      producer.setPollInterval(10);
 
       var offset;
 
       producer.once('delivery-report', function(err, report) {
-        clearInterval(tt);
         t.ifError(err);
         offset = report.offset;
       });
 
+      consumer.setDefaultConsumeTimeout(10);
       consumer.subscribe([topic]);
 
       var ct;
 
       var consumeOne = function() {
         consumer.consume(1, function(err, messages) {
-          if (messages.length === 0 || (err && err.code === -191)) {
+          if (err && err.code === -185) {
+            ct = setTimeout(consumeOne, 100);
+            return;
+          } else if (messages.length === 0 || (err && err.code === -191)) {
             producer.produce(topic, null, buffer, null);
             ct = setTimeout(consumeOne, 100);
             return;
-          } else if (err && err.code === -185) {
-            ct = setTimeout(consumeOne, 100);
+          } else if (err) {
             return;
           }
 
           var message = messages[0];
 
-          t.ifError(err);
           t.equal(Array.isArray(consumer.assignments()), true, 'Assignments should be an array');
           t.equal(consumer.assignments().length > 0, true, 'Should have at least one assignment');
           t.equal(buffer.toString(), message.value.toString(),
@@ -131,22 +163,20 @@ describe('Consumer/Producer', function() {
   });
 
   it('should be able to produce and consume messages: consumeLoop', function(done) {
-    this.timeout(20000);
     var key = 'key';
+
+    this.timeout(5000);
 
     crypto.randomBytes(4096, function(ex, buffer) {
 
-      var tt = setInterval(function() {
-        producer.poll();
-      }, 100);
+      producer.setPollInterval(10);
 
       producer.once('delivery-report', function(err, report) {
-        //console.log('delivery-report: ' + JSON.stringify(report));
-        clearInterval(tt);
-        t.ifError(err);
-        t.equal(topic, report.topic, 'invalid delivery-report topic');
-        t.equal(key, report.key, 'invalid delivery-report key');
-        t.ok(report.offset >= 0, 'invalid delivery-report offset');
+        if (!err) {
+          t.equal(topic, report.topic, 'invalid delivery-report topic');
+          t.equal(key, report.key, 'invalid delivery-report key');
+          t.ok(report.offset >= 0, 'invalid delivery-report offset');
+        }
       });
 
       consumer.on('data', function(message) {
@@ -172,12 +202,10 @@ describe('Consumer/Producer', function() {
     var key = '';
     var value = new Buffer('');
 
-    var tt = setInterval(function() {
-      producer.poll();
-    }, 100);
+    producer.setPollInterval(10);
 
     consumer.once('data', function(message) {
-      clearInterval(tt);
+      t.notEqual(message.value, null, 'message should not be null');
       t.equal(value.toString(), message.value.toString(), 'invalid message value');
       t.equal(key, message.key, 'invalid message key');
       done();
@@ -196,12 +224,9 @@ describe('Consumer/Producer', function() {
     var key = null;
     var value = null;
 
-    var tt = setInterval(function() {
-      producer.poll();
-    }, 100);
+    producer.setPollInterval(10);
 
     consumer.once('data', function(message) {
-      clearInterval(tt);
       t.equal(value, message.value, 'invalid message value');
       t.equal(key, message.key, 'invalid message key');
       done();
@@ -257,11 +282,11 @@ describe('Consumer/Producer', function() {
 
       consumer.once('data', function(message) {
         lastOffset = message.offset;
-        
+
         // disconnect in offset commit callback
         consumer.on('offset.commit', function(offsets) {
           t.equal(typeof offsets, 'object', 'offsets should be returned');
-          
+
           consumer.disconnect(function() {
             // reconnect in disconnect callback
             consumer.connect({}, function(err, d) {
@@ -284,7 +309,7 @@ describe('Consumer/Producer', function() {
             });
           });
         });
-        
+
         consumer.commitMessage(message);
       });
 
@@ -296,7 +321,7 @@ describe('Consumer/Producer', function() {
       }, 2000);
     });
   });
-  
+
   describe('Exceptional case - offset_commit_cb function', function() {
     var grp = 'kafka-mocha-grp-' + crypto.randomBytes(20).toString('hex');
 
@@ -335,11 +360,11 @@ describe('Consumer/Producer', function() {
           producer.produce(topic, null, new Buffer(''), '');
         }, 2000);
       });
-      
+
       consumer.once('data', function(message) {
         consumer.commitMessage(message);
-      })
+      });
     });
   });
-  
+
 });

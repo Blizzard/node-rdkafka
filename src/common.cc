@@ -378,6 +378,8 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Message *message) {
     void* message_payload = message->payload();
 
     if (message_payload) {
+      // @TODO(sparente) - I think I want to, one day, change these back to
+      // the librdkafka names for their values. Next major bump obviously.
       void* payload = malloc(message->len());
       memcpy(payload, message_payload, message->len());
 
