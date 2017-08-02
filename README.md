@@ -95,8 +95,8 @@ This library includes two utility functions for detecting the status of your ins
 You can get the features supported by your compile of `librdkafka` by reading the variable "features" on the root of the `node-rdkafka` object.
 
 ```js
-const kafka = require('node-rdkafka');
-console.log(kafka.features);
+const Kafka = require('node-rdkafka');
+console.log(Kafka.features);
 
 // #=> [ 'gzip', 'snappy', 'ssl', 'sasl', 'regex', 'lz4' ]
 ```
@@ -104,8 +104,8 @@ console.log(kafka.features);
 You can also get the version of `librdkafka`
 
 ```js
-const kafka = require('node-rdkafka');
-console.log(kafka.librdkafkaVersion);
+const Kafka = require('node-rdkafka');
+console.log(Kafka.librdkafkaVersion);
 
 // #=> 0.9.5
 ```
