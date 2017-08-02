@@ -26,7 +26,8 @@ var stream = Kafka.KafkaConsumer.createReadStream({
   objectMode: false
 });
 
-stream.on('error', function() {
+stream.on('error', function(err) {
+  if (err) console.log(err);
   process.exit(1);
 });
 
