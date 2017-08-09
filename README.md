@@ -267,7 +267,7 @@ The following table describes types of events.
 | `event.stats` | The  `event.stats` event is emitted when `librdkafka` reports stats (if you opted in). |
 | `event.error` | The  `event.error` event is emitted when `librdkafka` reports an error |
 | `event.throttle` | The `event.throttle` event emitted  when `librdkafka` reports throttling. |
-| `delivery-report` | The `delivery-report` event is emitted when a delivery report has been found via polling. <br><br>To use this event, you must set `request.required.acks` to `1` or `-1` in topic configuration and `dr_cb` (or `dr_msg_db` if you want the report to contain the message payload) to `true` in the `Producer` constructor options. |
+| `delivery-report` | The `delivery-report` event is emitted when a delivery report has been found via polling. <br><br>To use this event, you must set `request.required.acks` to `1` or `-1` in topic configuration and `dr_cb` (or `dr_msg_cb` if you want the report to contain the message payload) to `true` in the `Producer` constructor options. |
 
 ## Kafka.KafkaConsumer
 
