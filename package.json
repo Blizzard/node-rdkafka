@@ -6,8 +6,7 @@
   "scripts": {
     "configure": "node-gyp configure",
     "build": "node-gyp build",
-    "preinstall": "node ./nuget-dep.js",
-    "install": "node-gyp rebuild",
+    "install": "node ./nuget-dep.js && node-gyp rebuild",
     "test": "make test"
   },
   "keywords": [
