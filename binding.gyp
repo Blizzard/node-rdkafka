@@ -28,8 +28,8 @@
         [ 'OS=="win"', {
           "sources": [ '<!@(findwin src *.cc)' ],
           "include_dirs": [
-		      "deps/librdkafka/src-cpp",
-		  ],
+            "deps/librdkafka/src-cpp",
+          ],
           'configurations': {
             'Debug': {
               'msvs_settings': {
@@ -68,16 +68,16 @@
             # .deb packages.
             {
                 'conditions': [
-				  [ 'OS!="win"', {
+                  [ 'OS!="win"', {
                       "libraries": ["-lrdkafka", "-lrdkafka++"],
                       "include_dirs": [
                           "/usr/include/librdkafka",
                           "/usr/local/include/librdkafka"
                       ],
-				  }],
+                  }],
                   [ 'OS=="win"', {
                       "libraries": ["-l../deps/win32-runtime/librdkafka", "-l../deps/win32-runtime/librdkafkacpp"],
-			      }],
+                  }],
 				],
             },
         ],
