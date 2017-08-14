@@ -6,6 +6,8 @@
   "scripts": {
     "configure": "node-gyp configure",
     "build": "node-gyp build",
+    "preinstall": "node ./nuget-dep.js",
+    "install": "node-gyp rebuild",
     "test": "make test"
   },
   "keywords": [
@@ -32,7 +34,9 @@
     "jsdoc": "^3.4.0",
     "toolkit-jsdoc": "^1.0.0",
     "mocha": "2.x",
-    "node-gyp": "3.x"
+    "node-gyp": "3.x",
+    "download": "^6.2.5",
+    "decompress": "^4.2.0"
   },
   "dependencies": {
     "bindings": "1.x",

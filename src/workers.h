@@ -12,7 +12,8 @@
 
 #include <uv.h>
 #include <nan.h>
-#include <unistd.h>
+#include <chrono>
+#include <thread>
 #include <string>
 #include <vector>
 
