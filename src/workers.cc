@@ -378,7 +378,11 @@ void KafkaConsumerConsumeLoop::Execute(const ExecutionMessageBus& bus) {
       // when in consume loop mode
       // Randomise the wait time to avoid contention on different
       // slow topics
+	  #if defined(_WIN32)
       std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(rand() * 1000 / RAND_MAX)));
+      #else
+      std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(rand_r(&m_rand_seed) * 1000 / RAND_MAX)));
+      #endif
     } else if (
       b.err() == RdKafka::ERR__TIMED_OUT ||
       b.err() == RdKafka::ERR__TIMED_OUT_QUEUE) {
