@@ -6,6 +6,7 @@
   "scripts": {
     "configure": "node-gyp configure",
     "build": "node-gyp build",
+    "install": "node ./nuget-dep.js && node-gyp rebuild",
     "test": "make test"
   },
   "keywords": [
@@ -36,7 +37,9 @@
   },
   "dependencies": {
     "bindings": "1.x",
-    "nan": "2.x"
+    "nan": "2.x",
+    "download": "^6.2.5",
+    "decompress": "^4.2.0"
   },
   "engines": {
     "npm": "^2.7.3"
