@@ -293,9 +293,13 @@ void DeliveryReportDispatcher::Flush() {
     Nan::Set(jsobj, Nan::New("offset").ToLocalChecked(),
             Nan::New<v8::Number>(event.offset));
 
-    if (!event.m_key_is_null) {
+    if (event.key) {
+      Nan::MaybeLocal<v8::Object> buff = Nan::NewBuffer(
+        static_cast<char*>(event.key),
+        static_cast<int>(event.key_len));
+
       Nan::Set(jsobj, Nan::New("key").ToLocalChecked(),
-              Nan::New<v8::String>(event.key).ToLocalChecked());
+              buff.ToLocalChecked());
     } else {
       Nan::Set(jsobj, Nan::New("key").ToLocalChecked(), Nan::Null());
     }
@@ -336,9 +340,13 @@ void DeliveryReportDispatcher::Flush() {
   }
 }
 
+// This only exists to circumvent the problem with not being able to execute JS
+// on any thread other than the main thread.
+
+// I still think there may be better alternatives, because there is a lot of
+// duplication here
 DeliveryReport::DeliveryReport(RdKafka::Message &message, bool include_payload) :  // NOLINT
-  m_include_payload(include_payload),
-  m_key_is_null(true) {
+  m_include_payload(include_payload) {
   if (message.err() == RdKafka::ERR_NO_ERROR) {
     is_error = false;
   } else {
@@ -351,10 +359,15 @@ DeliveryReport::DeliveryReport(RdKafka::Message &message, bool include_payload) 
   partition = message.partition();
   offset = message.offset();
 
+  // Key length.
+  key_len = message.key_len();
+
   // It is okay if this is null
-  if (message.key()) {
-    key = *message.key();
-    m_key_is_null = false;
+  if (message.key_pointer()) {
+    key = malloc(message.key_len());
+    memcpy(key, message.key_pointer(), message.key_len());
+  } else {
+    key = NULL;
   }
 
   if (message.msg_opaque()) {

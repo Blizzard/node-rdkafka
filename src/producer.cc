@@ -405,6 +405,7 @@ NAN_METHOD(Producer::NodeProduce) {
     key_buffer_length = node::Buffer::Length(key_buffer_object);
     key_buffer_data = node::Buffer::Data(key_buffer_object);
   } else {
+    // If it was a string just use the utf8 value.
     v8::Local<v8::String> val = info[3]->ToString();
     // Get string pointer for this thing
     Nan::Utf8String keyUTF8(val);

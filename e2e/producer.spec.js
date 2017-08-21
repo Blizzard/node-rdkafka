@@ -240,7 +240,7 @@ describe('Producer', function() {
         t.ok(typeof report.topic === 'string');
         t.ok(typeof report.partition === 'number');
         t.ok(typeof report.offset === 'number');
-        t.ok( report.key === 'key');
+        t.ok(report.key.toString(), 'key');
         t.equal(report.value.toString(), 'hai');
         done();
       });
@@ -263,7 +263,7 @@ describe('Producer', function() {
         t.ok(typeof report.topic === 'string');
         t.ok(typeof report.partition === 'number');
         t.ok(typeof report.offset === 'number');
-        t.ok( report.key === '', 'key should be an empty string');
+        t.equal(report.key.toString(), '', 'key should be an empty string');
         t.ok(report.value.toString() === '', 'payload should be an empty string');
         done();
       });
@@ -274,25 +274,52 @@ describe('Producer', function() {
     it('should produce a message with a null payload and null key  (https://github.com/Blizzard/node-rdkafka/issues/117)', function(done) {
       this.timeout(3000);
 
-      var tt = setInterval(function() {
-        producer.poll();
-      }, 200);
+      producer.setPollInterval(10);
 
       producer.once('delivery-report', function(err, report) {
-        clearInterval(tt);
         t.ifError(err);
         t.ok(report !== undefined);
 
         t.ok(typeof report.topic === 'string');
         t.ok(typeof report.partition === 'number');
         t.ok(typeof report.offset === 'number');
-        t.ok( report.key === null, 'key should be null');
+        t.ok(report.key === null, 'key should be null');
         t.ok(report.value === null, 'payload should be null');
         done();
       });
 
       producer.produce('test', null, null, null);
     });
+
+    it('should produce an int64 key (https://github.com/Blizzard/node-rdkafka/issues/208)', function(done) {
+
+      var v1 = 0x0000000000000084;
+      var arr = new Uint8Array(8);
+      arr[0] = 0x00;
+      arr[1] = 0x00;
+      arr[2] = 0x00;
+      arr[3] = 0x00;
+      arr[4] = 0x00;
+      arr[5] = 0x00;
+      arr[6] = 0x00;
+      arr[7] = 84;
+      var buf = Buffer.from(arr.buffer);
+
+      producer.setPollInterval(10);
+
+      producer.once('delivery-report', function(err, report) {
+        t.ifError(err);
+        t.ok(report !== undefined);
+
+        t.deepEqual(buf, report.key);
+        done();
+      });
+
+      producer.produce('test', null, null, Buffer.from(arr.buffer));
+
+      this.timeout(3000);
+    });
+
   });
 
 });

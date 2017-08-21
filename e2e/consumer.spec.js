@@ -100,6 +100,7 @@ describe('Consumer', function() {
     });
 
     it('after assign and commit, should get committed offsets', function(done) {
+      this.timeout(6000);
       consumer.assign([{topic:topic, partition:0}]);
       consumer.commitSync({topic:topic, partition:0, offset:1000});
       consumer.committed(1000, function(err, committed) {

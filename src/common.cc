@@ -371,15 +371,21 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Metadata* metadata) {
 
 namespace Message {
 
+// Overload for all use cases except delivery reports
 v8::Local<v8::Object> ToV8Object(RdKafka::Message *message) {
+  return ToV8Object(message, true);
+}
+
+v8::Local<v8::Object> ToV8Object(RdKafka::Message *message, bool include_payload) {  // NOLINT
   if (message->err() == RdKafka::ERR_NO_ERROR) {
     v8::Local<v8::Object> pack = Nan::New<v8::Object>();
 
-    void* message_payload = message->payload();
+    const void* message_payload = message->payload();
 
-    if (message_payload) {
-      // @TODO(sparente) - I think I want to, one day, change these back to
-      // the librdkafka names for their values. Next major bump obviously.
+    if (!include_payload) {
+      Nan::Set(pack, Nan::New<v8::String>("value").ToLocalChecked(),
+        Nan::Undefined());
+    } else if (message_payload) {
       void* payload = malloc(message->len());
       memcpy(payload, message_payload, message->len());
 
@@ -396,10 +402,19 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Message *message) {
     Nan::Set(pack, Nan::New<v8::String>("size").ToLocalChecked(),
       Nan::New<v8::Number>(message->len()));
 
-    if (message->key()) {
-      std::string* key = new std::string(*message->key());
+    const void* key_payload = message->key_pointer();
+
+    if (key_payload) {
+      // We want this to also be a buffer to avoid corruption
+      // https://github.com/Blizzard/node-rdkafka/issues/208
+      void* key = malloc(message->key_len());
+      memcpy(key, key_payload, message->key_len());
+
+      Nan::MaybeLocal<v8::Object> buff = Nan::NewBuffer(
+        static_cast<char*>(key), static_cast<int>(message->key_len()));
+
       Nan::Set(pack, Nan::New<v8::String>("key").ToLocalChecked(),
-        Nan::New<v8::String>(*key).ToLocalChecked());
+        buff.ToLocalChecked());
     } else {
       Nan::Set(pack, Nan::New<v8::String>("key").ToLocalChecked(),
         Nan::Null());
