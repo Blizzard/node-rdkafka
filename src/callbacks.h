@@ -87,11 +87,18 @@ class Event : public RdKafka::EventCb {
   EventDispatcher dispatcher;
 };
 
+/**
+ * Delivery report class
+ *
+ * Class exists because the callback needs to be able to give information
+ * to the v8 main thread that it can use to formulate its object.
+ */
 class DeliveryReport {
  public:
   DeliveryReport(RdKafka::Message &, bool);
   ~DeliveryReport();
 
+  // Whether we include the payload. Is the second parameter to the constructor
   bool m_include_payload;
 
   // If it is an error these will be set
@@ -104,11 +111,15 @@ class DeliveryReport {
   int32_t partition;
   int64_t offset;
 
-  bool m_key_is_null;
-  std::string key;
+  // Opaque token used. Local value
+  void* opaque;
+
+  // Key. It is a pointer to avoid corrupted values
+  // https://github.com/Blizzard/node-rdkafka/issues/208
+  void* key;
+  size_t key_len;
 
   size_t len;
-  void* opaque;
   void* payload;
 };
 

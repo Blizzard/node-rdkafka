@@ -110,6 +110,7 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Metadata*);
 namespace Message {
 
 v8::Local<v8::Object> ToV8Object(RdKafka::Message*);
+v8::Local<v8::Object> ToV8Object(RdKafka::Message*, bool);
 
 }
 
