@@ -42,19 +42,12 @@ producer.on('delivery-report', function(err, report) {
 producer.on('ready', function(arg) {
   console.log('producer ready.' + JSON.stringify(arg));
 
-  //Create a Topic object with any options our Producer
-  //should use when producing to that topic.
-  var topic = producer.Topic(topicName, {
-   // Make the Kafka broker acknowledge our message (optional)
-   'request.required.acks': 1
-  });
-
   for (var i = 0; i < maxMessages; i++) {
     var value = new Buffer('value-' +i);
     var key = "key-"+i;
     // if partition is set to -1, librdkafka will use the default partitioner
     var partition = -1;
-    producer.produce(topic, partition, value, key);
+    producer.produce(topicName, partition, value, key);
   }
 
   //need to keep polling for a while to ensure the delivery reports are received

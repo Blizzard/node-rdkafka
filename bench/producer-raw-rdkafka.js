@@ -63,14 +63,13 @@ crypto.randomBytes(4096, function(ex, buffer) {
 
   producer.connect()
     .on('ready', function() {
-      var topic = producer.Topic(topicName, {});
       getTimer();
 
       started = new Date().getTime();
 
       var sendMessage = function() {
         try {
-          var errorCode = producer.produce(topic, null, buffer, null);
+          var errorCode = producer.produce(topicName, null, buffer, null);
           verifiedComplete += 1;
         } catch (e) {
           console.error(e);

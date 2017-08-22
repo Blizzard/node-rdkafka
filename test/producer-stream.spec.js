@@ -25,11 +25,6 @@ module.exports = {
       fakeClient.isConnected = function() {
         return true;
       };
-      fakeClient.Topic = function(name) {
-        return {
-          topicName: name
-        };
-      };
       fakeClient.connect = function(opts, cb) {
         setImmediate(function() {
           this.emit('ready');
