@@ -49,7 +49,7 @@ You can run both types of tests by using `Makefile`. Doing so calls `mocha` in y
   1. `git submodule init`
   2. `git submodule update`
 * To run the unit tests, you can run `make lint` or `make test`.
-* To run the integration tests, you must have a running Kafka installation available. By default, the test tries to connect to `localhost:9092`; however, you can supply the `KAFKA_HOST` environment variable to override this default behavior.
+* To run the integration tests, you must have a running Kafka installation available. By default, the test tries to connect to `localhost:9092`; however, you can supply the `KAFKA_HOST` environment variable to override this default behavior. Run `make e2e`.
 
 # Usage
 
