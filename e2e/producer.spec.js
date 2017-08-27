@@ -176,32 +176,6 @@ describe('Producer', function() {
       }
 
     });
-
-    it('should produce a message to a Topic object', function(done) {
-      this.timeout(3000);
-
-      var tt = setInterval(function() {
-        producer.poll();
-      }, 200);
-
-      var topic = producer.Topic('test', {
-       'request.required.acks': 1
-       //'produce.offset.report': true
-      });
-
-      producer.once('delivery-report', function(err, report) {
-        clearInterval(tt);
-        t.ifError(err);
-        t.ok(report !== undefined);
-        t.ok(typeof report.topic === 'string');
-        t.ok(typeof report.partition === 'number');
-        t.ok(typeof report.offset === 'number');
-        t.equal('key', report.key);
-        done();
-      });
-
-      producer.produce(topic, null, new Buffer('value'), 'key');
-    });
   });
 
   describe('with_dr_msg_cb', function() {
