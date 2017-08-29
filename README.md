@@ -12,7 +12,7 @@ Copyright (c) 2016 Blizzard Entertainment.
 
 The `node-rdkafka` library is a high-performance NodeJS client for [Apache Kafka](http://kafka.apache.org/) that wraps the native  [librdkafka](https://github.com/edenhill/librdkafka) library.  All the complexity of balancing writes across partitions and managing (possibly ever-changing) brokers should be encapsulated in the library.
 
-__This library currently uses `librdkafka` version `0.11.0`.__
+__This library currently uses `librdkafka` version `0.9.5`.__
 
 ## Reference Docs
 

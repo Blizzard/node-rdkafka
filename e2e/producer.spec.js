@@ -176,6 +176,7 @@ describe('Producer', function() {
       }
 
     });
+
   });
 
   describe('with_dr_msg_cb', function() {
