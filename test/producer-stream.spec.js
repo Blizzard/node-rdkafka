@@ -136,7 +136,7 @@ module.exports = {
         var message;
 
         fakeClient.produce = function(topic, partition, message, key) {
-          t.deepEqual({ topicName: 'topic' }, topic);
+          t.deepEqual('topic', topic);
           t.equal(message.toString(), 'Awesome');
           t.equal(Buffer.isBuffer(message), true);
           done();
@@ -149,6 +149,7 @@ module.exports = {
           }
         });
         stream.on('error', function(err) {
+          console.log(err);
           t.fail(err);
         });
 
