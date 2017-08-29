@@ -112,6 +112,7 @@ describe('Consumer/Producer', function() {
   });
 
   it('should be able to produce, consume messages, read position: subscribe/consumeOnce', function(done) {
+    this.timeout(8000);
     crypto.randomBytes(4096, function(ex, buffer) {
       producer.setPollInterval(10);
 
