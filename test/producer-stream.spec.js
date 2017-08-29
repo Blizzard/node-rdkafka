@@ -132,30 +132,6 @@ module.exports = {
         stream.write(new Buffer('Awesome'));
       },
 
-      'can be given a topic config': function(done) {
-        var message;
-
-        fakeClient.produce = function(topic, partition, message, key) {
-          t.deepEqual('topic', topic);
-          t.equal(message.toString(), 'Awesome');
-          t.equal(Buffer.isBuffer(message), true);
-          done();
-        };
-
-        var stream = new ProducerStream(fakeClient, {
-          topic: 'topic',
-          topicOptions: {
-            'acks': true
-          }
-        });
-        stream.on('error', function(err) {
-          console.log(err);
-          t.fail(err);
-        });
-
-        stream.write(new Buffer('Awesome'));
-      },
-
       'passes a topic string if options are not provided': function(done) {
         var message;
 
