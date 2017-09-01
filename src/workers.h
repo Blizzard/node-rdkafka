@@ -12,7 +12,6 @@
 
 #include <uv.h>
 #include <nan.h>
-#include <unistd.h>
 #include <string>
 #include <vector>
 
