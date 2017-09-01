@@ -12,6 +12,13 @@
 
 #include "src/workers.h"
 
+#ifndef _WIN32
+#include <unistd.h>
+#else
+// Windows specific
+#include <time.h>
+#endif
+
 using NodeKafka::Producer;
 using NodeKafka::Connection;
 
@@ -379,14 +386,22 @@ void KafkaConsumerConsumeLoop::Execute(const ExecutionMessageBus& bus) {
         // when in consume loop mode
         // Randomise the wait time to avoid contention on different
         // slow topics
+        #ifndef _WIN32
         usleep(static_cast<int>(rand_r(&m_rand_seed) * 1000 * 1000 / RAND_MAX));
+        #else
+        _sleep(1000);
+        #endif
         break;
       case RdKafka::ERR__TIMED_OUT:
       case RdKafka::ERR__TIMED_OUT_QUEUE:
         // If it is timed out this could just mean there were no
         // new messages fetched quickly enough. This isn't really
         // an error that should kill us.
+        #ifndef _WIN32
         usleep(500*1000);
+        #else
+        _sleep(500);
+        #endif
         break;
       case RdKafka::ERR_NO_ERROR:
         bus.Send(b.data<RdKafka::Message*>());
