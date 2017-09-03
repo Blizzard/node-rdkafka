@@ -50,7 +50,7 @@ describe('Producer', function() {
 
         // Ensure it is in the correct format
         t.ok(metadata.orig_broker_name, 'Broker name is not set');
-        t.ok(metadata.orig_broker_id !== undefined, 'Broker id is not set');
+        t.notStrictEqual(metadata.orig_broker_id, undefined, 'Broker id is not set');
         t.equal(Array.isArray(metadata.brokers), true);
         t.equal(Array.isArray(metadata.topics), true);
 
@@ -68,7 +68,7 @@ describe('Producer', function() {
       producer.once('delivery-report', function(err, report) {
         clearInterval(tt);
         t.ifError(err);
-        t.ok(report !== undefined);
+        t.notStrictEqual(report, undefined);
         t.strictEqual(typeof report.topic, 'string');
         t.strictEqual(typeof report.partition, 'number');
         t.strictEqual(typeof report.offset, 'number');
@@ -89,7 +89,7 @@ describe('Producer', function() {
       producer.once('delivery-report', function(err, report) {
         clearInterval(tt);
         t.ifError(err);
-        t.ok(report !== undefined);
+        t.notStrictEqual(report, undefined);
         t.strictEqual(report.value, undefined);
         t.strictEqual(typeof report.topic, 'string');
         t.strictEqual(typeof report.partition, 'number');
@@ -111,7 +111,7 @@ describe('Producer', function() {
       producer.once('delivery-report', function(err, report) {
         clearInterval(tt);
         t.ifError(err);
-        t.ok(report !== undefined);
+        t.notStrictEqual(report, undefined);
         t.strictEqual(report.value, undefined);
         t.strictEqual(typeof report.topic, 'string');
         t.strictEqual(typeof report.partition, 'number');
@@ -133,7 +133,7 @@ describe('Producer', function() {
       producer.once('delivery-report', function(err, report) {
         clearInterval(tt);
         t.ifError(err);
-        t.ok(report !== undefined);
+        t.notStrictEqual(report, undefined);
         t.strictEqual(typeof report.topic, 'string');
         t.strictEqual(typeof report.partition, 'number');
         t.strictEqual(typeof report.offset, 'number');
@@ -159,7 +159,7 @@ describe('Producer', function() {
       producer
         .on('delivery-report', function(err, report) {
           t.ifError(err);
-          t.ok(report !== undefined);
+          t.notStrictEqual(report, undefined);
           t.strictEqual(typeof report.topic, 'string');
           t.strictEqual(typeof report.partition, 'number');
           t.strictEqual(typeof report.offset, 'number');
@@ -211,7 +211,7 @@ describe('Producer', function() {
       producer.once('delivery-report', function(err, report) {
         clearInterval(tt);
         t.ifError(err);
-        t.ok(report !== undefined);
+        t.notStrictEqual(report, undefined);
         t.strictEqual(typeof report.topic, 'string');
         t.strictEqual(typeof report.partition, 'number');
         t.strictEqual(typeof report.offset, 'number');
@@ -233,7 +233,7 @@ describe('Producer', function() {
       producer.once('delivery-report', function(err, report) {
         clearInterval(tt);
         t.ifError(err);
-        t.ok(report !== undefined);
+        t.notStrictEqual(report, undefined);
 
         t.strictEqual(typeof report.topic, 'string');
         t.strictEqual(typeof report.partition, 'number');
@@ -253,7 +253,7 @@ describe('Producer', function() {
 
       producer.once('delivery-report', function(err, report) {
         t.ifError(err);
-        t.ok(report !== undefined);
+        t.notStrictEqual(report, undefined);
 
         t.strictEqual(typeof report.topic, 'string');
         t.strictEqual(typeof report.partition, 'number');
@@ -284,7 +284,7 @@ describe('Producer', function() {
 
       producer.once('delivery-report', function(err, report) {
         t.ifError(err);
-        t.ok(report !== undefined);
+        t.notStrictEqual(report, undefined);
 
         t.deepEqual(buf, report.key);
         done();
