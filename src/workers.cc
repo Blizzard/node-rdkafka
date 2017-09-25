@@ -448,22 +448,27 @@ KafkaConsumerConsumeNum::KafkaConsumerConsumeNum(Nan::Callback *callback,
 KafkaConsumerConsumeNum::~KafkaConsumerConsumeNum() {}
 
 void KafkaConsumerConsumeNum::Execute() {
-  const int max = static_cast<int>(m_num_messages);
-  for (int i = 0; i < max; i++) {
+  unsigned long max = static_cast<long>(m_num_messages);
+  while (m_messages.size() < max) {
     // Get a message
     Baton b = m_consumer->Consume(m_timeout_ms);
-    if (b.err() != RdKafka::ERR_NO_ERROR) {
-      if (b.err() != RdKafka::ERR__TIMED_OUT &&
-          b.err() != RdKafka::ERR__PARTITION_EOF &&
-          b.err() != RdKafka::ERR__TIMED_OUT_QUEUE) {
-        if (i == 0) {
-          SetErrorBaton(b);
-        }
+    if (b.err() == RdKafka::ERR__PARTITION_EOF) {
+      // If we reached the end of the partition, retry
+      continue;
+    } else if (
+      b.err() == RdKafka::ERR__TIMED_OUT ||
+      b.err() == RdKafka::ERR__TIMED_OUT_QUEUE) {
+      // Break of the loop if we timed out
+      break;
+    } else if (b.err() == RdKafka::ERR_NO_ERROR) {
+      m_messages.push_back(b.data<RdKafka::Message*>());
+    } else {
+      // Set the error for any other errors and break
+      if (m_messages.size() == 0) {
+        SetErrorBaton(b);
       }
       break;
     }
-
-    m_messages.push_back(b.data<RdKafka::Message*>());
   }
 }
 
