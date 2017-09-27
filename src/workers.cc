@@ -448,7 +448,7 @@ KafkaConsumerConsumeNum::KafkaConsumerConsumeNum(Nan::Callback *callback,
 KafkaConsumerConsumeNum::~KafkaConsumerConsumeNum() {}
 
 void KafkaConsumerConsumeNum::Execute() {
-  unsigned long max = static_cast<long>(m_num_messages);
+  std::size_t max = static_cast<std::size_t>(m_num_messages);
   while (m_messages.size() < max) {
     // Get a message
     Baton b = m_consumer->Consume(m_timeout_ms);
