@@ -433,9 +433,10 @@ The following table lists events for this API.
 
 |Event|Description|
 |-------|----------|
+|`data` | | When using the Standard API consumed messages are emitted in this event. |
 |`error` | Error reporting is handled through this pipeline. <br><br>Most errors will have a `code`, `message`, and `origin` value. The `origin` value will be **local** or **remote** to determine where the error happened. |
 |`disconnected` | The `disconnected` event is emitted when the broker disconnects. <br><br>This event is only emitted when `.disconnect` is called. The wrapper will always try to reconnect otherwise. |
-|`ready` | The `ready` event is emitted when the `Producer` is ready to send messages. |
+|`ready` | The `ready` event is emitted when the `Consumer` is ready to read messages. |
 |`event` | The `event` event is emitted when `librdkafka` reports an event (if you opted in via the `event_cb` option).|
 |`event.log` | The `event.log` event is emitted when logging events occur (if you opted in for logging  via the `event_cb` option).<br><br> You will need to set a value for `debug` if you want information to send. |
 |`event.stats` | The `event.stats` event is emitted when `librdkafka` reports stats (if you opted in). |
