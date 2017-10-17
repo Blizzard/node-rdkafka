@@ -170,6 +170,8 @@ stream.on('error', function (err) {
 })
 ```
 
+If you do not want your code to crash when an error happens, ensure you have an `error` listener on the stream. Most errors are not necessarily fatal, but the ones that are will immediately destroy the stream. If you use `autoClose`, the stream will close itself at the first sign of a problem.
+
 #### Standard API
 
 The Standard API is more performant, particularly when handling high volumes of messages.
@@ -222,8 +224,8 @@ To see the configuration options available to you, see the [Configuration](#conf
 
 |Method|Description|
 |-------|----------|
-|`producer.connect()`| Connects to the broker. <br><br> The `connect()` method emits the `ready` event when it connects successfully or an `error` when it does not.|
-|`producer.disconnect()`| Disconnects from the broker. <br><br>The `disconnect()` method emits the `disconnected` event when it has disconnected or `error` if something went wrong. |
+|`producer.connect()`| Connects to the broker. <br><br> The `connect()` method emits the `ready` event when it connects successfully. If it does not, the error will be passed through the callback. |
+|`producer.disconnect()`| Disconnects from the broker. <br><br>The `disconnect()` method emits the `disconnected` event when it has disconnected. If it does not, the error will be passed through the callback. |
 |`producer.poll()` | Polls the producer for delivery reports or other events to be transmitted via the emitter. <br><br>In order to get the events in `librdkafka`'s queue to emit, you must call this regularly. |
 |`producer.setPollInterval(interval)` | Polls the producer on this interval, handling disconnections and reconnection. Set it to 0 to turn it off. |
 |`producer.produce(topic, partition, msg, key, timestamp, opaque)`| Sends a message. <br><br>The `produce()` method throws when produce would return an error. Ordinarily, this is just if the queue is full. |
@@ -259,7 +261,6 @@ The following table describes types of events.
 
 |Event|Description|
 |-------|----------|
-| `error` | Error reporting is handled through this pipeline. <br><br>Most errors will have a value for `code`, `message`, and `origin`. `origin` will be `local` or `kafka` to determine where the error happened. |
 | `disconnected` | The `disconnected` event is emitted when the broker has disconnected. <br><br>This event is emitted only when `.disconnect` is called. The wrapper will always try to reconnect otherwise. |
 | `ready` | The `ready` event is emitted when the `Producer` is ready to send messages. |
 | `event` | The `event` event is emitted when `librdkafka` reports an event (if you opted in via the `event_cb` option). |
@@ -419,8 +420,8 @@ The following table lists important methods for this API.
 
 |Method|Description|
 |-------|----------|
-|`consumer.connect()` | Connects to the broker. <br><br>The `connect()` emits the event `ready` when it has successfully connected, or an `error` when it has not. |
-|`consumer.disconnect()` | Disconnects from the broker. <br><br>The `disconnect()` method emits `disconnected` when it has disconnected or `error` if something went wrong.
+|`consumer.connect()` | Connects to the broker. <br><br>The `connect()` emits the event `ready` when it has successfully connected. If it does not, the error will be passed through the callback. |
+|`consumer.disconnect()` | Disconnects from the broker. <br><br>The `disconnect()` method emits `disconnected` when it has disconnected. If it does not, the error will be passed through the callback. |
 |`consumer.subscribe(topics)` | Subscribes to an array of topics. |
 |`consumer.unsubscribe()` | Unsubscribes from the currently subscribed topics. <br><br>You cannot subscribe to different topics without calling the `unsubscribe()` method first. |
 |`consumer.consume(cb)` | Gets messages from the existing subscription as quickly as possible. This method keeps a background thread running to do the work. If `cb` is specified, invokes `cb(err, message)`. |
@@ -434,7 +435,6 @@ The following table lists events for this API.
 |Event|Description|
 |-------|----------|
 |`data` | | When using the Standard API consumed messages are emitted in this event. |
-|`error` | Error reporting is handled through this pipeline. <br><br>Most errors will have a `code`, `message`, and `origin` value. The `origin` value will be **local** or **remote** to determine where the error happened. |
 |`disconnected` | The `disconnected` event is emitted when the broker disconnects. <br><br>This event is only emitted when `.disconnect` is called. The wrapper will always try to reconnect otherwise. |
 |`ready` | The `ready` event is emitted when the `Consumer` is ready to read messages. |
 |`event` | The `event` event is emitted when `librdkafka` reports an event (if you opted in via the `event_cb` option).|
