@@ -231,6 +231,32 @@ v8::Local<v8::Array> ToV8Array(
 }
 
 /**
+ * @brief v8 Array of topic partitions to RdKafka::TopicPartition vector
+ *
+ * @see v8ArrayToTopicPartitionVector
+ *
+ * @note You must delete all the pointers inside here when you are done!!
+ */
+std::vector<RdKafka::TopicPartition*> FromV8Array(
+  const v8::Local<v8::Array> & topic_partition_list) {
+  // NOTE: ARRAY OF POINTERS! DELETE THEM WHEN YOU ARE FINISHED
+  std::vector<RdKafka::TopicPartition*> array;
+
+  for (size_t topic_partition_i = 0;
+    topic_partition_i < topic_partition_list->Length(); topic_partition_i++) {
+    v8::Local<v8::Value> topic_partition_value =
+      topic_partition_list->Get(topic_partition_i);
+
+    if (topic_partition_value->IsObject()) {
+      array.push_back(FromV8Object(
+        Nan::To<v8::Object>(topic_partition_value).ToLocalChecked()));
+    }
+  }
+
+  return array;
+}
+
+/**
  * @brief v8::Object to RdKafka::TopicPartition
  *
  */

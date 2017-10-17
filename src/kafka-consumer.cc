@@ -275,14 +275,10 @@ Baton KafkaConsumer::Seek(const RdKafka::TopicPartition &partition, int timeout_
   }
 
   // This isn't supported yet...
-  #if RD_KAFKA_VERSION > 0x000905ff
-    RdKafka::KafkaConsumer* consumer =
-      dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
+  RdKafka::KafkaConsumer* consumer =
+    dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
 
-    RdKafka::ErrorCode err = consumer->seek(partition, timeout_ms);
-  #else
-    RdKafka::ErrorCode err = RdKafka::ERR_UNKNOWN;
-  #endif
+  RdKafka::ErrorCode err = consumer->seek(partition, timeout_ms);
 
   return Baton(err);
 }
@@ -359,6 +355,42 @@ Baton KafkaConsumer::Unsubscribe() {
   }
 
   return Baton(RdKafka::ERR_NO_ERROR);
+}
+
+Baton KafkaConsumer::Pause(std::vector<RdKafka::TopicPartition*> & toppars) {
+  if (IsConnected() && IsSubscribed()) {
+    RdKafka::KafkaConsumer* consumer =
+      dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
+    RdKafka::ErrorCode err = consumer->pause(toppars);
+
+    return Baton(err);
+  }
+
+  return Baton(RdKafka::ERR__STATE);
+}
+
+Baton KafkaConsumer::Resume(std::vector<RdKafka::TopicPartition*> & toppars) {
+  if (IsConnected() && IsSubscribed()) {
+    RdKafka::KafkaConsumer* consumer =
+      dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
+    RdKafka::ErrorCode err = consumer->resume(toppars);
+
+    return Baton(err);
+  }
+
+  return Baton(RdKafka::ERR__STATE);
+}
+
+Baton KafkaConsumer::OffsetsStore(std::vector<RdKafka::TopicPartition*> & toppars) {  // NOLINT
+  if (IsConnected() && IsSubscribed()) {
+    RdKafka::KafkaConsumer* consumer =
+      dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
+    RdKafka::ErrorCode err = consumer->offsets_store(toppars);
+
+    return Baton(err);
+  }
+
+  return Baton(RdKafka::ERR__STATE);
 }
 
 Baton KafkaConsumer::Subscribe(std::vector<std::string> topics) {
@@ -468,14 +500,18 @@ void KafkaConsumer::Init(v8::Local<v8::Object> exports) {
   /*
    * @brief Methods exposed to do with message retrieval
    */
-
-
   Nan::SetPrototypeMethod(tpl, "subscription", NodeSubscription);
   Nan::SetPrototypeMethod(tpl, "subscribe", NodeSubscribe);
   Nan::SetPrototypeMethod(tpl, "unsubscribe", NodeUnsubscribe);
   Nan::SetPrototypeMethod(tpl, "consumeLoop", NodeConsumeLoop);
   Nan::SetPrototypeMethod(tpl, "consume", NodeConsume);
   Nan::SetPrototypeMethod(tpl, "seek", NodeSeek);
+
+  /**
+   * @brief Pausing and resuming
+   */
+  Nan::SetPrototypeMethod(tpl, "pause", NodePause);
+  Nan::SetPrototypeMethod(tpl, "resume", NodeResume);
 
   /*
    * @brief Methods to do with partition assignment / rebalancing
@@ -489,6 +525,7 @@ void KafkaConsumer::Init(v8::Local<v8::Object> exports) {
 
   Nan::SetPrototypeMethod(tpl, "commit", NodeCommit);
   Nan::SetPrototypeMethod(tpl, "commitSync", NodeCommitSync);
+  Nan::SetPrototypeMethod(tpl, "offsetsStore", NodeOffsetsStore);
 
   constructor.Reset(tpl->GetFunction());
   exports->Set(Nan::New("KafkaConsumer").ToLocalChecked(), tpl->GetFunction());
@@ -871,6 +908,107 @@ NAN_METHOD(KafkaConsumer::NodeSeek) {
     new Workers::KafkaConsumerSeek(callback, consumer, toppar, timeout_ms));
 
   info.GetReturnValue().Set(Nan::Null());
+}
+
+NAN_METHOD(KafkaConsumer::NodeOffsetsStore) {
+  Nan::HandleScope scope;
+
+  // If number of parameters is less than 3 (need topic partition, timeout,
+  // and callback), we can't call this thing
+  if (info.Length() < 1) {
+    return Nan::ThrowError("Must provide a list of topic partitions");
+  }
+
+  if (!info[0]->IsArray()) {
+    return Nan::ThrowError("Topic partition must be an array of objects");
+  }
+
+  KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
+
+  std::vector<RdKafka::TopicPartition *> toppars =
+    Conversion::TopicPartition::FromV8Array(info[0].As<v8::Array>());
+
+  Baton b = consumer->OffsetsStore(toppars);
+
+  // Now iterate through and delete these toppars
+  for (std::vector<RdKafka::TopicPartition *>::const_iterator it = toppars.begin();  // NOLINT
+       it != toppars.end(); it++) {
+    RdKafka::TopicPartition* toppar = *it;
+    delete toppar;
+  }
+
+  int error_code = static_cast<int>(b.err());
+  info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
+}
+
+NAN_METHOD(KafkaConsumer::NodePause) {
+  Nan::HandleScope scope;
+
+  // If number of parameters is less than 3 (need topic partition, timeout,
+  // and callback), we can't call this thing
+  if (info.Length() < 1) {
+    return Nan::ThrowError("Must provide a list of topic partitions");
+  }
+
+  if (!info[0]->IsArray()) {
+    return Nan::ThrowError("Topic partition must be an array of objects");
+  }
+
+  KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
+
+  std::vector<RdKafka::TopicPartition *> toppars =
+    Conversion::TopicPartition::FromV8Array(info[0].As<v8::Array>());
+
+  Baton b = consumer->Pause(toppars);
+
+  // Now iterate through and delete these toppars
+  for (std::vector<RdKafka::TopicPartition *>::const_iterator it = toppars.begin();  // NOLINT
+       it != toppars.end(); it++) {
+    RdKafka::TopicPartition* toppar = *it;
+    if (toppar->err() != RdKafka::ERR_NO_ERROR) {
+      // Need to somehow transmit this information.
+      // @TODO(webmakersteve)
+    }
+    delete toppar;
+  }
+
+  int error_code = static_cast<int>(b.err());
+  info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
+}
+
+NAN_METHOD(KafkaConsumer::NodeResume) {
+  Nan::HandleScope scope;
+
+  // If number of parameters is less than 3 (need topic partition, timeout,
+  // and callback), we can't call this thing
+  if (info.Length() < 1) {
+    return Nan::ThrowError("Must provide a list of topic partitions");  // NOLINT
+  }
+
+  if (!info[0]->IsArray()) {
+    return Nan::ThrowError("Topic partition must be an array of objects");
+  }
+
+  KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
+
+  std::vector<RdKafka::TopicPartition *> toppars =
+    Conversion::TopicPartition::FromV8Array(info[0].As<v8::Array>());
+
+  Baton b = consumer->Resume(toppars);
+
+  // Now iterate through and delete these toppars
+  for (std::vector<RdKafka::TopicPartition *>::const_iterator it = toppars.begin();  // NOLINT
+       it != toppars.end(); it++) {
+    RdKafka::TopicPartition* toppar = *it;
+    if (toppar->err() != RdKafka::ERR_NO_ERROR) {
+      // Need to somehow transmit this information.
+      // @TODO(webmakersteve)
+    }
+    delete toppar;
+  }
+
+  int error_code = static_cast<int>(b.err());
+  info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
 }
 
 NAN_METHOD(KafkaConsumer::NodeConsumeLoop) {

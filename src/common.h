@@ -98,6 +98,7 @@ namespace TopicPartition {
 
 v8::Local<v8::Array> ToV8Array(std::vector<RdKafka::TopicPartition*> &);
 RdKafka::TopicPartition * FromV8Object(v8::Local<v8::Object>);
+std::vector<RdKafka::TopicPartition *> FromV8Array(v8::Local<v8::Array>);
 
 }  // namespace TopicPartition
 
