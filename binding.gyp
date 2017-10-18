@@ -1,8 +1,8 @@
 {
   "variables": {
       # may be redefined in command line on configuration stage
-      # "build_librdkafka%": "<!(echo ${BUILD_LIBRDKAFKA:-1})"
-      "build_librdkafka%": "1"
+      # "BUILD_LIBRDKAFKA%": "<!(echo ${BUILD_LIBRDKAFKA:-1})"
+      "BUILD_LIBRDKAFKA%": "<!(node ./util/get-env.js BUILD_LIBRDKAFKA 1)"
   },
   "targets": [
     {
@@ -51,7 +51,7 @@
           },
           {
             'conditions': [
-              [ "<(build_librdkafka)==1",
+              [ "<(BUILD_LIBRDKAFKA)==1",
                 {
                   "dependencies": [
                       "<(module_root_dir)/deps/librdkafka.gyp:librdkafkacpp"
