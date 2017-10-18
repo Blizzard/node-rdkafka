@@ -1,14 +1,18 @@
 {
   'variables': {
-    # "with_sasl%": "<!(echo ${WITH_SASL:-1})",
-    # "with_lz4%": "<!(echo ${WITH_SASL:-1})",
-    "with_sasl%": "0",
-    "with_lz4%": "0"
+    "ENABLE_SSL%": "<!(node ../util/librdkafka-config-checker.js ENABLE_SSL)",
+    "WITH_SASL_CYRUS%": "<!(node ../util/librdkafka-config-checker.js WITH_SASL_CYRUS)",
+    "WITH_SASL_SCRAM%": "<!(node ../util/librdkafka-config-checker.js WITH_SASL_SCRAM)",
+    "WITH_SNAPPY%": "<!(node ../util/librdkafka-config-checker.js WITH_SNAPPY)",
+    "WITH_ZLIB%": "<!(node ../util/librdkafka-config-checker.js WITH_ZLIB)",
+    "WITH_LZ4_EXT%": "<!(node ../util/librdkafka-config-checker.js WITH_LZ4_EXT)",
+    "WITH_PLUGINS%": "<!(node ../util/librdkafka-config-checker.js WITH_PLUGINS)",
+    "WITH_LIBDL%": "<!(node ../util/librdkafka-config-checker.js WITH_LIBDL)"
   },
   'targets': [
     {
       "target_name": "librdkafkacpp",
-      'conditions': [
+      "conditions": [
         [
           'OS=="win"',
           {
@@ -70,11 +74,20 @@
               "librdkafka"
             ],
             'sources': [
-               '<!@(find librdkafka/src-cpp -name *.cpp)'
+              'librdkafka/src-cpp/RdKafka.cpp',
+              'librdkafka/src-cpp/ConfImpl.cpp',
+              'librdkafka/src-cpp/HandleImpl.cpp',
+		          'librdkafka/src-cpp/ConsumerImpl.cpp',
+              'librdkafka/src-cpp/ProducerImpl.cpp',
+              'librdkafka/src-cpp/KafkaConsumerImpl.cpp',
+		          'librdkafka/src-cpp/TopicImpl.cpp',
+              'librdkafka/src-cpp/TopicPartitionImpl.cpp',
+              'librdkafka/src-cpp/MessageImpl.cpp',
+		          'librdkafka/src-cpp/QueueImpl.cpp',
+              'librdkafka/src-cpp/MetadataImpl.cpp'
             ],
-            "conditions": [
-              [
-                'OS=="linux"',
+            'conditions': [
+              ['OS=="linux"',
                 {
                   'cflags_cc!': [
                     '-fno-rtti'
@@ -116,136 +129,180 @@
           'OS!="win"',
           {
             "type": "static_library",
-            'defines': [
-               'HAVE_CONFIG_H'
-            ],
             "include_dirs": [
               "librdkafka/src"
             ],
             'cflags': [
               '-Wunused-function',
               '-Wformat',
-              '-Wimplicit-function-declaration'
+              '-Wimplicit-function-declaration',
+              '-Wimplicit-fallthrough=0',
+              '-Wno-unused-variable',
+              '-Wformat-truncation'
             ],
             "conditions": [
-              [
-                'OS=="linux"',
+              [ '<(ENABLE_SSL)==1',
                 {
-                  'cflags!': [
-                  ],
-                  'cflags' : [
-                    '-Wno-type-limits',
-                    '-Wno-unused-function',
-                    '-Wno-maybe-uninitialized',
-                    '-Wno-sign-compare',
-                    '-Wno-missing-field-initializers',
-                    '-Wno-empty-body',
-                    '-Wno-old-style-declaration',
-                  ],
-                  "dependencies": [
-                    "librdkafka_config"
-                  ]
-                }
-              ],
-              [
-                'OS=="mac"',
-                {
-                  'xcode_settings': {
-                    'OTHER_CFLAGS' : [
-                      '-Wno-sign-compare',
-                      '-Wno-missing-field-initializers',
-                      '-ObjC',
-                      '-Wno-implicit-function-declaration',
-                      '-Wno-unused-function',
-                      '-Wno-format'
-                    ],
-                    'OTHER_LDFLAGS': [],
-                    'MACOSX_DEPLOYMENT_TARGET': '10.11',
-                    'libraries' : ['-lz']
+                  'link_settings': {
+                    'libraries' : ['-lssl'],
                   },
-                  "dependencies": [
-                      "librdkafka_config"
-                  ]
+                  'xcode_settings': {
+                    'libraries' : ['-lssl']
+                  }
                 }
               ],
-              [ '<(with_lz4)==1',
+              [ '<(WITH_LZ4_EXT)==1',
                 {
-                  'libraries' : ['-llz4'],
-                  'conditions': [
-                    [ 'OS=="mac"',
-                      {
-                        'xcode_settings': {
-                          'libraries' : ['-llz4']
-                        }
-                      }
-                    ],
+                  'link_settings': {
+                    'libraries' : ['-llz4'],
+                  },
+                  'xcode_settings': {
+                    'libraries' : ['-llz4']
+                  },
+                  'sources': [
+                    'librdkafka/src/lz4.c',
+                    'librdkafka/src/lz4frame.c',
+                    'librdkafka/src/lz4hc.c'
                   ]
                 }
               ],
-              [ '<(with_sasl)==1',
+              [ '<(WITH_SASL_CYRUS)==1',
+                {
+                  'link_settings': {
+                    'libraries' : ['-lsasl2']
+                  },
+                  'xcode_settings': {
+                    'libraries' : ['-lsasl2']
+                  },
+                  'sources': [
+                    'librdkafka/src/rdkafka_sasl_cyrus.c'
+                  ]
+                }
+              ],
+              [ '<(WITH_SASL_SCRAM)==1',
                 {
                   'sources': [
-                    '<!@(find librdkafka/src -name rdkafka_sasl*.c ! -name rdkafka_sasl_win32*.c )'
-                  ],
-                  'libraries' : ['-lsasl2'],
-                  'conditions': [
-                    [ 'OS=="mac"',
-                      {
-                        'xcode_settings': {
-                          'libraries' : ['-lsasl2']
-                        }
-                      }
-                    ],
+                    'librdkafka/src/rdkafka_sasl_scram.c'
                   ]
                 }
-              ]
+              ],
+              [ '<(WITH_SNAPPY)==1',
+                {
+                  'sources': [
+                    'librdkafka/src/snappy.c'
+                  ]
+                }
+              ],
+              ['<(WITH_ZLIB)==1',
+                {
+                  'sources': [
+                    'librdkafka/src/rdgz.c'
+                  ],
+                  'link_settings': {
+                    'libraries' : ['-lz']
+                  },
+                  'xcode_settings': {
+                    'libraries' : ['-lz']
+                  }
+                }
+              ],
+              ['<(WITH_LIBDL)==1',
+                {
+                  'sources': [
+                    'librdkafka/src/rddl.c'
+                  ],
+                  'link_settings': {
+                    'libraries' : ['-ldl'],
+                  },
+                  'xcode_settings': {
+                    'libraries' : ['-ldl']
+                  }
+                }
+              ],
+              ['<(WITH_PLUGINS)==1',
+                {
+                  'sources': [
+                    'librdkafka/src/rdkafka_plugin.c'
+                  ]
+                }
+              ],
             ],
+            'cflags!': [
+            ],
+            'cflags' : [
+              '-Wno-type-limits',
+              '-Wno-unused-function',
+              '-Wno-maybe-uninitialized',
+              '-Wno-sign-compare',
+              '-Wno-missing-field-initializers',
+              '-Wno-empty-body',
+              '-Wno-old-style-declaration',
+            ],
+            'link_settings': {
+              'libraries' : ['-lpthread', '-lcrypto'],
+            },
+            'xcode_settings': {
+              'OTHER_CFLAGS' : [
+                '-Wno-sign-compare',
+                '-Wno-missing-field-initializers',
+                '-ObjC',
+                '-Wno-implicit-function-declaration',
+                '-Wno-unused-function',
+                '-Wno-format'
+              ],
+              'OTHER_LDFLAGS': [],
+              'MACOSX_DEPLOYMENT_TARGET': '10.11',
+              'libraries' : ['-lpthread', '-lcrypto']
+            },
             'sources': [
-               '<!@(find librdkafka/src -name *.c ! -name rdkafka_sasl* )'
+              'librdkafka/src/rdkafka.c',
+              'librdkafka/src/rdkafka_broker.c',
+              'librdkafka/src/rdkafka_msg.c',
+              'librdkafka/src/rdkafka_topic.c',
+              'librdkafka/src/rdkafka_conf.c',
+              'librdkafka/src/rdkafka_timer.c',
+              'librdkafka/src/rdkafka_offset.c',
+     	        'librdkafka/src/rdkafka_transport.c',
+              'librdkafka/src/rdkafka_buf.c',
+              'librdkafka/src/rdkafka_queue.c',
+              'librdkafka/src/rdkafka_op.c',
+              'librdkafka/src/rdkafka_request.c',
+              'librdkafka/src/rdkafka_cgrp.c',
+              'librdkafka/src/rdkafka_pattern.c',
+              'librdkafka/src/rdkafka_partition.c',
+              'librdkafka/src/rdkafka_subscription.c',
+              'librdkafka/src/rdkafka_assignor.c',
+              'librdkafka/src/rdkafka_range_assignor.c',
+              'librdkafka/src/rdkafka_roundrobin_assignor.c',
+              'librdkafka/src/rdkafka_feature.c',
+              'librdkafka/src/rdcrc32.c',
+              'librdkafka/src/crc32c.c',
+              'librdkafka/src/rdaddr.c',
+              'librdkafka/src/rdrand.c',
+              'librdkafka/src/rdlist.c',
+              'librdkafka/src/tinycthread.c',
+              'librdkafka/src/rdlog.c',
+              'librdkafka/src/rdstring.c',
+              'librdkafka/src/rdkafka_event.c',
+              'librdkafka/src/rdkafka_metadata.c',
+              'librdkafka/src/rdregex.c',
+              'librdkafka/src/rdports.c',
+              'librdkafka/src/rdkafka_metadata_cache.c',
+              'librdkafka/src/rdavl.c',
+              'librdkafka/src/rdkafka_sasl.c',
+              'librdkafka/src/rdkafka_sasl_plain.c',
+              'librdkafka/src/rdkafka_interceptor.c',
+              'librdkafka/src/rdkafka_msgset_writer.c',
+              'librdkafka/src/rdkafka_msgset_reader.c',
+              'librdkafka/src/rdvarint.c',
+              'librdkafka/src/rdbuf.c',
+              'librdkafka/src/rdunittest.c',
+
+              # SRC Y
+              'librdkafka/src/rdkafka_lz4.c',
+              'librdkafka/src/xxhash.c',
             ],
             'cflags!': [ '-fno-rtti' ],
-          }
-        ]
-      ]
-    },
-    {
-      "target_name": "librdkafka_config",
-      "type": "none",
-      'conditions': [
-        [
-          'OS!="win"',
-          {
-            "actions": [
-              {
-                'action_name': 'configure_librdkafka',
-                'message': 'configuring librdkafka...',
-                'inputs': [
-                  'librdkafka/configure',
-                ],
-                'outputs': [
-                  'librdkafka/config.h',
-                ],
-                "conditions": [
-                  [ 'OS!="win"',
-                    {
-                      "conditions": [
-                        [ "<(with_sasl)==1",
-                          {
-                            'action': ['eval', 'cd librdkafka && chmod a+x ./configure && ./configure']
-                          },
-                          {
-                            'action': ['eval', 'cd librdkafka && chmod a+x ./configure && ./configure --disable-sasl']
-                          }
-                        ]
-                      ]
-                    },
-                    {
-                      'action': ['echo']
-                    }
-                  ]
-                ]
-              }
-            ]
           }
         ]
       ]
