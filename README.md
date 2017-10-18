@@ -12,7 +12,7 @@ Copyright (c) 2016 Blizzard Entertainment.
 
 The `node-rdkafka` library is a high-performance NodeJS client for [Apache Kafka](http://kafka.apache.org/) that wraps the native  [librdkafka](https://github.com/edenhill/librdkafka) library.  All the complexity of balancing writes across partitions and managing (possibly ever-changing) brokers should be encapsulated in the library.
 
-__This library currently uses `librdkafka` version `0.9.5`.__
+__This library currently uses `librdkafka` version `0.11.1`.__
 
 ## Reference Docs
 
@@ -30,12 +30,36 @@ Play nice; Play fair.
 
 * Apache Kafka >=0.9
 * Node.js >=4
-* Linux/Mac (Sorry Windows :()
+* Linux/Mac
+* Windows?! See below
 
 __NOTE:__ From the `librdkafka` docs
 
 > WARNING: Due to a bug in Apache Kafka 0.9.0.x, the ApiVersionRequest (as sent by the client when connecting to the broker) will be silently ignored by the broker causing the request to time out after 10 seconds. This causes client-broker connections to stall for 10 seconds during connection-setup before librdkafka falls back on the broker.version.fallback protocol features. The workaround is to explicitly configure api.version.request to false on clients communicating with &lt=0.9.0.x brokers.
 
+### Windows
+
+Installing `node-rdkafka` on Windows is now possible thanks to [#248](https://github.com/Blizzard/node-rdkafka/pull/248). However, it does require some special instructions.
+
+You can read the [Librdkafka Windows Instructions](https://github.com/edenhill/librdkafka/blob/master/README.win32) here. As it says in that document, you must be using Microsoft Visual Studio 2013 to compile `librdkafka`. This is because a version of openssl that is used requires this version of Visual Studio.
+
+Additionally, you will need to open Visual Studio and ensure that nuget package restore is enabled. If you do not you may get this error:
+
+> This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them
+
+Microsoft has instructions [here](https://docs.microsoft.com/en-us/nuget/consume-packages/package-restore#enabling-and-disabling-package-restore).
+
+If you have multiple versions of Visual Studio on your machine you may need to ensure that the correct MSBuild is called by node-gyp. For whatever reason, gyp just uses the MSBuild in your path if there is one, so you will need to ensure it resolves to the right place. The `bin` directory for MSBuild will usually be similar to `C:/Program Files (x86)/MSBuild/12.0/Bin/` so ensure it comes late in your path.
+
+Lastly, you may need to set the MS build tools gyp uses to the correct version.
+
+```sh
+node-gyp configure --msvs_version=2013
+```
+
+After that it should compile!
+
+**Note:** I _still_ do not recommend using `node-rdkafka` in production on Windows. This feature was in high demand and is provided to help develop, but we do not test against Windows, and windows support may lag behind Linux/Mac support because those platforms are the ones used to develop this library. Contributors are welcome if any Windows issues are found :)
 
 ## Tests
 
@@ -67,7 +91,7 @@ var Kafka = require('node-rdkafka');
 
 ## Configuration
 
-You can pass many configuration options to `librdkafka`.  A full list can be found in `librdkafka`'s [Configuration.md](https://github.com/edenhill/librdkafka/blob/0.9.5.x/CONFIGURATION.md)
+You can pass many configuration options to `librdkafka`.  A full list can be found in `librdkafka`'s [Configuration.md](https://github.com/edenhill/librdkafka/blob/0.11.1.x/CONFIGURATION.md)
 
 Configuration keys that have the suffix `_cb` are designated as callbacks. Some
 of these keys are informational and you can choose to opt-in (for example, `dr_cb`). Others are callbacks designed to
@@ -80,13 +104,6 @@ The library currently supports the following callbacks:
 * `partitioner_cb`
 * `dr_cb` or `dr_msg_cb`
 * `event_cb`
-
-### SASL Support
-
-`librdkafka` supports using SASL for authentication and `node-rdkafka` has it turned on by default. If you would like
-disable `sasl` support, export `WITH_SASL=0` before you run `npm install`. (You can also specify it when using `node-gyp`, `node-gyp --WITH_SASL=0 rebuild`)
-
-This means you are required to have `libsasl2` on the machine before you build it.
 
 ### Librdkafka Methods
 
@@ -107,7 +124,7 @@ You can also get the version of `librdkafka`
 const kafka = require('node-rdkafka');
 console.log(kafka.librdkafkaVersion);
 
-// #=> 0.9.5
+// #=> 0.11.1
 ```
 
 ## Sending Messages
@@ -120,7 +137,7 @@ var producer = new Kafka.Producer({
 });
 ```
 
-A `Producer` requires only `metadata.broker.list` (the Kafka brokers) to be created.  The values in this list are separated by commas.  For other configuration options, see the [Configuration.md](https://github.com/edenhill/librdkafka/blob/0.9.4.x/CONFIGURATION.md) file described previously.
+A `Producer` requires only `metadata.broker.list` (the Kafka brokers) to be created.  The values in this list are separated by commas.  For other configuration options, see the [Configuration.md](https://github.com/edenhill/librdkafka/blob/0.11.1.x/CONFIGURATION.md) file described previously.
 
 The following example illustrates a list with several `librdkafka` options set.
 
