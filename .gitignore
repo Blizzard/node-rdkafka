@@ -7,5 +7,6 @@ docs
 
 deps/*
 !deps/*.gyp
+!deps/win.cc
 
 .DS_Store
