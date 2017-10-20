@@ -4,16 +4,13 @@ sudo: required
 node_js:
 - '4'
 - '6'
-# env:
-# - WITH_SASL=0
-# - WITH_SASL=1
 cache:
   directories:
   - node_modules
 services:
 - docker
 before_install:
-- docker-compose up -d
+- ./run_docker.sh
 script:
 - make lint
 - make test
