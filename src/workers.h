@@ -311,7 +311,7 @@ class KafkaConsumerSeek : public ErrorAwareWorker {
   void HandleErrorCallback();
  private:
   NodeKafka::KafkaConsumer * m_consumer;
-  const RdKafka::TopicPartition * m_partition;
+  const RdKafka::TopicPartition * m_toppar;
   const int m_timeout_ms;
 };
 

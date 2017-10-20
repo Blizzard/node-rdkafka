@@ -24,7 +24,6 @@
 
 namespace NodeKafka {
 
-
 /**
  * @brief KafkaConsumer v8 wrapped object.
  *

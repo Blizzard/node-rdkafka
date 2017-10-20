@@ -658,23 +658,32 @@ void KafkaConsumerCommitted::HandleErrorCallback() {
 
 KafkaConsumerSeek::KafkaConsumerSeek(Nan::Callback *callback,
                                      KafkaConsumer* consumer,
-                                     const RdKafka::TopicPartition * partition,
+                                     const RdKafka::TopicPartition * toppar,
                                      const int & timeout_ms) :
   ErrorAwareWorker(callback),
   m_consumer(consumer),
-  m_partition(partition),
+  m_toppar(toppar),
   m_timeout_ms(timeout_ms) {}
 
-KafkaConsumerSeek::~KafkaConsumerSeek() {}
+KafkaConsumerSeek::~KafkaConsumerSeek() {
+  if (m_timeout_ms > 0) {
+    // Delete it when we are done with it.
+    // However, if the timeout was less than 1, that means librdkafka is going
+    // to queue the request up asynchronously, which apparently looks like if
+    // we delete the memory here, since it was a pointer, librdkafka segfaults
+    // when it actually does the operation (since it no longer blocks).
+
+    // Well, that means we will be leaking memory when people do a timeout of 0
+    // so... we should never get to this block. But just in case...
+    delete m_toppar;
+  }
+}
 
 void KafkaConsumerSeek::Execute() {
-  Baton b = m_consumer->Seek(*m_partition, m_timeout_ms);
+  Baton b = m_consumer->Seek(*m_toppar, m_timeout_ms);
   if (b.err() != RdKafka::ERR_NO_ERROR) {
     SetErrorBaton(b);
   }
-
-  // Delete it when we are done with it.
-  delete m_partition;
 }
 
 void KafkaConsumerSeek::HandleOKCallback() {

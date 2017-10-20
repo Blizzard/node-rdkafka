@@ -46,12 +46,9 @@ describe('Consumer', function() {
         done();
       });
     });
-
   });
 
-
   describe('committed and position', function() {
-
     var consumer;
     beforeEach(function(done) {
       consumer = new KafkaConsumer(gcfg, {});
@@ -134,6 +131,53 @@ describe('Consumer', function() {
       });
     });
 
+  });
+
+  describe('seek and positioning', function() {
+    var consumer;
+    beforeEach(function(done) {
+      consumer = new KafkaConsumer(gcfg, {});
+
+      consumer.connect({ timeout: 2000 }, function(err, info) {
+        t.ifError(err);
+        consumer.assign([{
+          topic: 'test',
+          partition: 0,
+          offset: 0
+        }]);
+        done();
+      });
+
+      eventListener(consumer);
+    });
+
+    afterEach(function(done) {
+      consumer.disconnect(function() {
+        done();
+      });
+    });
+
+    it('should be able to seek', function(cb) {
+      consumer.seek({
+        topic: 'test',
+        partition: 0,
+        offset: 0
+      }, 1, function(err) {
+        t.ifError(err);
+        cb();
+      });
+    });
+
+    it('should be able to seek with a timeout of 0', function(cb) {
+      consumer.seek({
+        topic: 'test',
+        partition: 0,
+        offset: 0
+      }, 0, function(err) {
+        t.ifError(err);
+        cb();
+      });
+    });
   });
 
   describe('subscribe', function() {
@@ -288,5 +332,6 @@ describe('Consumer', function() {
 
       });
     });
+
   });
 });

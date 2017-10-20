@@ -274,7 +274,6 @@ Baton KafkaConsumer::Seek(const RdKafka::TopicPartition &partition, int timeout_
     return Baton(RdKafka::ERR__STATE, "KafkaConsumer is not connected");
   }
 
-  // This isn't supported yet...
   RdKafka::KafkaConsumer* consumer =
     dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
 
@@ -886,12 +885,17 @@ NAN_METHOD(KafkaConsumer::NodeSeek) {
 
   int timeout_ms;
   Nan::Maybe<uint32_t> maybeTimeout =
-    Nan::To<uint32_t>(info[0].As<v8::Number>());
+    Nan::To<uint32_t>(info[1].As<v8::Number>());
 
   if (maybeTimeout.IsNothing()) {
     timeout_ms = 1000;
   } else {
     timeout_ms = static_cast<int>(maybeTimeout.FromJust());
+    // Do not allow timeouts of less than 10. Providing 0 causes segfaults
+    // because it makes it asynchronous.
+    if (timeout_ms < 10) {
+      timeout_ms = 10;
+    }
   }
 
   KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
@@ -929,13 +933,7 @@ NAN_METHOD(KafkaConsumer::NodeOffsetsStore) {
     Conversion::TopicPartition::FromV8Array(info[0].As<v8::Array>());
 
   Baton b = consumer->OffsetsStore(toppars);
-
-  // Now iterate through and delete these toppars
-  for (std::vector<RdKafka::TopicPartition *>::const_iterator it = toppars.begin();  // NOLINT
-       it != toppars.end(); it++) {
-    RdKafka::TopicPartition* toppar = *it;
-    delete toppar;
-  }
+  RdKafka::TopicPartition::destroy(toppars);
 
   int error_code = static_cast<int>(b.err());
   info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
@@ -960,7 +958,9 @@ NAN_METHOD(KafkaConsumer::NodePause) {
     Conversion::TopicPartition::FromV8Array(info[0].As<v8::Array>());
 
   Baton b = consumer->Pause(toppars);
+  RdKafka::TopicPartition::destroy(toppars);
 
+  #if 0
   // Now iterate through and delete these toppars
   for (std::vector<RdKafka::TopicPartition *>::const_iterator it = toppars.begin();  // NOLINT
        it != toppars.end(); it++) {
@@ -971,6 +971,7 @@ NAN_METHOD(KafkaConsumer::NodePause) {
     }
     delete toppar;
   }
+  #endif
 
   int error_code = static_cast<int>(b.err());
   info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
