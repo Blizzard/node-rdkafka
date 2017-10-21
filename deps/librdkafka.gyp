@@ -25,9 +25,7 @@
                 'inputs': [
                   '<(module_root_dir)/deps/librdkafka/win32/librdkafka.sln'
                 ],
-                'outputs': [
-                  '<(module_root_dir)/deps/librdkafka/win32/packages',
-                ],
+                'outputs': [ ],
                 'action': ['nuget', 'restore', '<@(_inputs)']
               },
               {
