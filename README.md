@@ -43,13 +43,9 @@ Installing `node-rdkafka` on Windows is now possible thanks to [#248](https://gi
 
 You can read the [Librdkafka Windows Instructions](https://github.com/edenhill/librdkafka/blob/master/README.win32) here. As it says in that document, you must be using Microsoft Visual Studio 2013 to compile `librdkafka`. This is because a version of openssl that is used requires this version of Visual Studio.
 
-Additionally, you will need to open Visual Studio and ensure that nuget package restore is enabled. If you do not you may get this error:
-
-> This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them
-
-Microsoft has instructions [here](https://docs.microsoft.com/en-us/nuget/consume-packages/package-restore#enabling-and-disabling-package-restore).
-
 If you have multiple versions of Visual Studio on your machine you may need to ensure that the correct MSBuild is called by node-gyp. For whatever reason, gyp just uses the MSBuild in your path if there is one, so you will need to ensure it resolves to the right place. The `bin` directory for MSBuild will usually be similar to `C:/Program Files (x86)/MSBuild/12.0/Bin/` so ensure it comes late in your path.
+
+Additionally, `librdkafka` requires a few dependencies be installed via `nuget` before it will build properly on Windows. You will need to [download the nuget command line tools](https://www.nuget.org/downloads) and make sure `nuget.exe` is available in your path. It is recommended that you install the latest stable version, as versions before `v4.3.0` did not always correctly read dependencies.
 
 Lastly, you may need to set the MS build tools gyp uses to the correct version.
 
