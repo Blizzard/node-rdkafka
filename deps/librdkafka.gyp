@@ -21,6 +21,14 @@
             'msbuild_toolset': 'v120',
             'actions': [
               {
+                'action_name': 'nuget_restore',
+                'inputs': [
+                  '<(module_root_dir)/deps/librdkafka/win32/librdkafka.sln'
+                ],
+                'outputs': [ ],
+                'action': ['nuget', 'restore', '<@(_inputs)']
+              },
+              {
                 'action_name': 'build_dependencies',
                 'inputs': [
                   '<(module_root_dir)/deps/librdkafka/win32/librdkafka.sln'
