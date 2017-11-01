@@ -1,10 +1,23 @@
 {
   "variables": {
       # may be redefined in command line on configuration stage
-      # "BUILD_LIBRDKAFKA%": "<!(echo ${BUILD_LIBRDKAFKA:-1})"
       "BUILD_LIBRDKAFKA%": "<!(node ./util/get-env.js BUILD_LIBRDKAFKA 1)"
   },
   "targets": [
+    {
+      "target_name": "configure-node-rdkafka",
+      "type": 'none',
+      "actions": [
+        {
+          'action_name': 'configure',
+          'inputs': [],
+          'outputs': [
+            '<(module_root_dir)/deps/librdkafka/config.h'
+          ],
+          'action': ['node', '<(module_root_dir)/util/configure.js', '<@(_inputs)']
+        }
+      ]
+    },
     {
       "target_name": "node-librdkafka",
       'sources': [
@@ -22,6 +35,9 @@
       "include_dirs": [
         "<!(node -e \"require('nan')\")",
         "<(module_root_dir)/"
+      ],
+      "dependencies": [
+        'configure-node-rdkafka'
       ],
       'conditions': [
         [
@@ -54,7 +70,7 @@
               [ "<(BUILD_LIBRDKAFKA)==1",
                 {
                   "dependencies": [
-                      "<(module_root_dir)/deps/librdkafka.gyp:librdkafkacpp"
+                    "<(module_root_dir)/deps/librdkafka.gyp:librdkafkacpp"
                   ],
                   "include_dirs": [ "deps/librdkafka/src-cpp" ],
                 },
