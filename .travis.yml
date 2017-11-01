@@ -4,6 +4,7 @@ sudo: required
 node_js:
 - '4'
 - '6'
+- '8'
 cache:
   directories:
   - node_modules
