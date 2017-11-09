@@ -7,7 +7,9 @@
     "WITH_ZLIB%": "<!(node ../util/librdkafka-config-checker.js WITH_ZLIB)",
     "WITH_LZ4_EXT%": "<!(node ../util/librdkafka-config-checker.js WITH_LZ4_EXT)",
     "WITH_PLUGINS%": "<!(node ../util/librdkafka-config-checker.js WITH_PLUGINS)",
-    "WITH_LIBDL%": "<!(node ../util/librdkafka-config-checker.js WITH_LIBDL)"
+    "WITH_LIBDL%": "<!(node ../util/librdkafka-config-checker.js WITH_LIBDL)",
+    "LIBRARY_INCLUDE_PATHS": "<!(node ../util/get-lib-dirs.js include)",
+    "LIBRARY_DIRS": "<!(node ../util/get-lib-dirs.js)",
   },
   'targets': [
     {
@@ -138,7 +140,8 @@
           {
             "type": "static_library",
             "include_dirs": [
-              "librdkafka/src"
+              "librdkafka/src",
+              '<@(LIBRARY_INCLUDE_PATHS)'
             ],
             'cflags': [
               '-Wunused-function',
@@ -247,6 +250,10 @@
               '-Wno-old-style-declaration',
             ],
             'link_settings': {
+              # Need to get the library dirs here
+              'library_dirs': [
+                '<@(LIBRARY_DIRS)'
+              ],
               'libraries' : ['-lpthread', '-lcrypto'],
             },
             'xcode_settings': {

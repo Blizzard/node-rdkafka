@@ -48,7 +48,7 @@ bufLines = bufLines.map(function(line) {
   return true;
 });
 
-const defines = {};
+var defines = {};
 
 bufLines.forEach(function(line) {
   if (line.startsWith('#define')) {
