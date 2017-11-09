@@ -69,7 +69,7 @@ describe('Consumer', function() {
 
     it('before assign, committed offsets are empty', function(done) {
       consumer.committed(null, 1000, function(err, committed) {
-        console.log(committed);
+        t.ifError(err);
         t.equal(Array.isArray(committed), true, 'Committed offsets should be an array');
         t.equal(committed.length, 0);
         done();
