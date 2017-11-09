@@ -600,7 +600,7 @@ topic configuration</td>
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source">
         <ul class="pager"><li>
-        <a href="kafka-consumer.js.html#line152">kafka-consumer.js, line 152</a>
+        <a href="kafka-consumer.js.html#line153">kafka-consumer.js, line 153</a>
         </li></ul>
     </dd>
     
@@ -660,11 +660,11 @@ when new ones become available.
 
     
       <p>
-        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal-example-333-1">
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal-example-822-1">
           Open Example 1
         </button>
       </p>
-      <div class="modal hide" id="modal-example-333-1">
+      <div class="modal hide" id="modal-example-822-1">
         <div class="modal-header">
           <a href="#" class="close" data-dismiss="modal" onclick="return false;">
             <i class="icon-remove icon-white"></i></a>
@@ -800,7 +800,7 @@ objects with topic and partition set.</td>
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source">
         <ul class="pager"><li>
-        <a href="kafka-consumer.js.html#line226">kafka-consumer.js, line 226</a>
+        <a href="kafka-consumer.js.html#line241">kafka-consumer.js, line 241</a>
         </li></ul>
     </dd>
     
@@ -910,7 +910,7 @@ objects with topic and partition set.</td>
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source">
         <ul class="pager"><li>
-        <a href="kafka-consumer.js.html#line249">kafka-consumer.js, line 249</a>
+        <a href="kafka-consumer.js.html#line264">kafka-consumer.js, line 264</a>
         </li></ul>
     </dd>
     
@@ -1082,7 +1082,7 @@ are going to commit all read offsets.</td>
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source">
         <ul class="pager"><li>
-        <a href="kafka-consumer.js.html#line461">kafka-consumer.js, line 461</a>
+        <a href="kafka-consumer.js.html#line481">kafka-consumer.js, line 481</a>
         </li></ul>
     </dd>
     
@@ -1267,7 +1267,7 @@ add one to the offset in this case</p>
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source">
         <ul class="pager"><li>
-        <a href="kafka-consumer.js.html#line477">kafka-consumer.js, line 477</a>
+        <a href="kafka-consumer.js.html#line497">kafka-consumer.js, line 497</a>
         </li></ul>
     </dd>
     
@@ -1449,7 +1449,7 @@ add one to the offset in this case</p>
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source">
         <ul class="pager"><li>
-        <a href="kafka-consumer.js.html#line513">kafka-consumer.js, line 513</a>
+        <a href="kafka-consumer.js.html#line533">kafka-consumer.js, line 533</a>
         </li></ul>
     </dd>
     
@@ -1660,7 +1660,7 @@ are going to commit all read offsets.</td>
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source">
         <ul class="pager"><li>
-        <a href="kafka-consumer.js.html#line498">kafka-consumer.js, line 498</a>
+        <a href="kafka-consumer.js.html#line518">kafka-consumer.js, line 518</a>
         </li></ul>
     </dd>
     
@@ -1752,7 +1752,7 @@ are going to commit all read offsets.</td>
     
 
     <h4 class="name" id="committed">
-        <span class="type-signature"></span>committed<span class="signature">(timeout, cb)</span><span class="type-signature"> &rarr; {<a href="Client.html">Client</a>}</span>
+        <span class="type-signature"></span>committed<span class="signature">(toppars, timeout, cb)</span><span class="type-signature"> &rarr; {<a href="Client.html">Client</a>}</span>
     </h4>
 
     
@@ -1799,6 +1799,31 @@ Returns an array of objects in the form of a topic partition list</p>
     </thead>
 
     <tbody>
+    
+
+        <tr>
+            
+                <td class="name">toppars</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;TopicPartition></span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Topic partition list to query committed
+offsets for. Defaults to the current assignment</td>
+        </tr>
+
     
 
         <tr>
@@ -1888,7 +1913,7 @@ out</td>
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source">
         <ul class="pager"><li>
-        <a href="kafka-consumer.js.html#line168">kafka-consumer.js, line 168</a>
+        <a href="kafka-consumer.js.html#line171">kafka-consumer.js, line 171</a>
         </li></ul>
     </dd>
     
@@ -2470,7 +2495,7 @@ is fetched.</td>
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source">
         <ul class="pager"><li>
-        <a href="kafka-consumer.js.html#line344">kafka-consumer.js, line 344</a>
+        <a href="kafka-consumer.js.html#line364">kafka-consumer.js, line 364</a>
         </li></ul>
     </dd>
     
@@ -2643,7 +2668,7 @@ but we will not exceed it.</p>
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source">
         <ul class="pager"><li>
-        <a href="kafka-consumer.js.html#line344">kafka-consumer.js, line 344</a>
+        <a href="kafka-consumer.js.html#line364">kafka-consumer.js, line 364</a>
         </li></ul>
     </dd>
     
@@ -3443,7 +3468,7 @@ throw an error.</p>
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source">
         <ul class="pager"><li>
-        <a href="kafka-consumer.js.html#line540">kafka-consumer.js, line 540</a>
+        <a href="kafka-consumer.js.html#line560">kafka-consumer.js, line 560</a>
         </li></ul>
     </dd>
     
@@ -3764,7 +3789,7 @@ enable.auto.offset.store must be set to false to use this API,</p>
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source">
         <ul class="pager"><li>
-        <a href="kafka-consumer.js.html#line561">kafka-consumer.js, line 561</a>
+        <a href="kafka-consumer.js.html#line581">kafka-consumer.js, line 581</a>
         </li></ul>
     </dd>
     
@@ -3947,7 +3972,7 @@ enable.auto.offset.store must be set to false to use this API,</p>
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source">
         <ul class="pager"><li>
-        <a href="kafka-consumer.js.html#line589">kafka-consumer.js, line 589</a>
+        <a href="kafka-consumer.js.html#line609">kafka-consumer.js, line 609</a>
         </li></ul>
     </dd>
     
@@ -4015,7 +4040,7 @@ enable.auto.offset.store must be set to false to use this API,</p>
     
 
     <h4 class="name" id="position">
-        <span class="type-signature"></span>position<span class="signature">()</span><span class="type-signature"> &rarr; {array}</span>
+        <span class="type-signature"></span>position<span class="signature">(toppars)</span><span class="type-signature"> &rarr; {array}</span>
     </h4>
 
     
@@ -4035,6 +4060,62 @@ an error on failure</p>
 
 
 
+
+
+    <div class="clearfix">
+  <div class="grid-75">
+    <h4 class="heading-3">Parameters:</h4>
+  </div>
+</div>
+
+    
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">toppars</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;TopicPartition></span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">List of topic partitions to query
+position for. Defaults to the current assignment</td>
+        </tr>
+
+    
+    </tbody>
+</table>
 
 
 
@@ -4071,7 +4152,7 @@ an error on failure</p>
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source">
         <ul class="pager"><li>
-        <a href="kafka-consumer.js.html#line299">kafka-consumer.js, line 299</a>
+        <a href="kafka-consumer.js.html#line316">kafka-consumer.js, line 316</a>
         </li></ul>
     </dd>
     
@@ -4475,7 +4556,7 @@ and high (newest/end) offsets for a topic partition.</p>
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source">
         <ul class="pager"><li>
-        <a href="kafka-consumer.js.html#line575">kafka-consumer.js, line 575</a>
+        <a href="kafka-consumer.js.html#line595">kafka-consumer.js, line 595</a>
         </li></ul>
     </dd>
     
@@ -4708,7 +4789,7 @@ out. If the seek timed out, the internal state of the consumer is unknown.</td>
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source">
         <ul class="pager"><li>
-        <a href="kafka-consumer.js.html#line205">kafka-consumer.js, line 205</a>
+        <a href="kafka-consumer.js.html#line220">kafka-consumer.js, line 220</a>
         </li></ul>
     </dd>
     
@@ -4760,11 +4841,11 @@ out. If the seek timed out, the internal state of the consumer is unknown.</td>
 
     
       <p>
-        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal-example-223-1">
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal-example-405-1">
           Open Example 1
         </button>
       </p>
-      <div class="modal hide" id="modal-example-223-1">
+      <div class="modal hide" id="modal-example-405-1">
         <div class="modal-header">
           <a href="#" class="close" data-dismiss="modal" onclick="return false;">
             <i class="icon-remove icon-white"></i></a>
@@ -4898,7 +4979,7 @@ out. If the seek timed out, the internal state of the consumer is unknown.</td>
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source">
         <ul class="pager"><li>
-        <a href="kafka-consumer.js.html#line128">kafka-consumer.js, line 128</a>
+        <a href="kafka-consumer.js.html#line129">kafka-consumer.js, line 129</a>
         </li></ul>
     </dd>
     
@@ -5047,7 +5128,7 @@ This is also a good way to do it for streams.</p>
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source">
         <ul class="pager"><li>
-        <a href="kafka-consumer.js.html#line268">kafka-consumer.js, line 268</a>
+        <a href="kafka-consumer.js.html#line283">kafka-consumer.js, line 283</a>
         </li></ul>
     </dd>
     
@@ -5177,7 +5258,7 @@ passed on via subscribe</p>
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source">
         <ul class="pager"><li>
-        <a href="kafka-consumer.js.html#line285">kafka-consumer.js, line 285</a>
+        <a href="kafka-consumer.js.html#line300">kafka-consumer.js, line 300</a>
         </li></ul>
     </dd>
     
@@ -5311,7 +5392,7 @@ passed on via subscribe</p>
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source">
         <ul class="pager"><li>
-        <a href="kafka-consumer.js.html#line237">kafka-consumer.js, line 237</a>
+        <a href="kafka-consumer.js.html#line252">kafka-consumer.js, line 252</a>
         </li></ul>
     </dd>
     
@@ -5426,7 +5507,7 @@ existing subscription.</p>
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source">
         <ul class="pager"><li>
-        <a href="kafka-consumer.js.html#line314">kafka-consumer.js, line 314</a>
+        <a href="kafka-consumer.js.html#line334">kafka-consumer.js, line 334</a>
         </li></ul>
     </dd>
     
@@ -5713,6 +5794,30 @@ message was on</td>
         </tr>
 
     
+
+        <tr>
+            
+                <td class="name">timestamp</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">message timestamp</td>
+        </tr>
+
+    
     </tbody>
 </table>
 
@@ -5905,7 +6010,7 @@ the data.</td>
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source">
         <ul class="pager"><li>
-        <a href="kafka-consumer.js.html#line440">kafka-consumer.js, line 440</a>
+        <a href="kafka-consumer.js.html#line460">kafka-consumer.js, line 460</a>
         </li></ul>
     </dd>
     
@@ -6013,7 +6118,7 @@ the data.</td>
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source">
         <ul class="pager"><li>
-        <a href="kafka-consumer.js.html#line395">kafka-consumer.js, line 395</a>
+        <a href="kafka-consumer.js.html#line415">kafka-consumer.js, line 415</a>
         </li></ul>
     </dd>
     
@@ -6391,7 +6496,7 @@ the data.</td>
     <div class="footer-content">
       <div class="grid-75">
         <div class="legal">
-            Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc </a> on Wed Oct 18 2017 22:50:37 GMT+0000 (UTC)
+            Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc </a> on Thu Nov 09 2017 21:01:07 GMT+0000 (UTC)
         </div>
       </div>
       <div class="grid-25">
