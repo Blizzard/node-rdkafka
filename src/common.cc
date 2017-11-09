@@ -454,6 +454,8 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Message *message, bool include_payload
       Nan::New<v8::Number>(message->offset()));
     Nan::Set(pack, Nan::New<v8::String>("partition").ToLocalChecked(),
       Nan::New<v8::Number>(message->partition()));
+    Nan::Set(pack, Nan::New<v8::String>("timestamp").ToLocalChecked(),
+      Nan::New<v8::Number>(message->timestamp().timestamp));
 
     return pack;
   } else {
