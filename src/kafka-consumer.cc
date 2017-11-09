@@ -171,6 +171,9 @@ Baton KafkaConsumer::Assign(std::vector<RdKafka::TopicPartition*> partitions) {
   m_partition_cnt = partitions.size();
   m_partitions.swap(partitions);
 
+  // Destroy the old list of partitions since we are no longer using it
+  RdKafka::TopicPartition::destroy(partitions);
+
   return Baton(RdKafka::ERR_NO_ERROR);
 }
 
@@ -188,7 +191,9 @@ Baton KafkaConsumer::Unassign() {
     return Baton(errcode);
   }
 
-  m_partitions.empty();
+  // Destroy the old list of partitions since we are no longer using it
+  RdKafka::TopicPartition::destroy(m_partitions);
+
   m_partition_cnt = 0;
 
   return Baton(RdKafka::ERR_NO_ERROR);
@@ -282,7 +287,8 @@ Baton KafkaConsumer::Seek(const RdKafka::TopicPartition &partition, int timeout_
   return Baton(err);
 }
 
-Baton KafkaConsumer::Committed(int timeout_ms) {
+Baton KafkaConsumer::Committed(std::vector<RdKafka::TopicPartition*> &toppars,
+  int timeout_ms) {
   if (!IsConnected()) {
     return Baton(RdKafka::ERR__STATE, "KafkaConsumer is not connected");
   }
@@ -290,20 +296,12 @@ Baton KafkaConsumer::Committed(int timeout_ms) {
   RdKafka::KafkaConsumer* consumer =
     dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
 
-  std::vector<RdKafka::TopicPartition*> * partitions =
-    new std::vector<RdKafka::TopicPartition*>(m_partitions);
-
-  RdKafka::ErrorCode err = consumer->committed(*partitions, timeout_ms);
-
-  if (err == RdKafka::ErrorCode::ERR_NO_ERROR) {
-    // Good to go
-    return Baton(partitions);
-  }
+  RdKafka::ErrorCode err = consumer->committed(toppars, timeout_ms);
 
   return Baton(err);
 }
 
-Baton KafkaConsumer::Position() {
+Baton KafkaConsumer::Position(std::vector<RdKafka::TopicPartition*> &toppars) {
   if (!IsConnected()) {
     return Baton(RdKafka::ERR__STATE, "KafkaConsumer is not connected");
   }
@@ -311,15 +309,7 @@ Baton KafkaConsumer::Position() {
   RdKafka::KafkaConsumer* consumer =
     dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
 
-  std::vector<RdKafka::TopicPartition*> * partitions =
-    new std::vector<RdKafka::TopicPartition*>(m_partitions);
-
-  RdKafka::ErrorCode err = consumer->position(*partitions);
-
-  if (err == RdKafka::ErrorCode::ERR_NO_ERROR) {
-    // Good to go
-    return Baton(partitions);
-  }
+  RdKafka::ErrorCode err = consumer->position(toppars);
 
   return Baton(err);
 }
@@ -448,6 +438,11 @@ Baton KafkaConsumer::RefreshAssignments() {
     case RdKafka::ERR_NO_ERROR:
       m_partition_cnt = partition_list.size();
       m_partitions.swap(partition_list);
+
+      // These are pointers so we need to delete them somewhere.
+      // Do it here because we're only going to convert when we're ready
+      // to return to v8.
+      RdKafka::TopicPartition::destroy(partition_list);
       return Baton(RdKafka::ERR_NO_ERROR);
     break;
     default:
@@ -594,9 +589,17 @@ v8::Local<v8::Object> KafkaConsumer::NewInstance(v8::Local<v8::Value> arg) {
 NAN_METHOD(KafkaConsumer::NodeCommitted) {
   Nan::HandleScope scope;
 
+  if (info.Length() < 3 || !info[0]->IsArray()) {
+    // Just throw an exception
+    return Nan::ThrowError("Need to specify an array of topic partitions");
+  }
+
+  std::vector<RdKafka::TopicPartition *> toppars =
+    Conversion::TopicPartition::FromV8Array(info[0].As<v8::Array>());
+
   int timeout_ms;
   Nan::Maybe<uint32_t> maybeTimeout =
-    Nan::To<uint32_t>(info[0].As<v8::Number>());
+    Nan::To<uint32_t>(info[1].As<v8::Number>());
 
   if (maybeTimeout.IsNothing()) {
     timeout_ms = 1000;
@@ -604,20 +607,14 @@ NAN_METHOD(KafkaConsumer::NodeCommitted) {
     timeout_ms = static_cast<int>(maybeTimeout.FromJust());
   }
 
-  v8::Local<v8::Function> cb = info[1].As<v8::Function>();
+  v8::Local<v8::Function> cb = info[2].As<v8::Function>();
   Nan::Callback *callback = new Nan::Callback(cb);
 
   KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
-  Baton b = consumer->RefreshAssignments();
-
-  if (b.err() != RdKafka::ERR_NO_ERROR) {
-    // Let the JS library throw if we need to so the error can be more rich
-    int error_code = static_cast<int>(b.err());
-    return info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
-  }
 
   Nan::AsyncQueueWorker(
-    new Workers::KafkaConsumerCommitted(callback, consumer, timeout_ms));
+    new Workers::KafkaConsumerCommitted(callback, consumer,
+      toppars, timeout_ms));
 
   info.GetReturnValue().Set(Nan::Null());
 }
@@ -646,15 +643,16 @@ NAN_METHOD(KafkaConsumer::NodePosition) {
   Nan::HandleScope scope;
 
   KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
-  Baton br = consumer->RefreshAssignments();
 
-  if (br.err() != RdKafka::ERR_NO_ERROR) {
-    // Let the JS library throw if we need to so the error can be more rich
-    int error_code = static_cast<int>(br.err());
-    return info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
+  if (info.Length() < 1 || !info[0]->IsArray()) {
+    // Just throw an exception
+    return Nan::ThrowError("Need to specify an array of topic partitions");
   }
 
-  Baton b = consumer->Position();
+  std::vector<RdKafka::TopicPartition *> toppars =
+    Conversion::TopicPartition::FromV8Array(info[0].As<v8::Array>());
+
+  Baton b = consumer->Position(toppars);
 
   if (b.err() != RdKafka::ErrorCode::ERR_NO_ERROR) {
     // Let the JS library throw if we need to so the error can be more rich
@@ -662,12 +660,11 @@ NAN_METHOD(KafkaConsumer::NodePosition) {
     return info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
   }
 
-  std::vector<RdKafka::TopicPartition*> * partitions =
-    b.data<std::vector<RdKafka::TopicPartition*>*>();
+  info.GetReturnValue().Set(
+    Conversion::TopicPartition::ToV8Array(toppars));
 
-  info.GetReturnValue().Set(Conversion::TopicPartition::ToV8Array(*partitions)); // NOLINT
-
-  delete partitions;
+  // Delete the underlying topic partitions
+  RdKafka::TopicPartition::destroy(toppars);
 }
 
 NAN_METHOD(KafkaConsumer::NodeAssignments) {

@@ -60,8 +60,8 @@ class KafkaConsumer : public Connection {
   Baton CommitSync(std::string, int, int64_t);
   Baton CommitSync();
 
-  Baton Committed(int timeout_ms);
-  Baton Position();
+  Baton Committed(std::vector<RdKafka::TopicPartition*> &, int timeout_ms);
+  Baton Position(std::vector<RdKafka::TopicPartition*> &);
 
   Baton RefreshAssignments();
 

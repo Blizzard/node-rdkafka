@@ -68,7 +68,8 @@ describe('Consumer', function() {
     });
 
     it('before assign, committed offsets are empty', function(done) {
-      consumer.committed(1000, function(err, committed) {
+      consumer.committed(null, 1000, function(err, committed) {
+        console.log(committed);
         t.equal(Array.isArray(committed), true, 'Committed offsets should be an array');
         t.equal(committed.length, 0);
         done();
@@ -85,7 +86,7 @@ describe('Consumer', function() {
       consumer.assign([{topic:topic, partition:0}]);
       // Defer this for a second
       setTimeout(function() {
-        consumer.committed(1000, function(err, committed) {
+        consumer.committed(null, 1000, function(err, committed) {
           t.ifError(err);
           t.equal(committed.length, 1);
           t.equal(typeof committed[0], 'object', 'TopicPartition should be an object');
@@ -100,7 +101,7 @@ describe('Consumer', function() {
       this.timeout(6000);
       consumer.assign([{topic:topic, partition:0}]);
       consumer.commitSync({topic:topic, partition:0, offset:1000});
-      consumer.committed(1000, function(err, committed) {
+      consumer.committed(null, 1000, function(err, committed) {
         t.ifError(err);
         t.equal(committed.length, 1);
         t.equal(typeof committed[0], 'object', 'TopicPartition should be an object');
@@ -123,7 +124,7 @@ describe('Consumer', function() {
     });
 
     it('should obey the timeout', function(done) {
-      consumer.committed(0, function(err, committed) {
+      consumer.committed(null, 0, function(err, committed) {
         if (!err) {
           t.fail(err, 'not null', 'Error should be set for a timeout');
         }

@@ -114,7 +114,7 @@ describe('Consumer group/Producer', function() {
       if (count === 3) {
         consumer.commitMessageSync(message);
         // test consumer.committed( ) API
-        consumer.committed(5000, function(err, topicPartitions) {
+        consumer.committed(null, 5000, function(err, topicPartitions) {
           t.ifError(err);
           t.deepStrictEqual(topicPartitions.length, 1);
           t.deepStrictEqual(topicPartitions[0].offset, message.offset + 1, 'Offset read by consumer 1 incorrect');

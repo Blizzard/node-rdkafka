@@ -192,9 +192,6 @@ namespace TopicPartition {
  * @brief RdKafka::TopicPartition vector to a v8 Array
  *
  * @see v8ArrayToTopicPartitionVector
- *
- * @note This will destroy the topic partition pointers inside the vector, rendering
- * it unusable
  */
 v8::Local<v8::Array> ToV8Array(
   std::vector<RdKafka::TopicPartition*> & topic_partition_list) {  // NOLINT
@@ -204,28 +201,27 @@ v8::Local<v8::Array> ToV8Array(
     RdKafka::TopicPartition* topic_partition =
       topic_partition_list[topic_partition_i];
 
-    // We have the list now let's get the properties from it
-    v8::Local<v8::Object> obj = Nan::New<v8::Object>();
+    if (topic_partition->err() != RdKafka::ErrorCode::ERR_NO_ERROR) {
+      array->Set(topic_partition_i,
+        Nan::Error(Nan::New(RdKafka::err2str(topic_partition->err()))
+        .ToLocalChecked()));
+    } else {
+      // We have the list now let's get the properties from it
+      v8::Local<v8::Object> obj = Nan::New<v8::Object>();
 
-    if (topic_partition->offset() != RdKafka::Topic::OFFSET_INVALID) {
-      Nan::Set(obj, Nan::New("offset").ToLocalChecked(),
-        Nan::New<v8::Number>(topic_partition->offset()));
+      if (topic_partition->offset() != RdKafka::Topic::OFFSET_INVALID) {
+        Nan::Set(obj, Nan::New("offset").ToLocalChecked(),
+          Nan::New<v8::Number>(topic_partition->offset()));
+      }
+      Nan::Set(obj, Nan::New("partition").ToLocalChecked(),
+        Nan::New<v8::Number>(topic_partition->partition()));
+      Nan::Set(obj, Nan::New("topic").ToLocalChecked(),
+        Nan::New<v8::String>(topic_partition->topic().c_str())
+        .ToLocalChecked());
+
+      array->Set(topic_partition_i, obj);
     }
-    Nan::Set(obj, Nan::New("partition").ToLocalChecked(),
-      Nan::New<v8::Number>(topic_partition->partition()));
-    Nan::Set(obj, Nan::New("topic").ToLocalChecked(),
-      Nan::New<v8::String>(topic_partition->topic().c_str()).ToLocalChecked());
-
-    array->Set(topic_partition_i, obj);
-
-    // These are pointers so we need to delete them somewhere.
-    // Do it here because we're only going to convert when we're ready
-    // to return to v8.
-    delete topic_partition;
   }
-
-  // Clear the topic partition list of dangling pointers
-  topic_partition_list.clear();
 
   return array;
 }

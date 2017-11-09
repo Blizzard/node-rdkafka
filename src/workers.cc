@@ -605,19 +605,22 @@ void KafkaConsumerConsume::HandleErrorCallback() {
 
 KafkaConsumerCommitted::KafkaConsumerCommitted(Nan::Callback *callback,
                                      KafkaConsumer* consumer,
+                                     std::vector<RdKafka::TopicPartition*> & t,
                                      const int & timeout_ms) :
   ErrorAwareWorker(callback),
   m_consumer(consumer),
+  m_topic_partitions(t),
   m_timeout_ms(timeout_ms) {}
 
-KafkaConsumerCommitted::~KafkaConsumerCommitted() {}
+KafkaConsumerCommitted::~KafkaConsumerCommitted() {
+  // Delete the underlying topic partitions as they are ephemeral or cloned
+  RdKafka::TopicPartition::destroy(m_topic_partitions);
+}
 
 void KafkaConsumerCommitted::Execute() {
-  Baton b = m_consumer->Committed(m_timeout_ms);
+  Baton b = m_consumer->Committed(m_topic_partitions, m_timeout_ms);
   if (b.err() != RdKafka::ERR_NO_ERROR) {
     SetErrorBaton(b);
-  } else {
-    m_topic_partitions = b.data<std::vector<RdKafka::TopicPartition*>*>();
   }
 }
 
@@ -628,9 +631,7 @@ void KafkaConsumerCommitted::HandleOKCallback() {
   v8::Local<v8::Value> argv[argc];
 
   argv[0] = Nan::Null();
-  argv[1] = Conversion::TopicPartition::ToV8Array(*m_topic_partitions);
-
-  delete m_topic_partitions;
+  argv[1] = Conversion::TopicPartition::ToV8Array(m_topic_partitions);
 
   callback->Call(argc, argv);
 }
