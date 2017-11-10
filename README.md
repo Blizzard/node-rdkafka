@@ -361,7 +361,8 @@ Messages that are returned by the `KafkaConsumer` have the following structure.
   topic: 'librdtesting-01', // topic the message comes from
   offset: 1337, // offset the message was read from
   partition: 1, // partition the message was on
-  key: 'someKey' // key of the message if present
+  key: 'someKey', // key of the message if present
+  timestamp: 1510325354780 // timestamp of message creation
 }
 ```
 
