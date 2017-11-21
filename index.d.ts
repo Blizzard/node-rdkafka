@@ -155,6 +155,14 @@ export const features: string[];
 
 export const librdkafkaVersion: string;
 
-export function createReadStream(conf: any, topicConf: any, streamOptions: any): NodeJS.ReadStream;
+declare interface ProducerStream extends NodeJS.ReadStream {
+    producer: Producer
+}
 
-export function createWriteStream(conf: any, topicConf: any, streamOptions: any): NodeJS.WriteStream;
+declare interface ConsumerStream extends NodeJS.WriteStream {
+    consumer: KafkaConsumer
+}
+
+export function createReadStream(conf: any, topicConf: any, streamOptions: any): ConsumerStream;
+
+export function createWriteStream(conf: any, topicConf: any, streamOptions: any): ProducerStream;
