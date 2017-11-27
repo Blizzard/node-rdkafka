@@ -405,7 +405,7 @@ consumer
   })
   .on('data', function(data) {
     // Output the actual message contents
-    console.log(data.message.toString());
+    console.log(data.value.toString());
   });
 ```
 The following example illustrates non-flowing mode:
@@ -426,7 +426,7 @@ consumer
   })
   .on('data', function(data) {
     console.log('Message found!  Contents below.');
-    console.log(data.message.toString());
+    console.log(data.value.toString());
   });
 ```
 
