@@ -4,3 +4,4 @@ deps/
 .gitmodules
 Dockerfile
 deps/librdkafka/config.h
+build
