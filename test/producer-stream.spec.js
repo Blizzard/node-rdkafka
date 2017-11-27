@@ -291,7 +291,45 @@ module.exports = {
 
         readable.pipe(stream);
       },
+      'can drain buffered chunks': function(done) {
+        
+        var message;
+        var currentMessage = 0;
 
+        fakeClient.produce = function(topic, partition, message, key) {
+          currentMessage++;
+          t.equal('topic', topic);
+          t.equal(message.toString(), 'Awesome' + currentMessage);
+          t.equal(Buffer.isBuffer(message), true);
+          if (currentMessage === 3) {
+            done();
+          }
+        };
+
+        var stream = new ProducerStream(fakeClient, {
+          topic: 'topic'
+        });
+        stream.on('error', function(err) {
+          t.fail(err);
+        });
+
+        fakeClient._isConnected = false;
+        fakeClient._isConnecting = true;
+        fakeClient.isConnected = function() {
+          return false;
+        };
+
+        stream.write(new Buffer('Awesome1'));
+        stream.write(new Buffer('Awesome2'));
+        stream.write(new Buffer('Awesome3'));
+
+        fakeClient._isConnected = true;
+        fakeClient._isConnecting = false;
+        fakeClient.isConnected = function() {
+          return true;
+        };
+        fakeClient.connect();
+      },
     },
 
     'in objectMode': {
@@ -498,6 +536,54 @@ module.exports = {
         readable.pipe(stream);
       },
 
+      'can drain buffered messages': function(done) {
+
+        var message;
+        var currentMessage = 0;
+
+        fakeClient.produce = function(topic, partition, message, key) {
+          currentMessage++;
+          t.equal('topic', topic);
+          t.equal(message.toString(), 'Awesome' + currentMessage);
+          t.equal(Buffer.isBuffer(message), true);
+          if (currentMessage === 3) {
+            done();
+          }
+        };
+
+        var stream = new ProducerStream(fakeClient, {
+          objectMode: true
+        });
+        stream.on('error', function(err) {
+          t.fail(err);
+        });
+
+        fakeClient._isConnected = false;
+        fakeClient._isConnecting = true;
+        fakeClient.isConnected = function() {
+          return false;
+        };
+
+        stream.write({
+          value: new Buffer('Awesome1'),
+          topic: 'topic'
+        });
+        stream.write({
+          value: new Buffer('Awesome2'),
+          topic: 'topic'
+        });
+        stream.write({
+          value: new Buffer('Awesome3'),
+          topic: 'topic'
+        });
+
+        fakeClient._isConnected = true;
+        fakeClient._isConnecting = false;
+        fakeClient.isConnected = function() {
+          return true;
+        };
+        fakeClient.connect();
+      },
     }
 
   }
