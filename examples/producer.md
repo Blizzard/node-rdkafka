@@ -65,6 +65,16 @@ producer.on('disconnected', function(arg) {
   console.log('producer disconnected. ' + JSON.stringify(arg));
 });
 
+function connect(){
+  producer.connect(undefined, function(err) {
+    if(err) {
+      console.error(err)
+      // auto retry connection if connect fails
+      connect();
+    }
+  })
+}
+
 //starting the producer
-producer.connect();
+connect();
 ```
