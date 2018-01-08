@@ -11,6 +11,7 @@ var isWin = /^win/.test(process.platform);
 
 // Skip running this if we are running on a windows system
 if (isWin) {
+  process.stderr.write('Skipping run because we are on windows\n');
   process.exit(0);
 }
 
