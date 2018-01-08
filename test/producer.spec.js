@@ -7,7 +7,7 @@
  * of the MIT license.  See the LICENSE.txt file for details.
  */
 
-var addon = require('bindings')('node-librdkafka');
+var Producer = require('../lib/producer');
 var t = require('assert');
 // var Mock = require('./mock');
 
@@ -23,7 +23,7 @@ var server;
 module.exports = {
   'Producer client': {
     'beforeEach': function() {
-      client = new addon.Producer(defaultConfig, {});
+      client = new Producer(defaultConfig, {});
     },
     'afterEach': function() {
       client = null;
@@ -33,33 +33,49 @@ module.exports = {
     },
     'requires configuration': function() {
       t.throws(function() {
-        return new addon.Producer();
+        return new Producer();
       });
     },
     'has necessary methods from superclass': function() {
-      var methods = ['connect', 'disconnect', 'onEvent', 'getMetadata'];
+      var methods = ['connect', 'disconnect', 'getMetadata'];
       methods.forEach(function(m) {
         t.equal(typeof(client[m]), 'function', 'Client is missing ' + m + ' method');
       });
     },
-    /*
-    'with mock server': {
-      'before': function(cb) {
-        server = new Mock();
-        server.on('ready', cb);
-      },
+    'has "_disconnect" override': function() {
+      t.equal(typeof(client['_disconnect']), 'function', 'Producer is missing base _disconnect method');
+    },
+    'disconnect method': {
+      'calls flush before it runs': function(next) {
+        var providedTimeout = 1;
 
-      'after': function(cb) {
-        server.close(cb);
-      },
+        client.flush = function(timeout, cb) {
+          t.equal(providedTimeout, timeout, 'Timeouts do not match');
+          t.equal(typeof(cb), 'function');
+          setImmediate(cb);
+        };
 
-      'can connect': function(cb) {
-        var producer = new addon.Producer(defaultConfig, {});
-        producer.connect(function(err, info) {
-          t.ifError(err);
-          cb();
-        });
+        client._disconnect = function(cb) {
+          setImmediate(cb);
+        }
+
+        client.disconnect(providedTimeout, next);
+      },
+      'provides a default timeout when none is provided': function(next) {
+        client.flush = function(timeout, cb) {
+          t.notEqual(timeout, undefined);
+          t.notEqual(timeout, null);
+          t.notEqual(timeout, 0);
+          t.equal(typeof(cb), 'function');
+          setImmediate(cb);
+        };
+
+        client._disconnect = function(cb) {
+          setImmediate(cb);
+        }
+
+        client.disconnect(next);
       }
-    }*/
+    }
   },
 };

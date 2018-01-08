@@ -14,6 +14,12 @@ var consumerConfig = {
   'group.id': 'awesome'
 };
 
+var producerConfig = {
+  'client.id': 'kafka-mocha',
+  'metadata.broker.list': 'localhost:9092',
+  'socket.timeout.ms': 250
+};
+
 module.exports = {
   'native addon': {
     'exports something': function() {
@@ -31,6 +37,28 @@ module.exports = {
     },
     'exports version': function() {
       t.ok(addon.librdkafkaVersion);
+    },
+    'Producer client': {
+      'beforeEach': function() {
+        client = new addon.Producer(producerConfig, {});
+      },
+      'afterEach': function() {
+        client = null;
+      },
+      'is an object': function() {
+        t.equal(typeof(client), 'object');
+      },
+      'requires configuration': function() {
+        t.throws(function() {
+          return new addon.Producer();
+        });
+      },
+      'has necessary methods from superclass': function() {
+        var methods = ['connect', 'disconnect', 'onEvent', 'getMetadata'];
+        methods.forEach(function(m) {
+          t.equal(typeof(client[m]), 'function', 'Client is missing ' + m + ' method');
+        });
+      }
     }
   },
 };
