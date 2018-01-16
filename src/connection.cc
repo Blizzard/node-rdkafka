@@ -78,6 +78,10 @@ bool Connection::IsConnected() {
   return !m_is_closing && m_client != NULL;
 }
 
+bool Connection::IsClosing() {
+  return m_client != NULL && m_is_closing;
+}
+
 RdKafka::Handle* Connection::GetClient() {
   return m_client;
 }

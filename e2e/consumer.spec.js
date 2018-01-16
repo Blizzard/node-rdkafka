@@ -24,7 +24,8 @@ describe('Consumer', function() {
      gcfg = {
       'bootstrap.servers': kafkaBrokerList,
       'group.id': grp,
-      'debug': 'all'
+      'debug': 'all',
+      'rebalance_cb': true
     };
   });
 
@@ -291,7 +292,6 @@ describe('Consumer', function() {
       this.timeout(11000);
 
       var consumer = new KafkaConsumer(gcfg, tcfg);
-
       consumer.setDefaultConsumeTimeout(10000);
 
       consumer.connect({ timeout: 2000 }, function(err, info) {

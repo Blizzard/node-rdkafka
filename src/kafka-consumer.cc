@@ -178,7 +178,7 @@ Baton KafkaConsumer::Assign(std::vector<RdKafka::TopicPartition*> partitions) {
 }
 
 Baton KafkaConsumer::Unassign() {
-  if (!IsConnected()) {
+  if (!IsClosing() && !IsConnected()) {
     return Baton(RdKafka::ERR__STATE);
   }
 
@@ -744,7 +744,8 @@ NAN_METHOD(KafkaConsumer::NodeUnassign) {
 
   KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
-  if (!consumer->IsConnected()) {
+
+  if (!consumer->IsClosing() && !consumer->IsConnected()) {
     Nan::ThrowError("KafkaConsumer is disconnected");
     return;
   }

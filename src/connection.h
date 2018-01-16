@@ -46,6 +46,7 @@ namespace NodeKafka {
 class Connection : public Nan::ObjectWrap {
  public:
   bool IsConnected();
+  bool IsClosing();
 
   // Baton<RdKafka::Topic*>
   Baton CreateTopic(std::string);
