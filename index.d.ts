@@ -155,11 +155,11 @@ export const features: string[];
 
 export const librdkafkaVersion: string;
 
-declare interface ProducerStream extends NodeJS.ReadStream {
+declare interface ProducerStream extends NodeJS.WriteStream {
     producer: Producer
 }
 
-declare interface ConsumerStream extends NodeJS.WriteStream {
+declare interface ConsumerStream extends NodeJS.ReadStream {
     consumer: KafkaConsumer
 }
 
