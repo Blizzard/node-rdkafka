@@ -296,8 +296,6 @@ describe('Consumer/Producer', function() {
 
               // check that no new messages arrive, as the offset was committed
               consumer.once('data', function(message) {
-                console.log('First message offset:', lastOffset, 'New message',
-                  'offset:', message.offset);
                 done(new Error('Should never be here'));
               });
 
