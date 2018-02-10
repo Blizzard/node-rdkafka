@@ -43,7 +43,7 @@ module.exports = {
       });
     },
     'has "_disconnect" override': function() {
-      t.equal(typeof(client['_disconnect']), 'function', 'Producer is missing base _disconnect method');
+      t.equal(typeof(client._disconnect), 'function', 'Producer is missing base _disconnect method');
     },
     'disconnect method': {
       'calls flush before it runs': function(next) {
@@ -57,7 +57,7 @@ module.exports = {
 
         client._disconnect = function(cb) {
           setImmediate(cb);
-        }
+        };
 
         client.disconnect(providedTimeout, next);
       },
@@ -72,7 +72,7 @@ module.exports = {
 
         client._disconnect = function(cb) {
           setImmediate(cb);
-        }
+        };
 
         client.disconnect(next);
       }

@@ -20,6 +20,8 @@ var producerConfig = {
   'socket.timeout.ms': 250
 };
 
+var client;
+
 module.exports = {
   'native addon': {
     'exports something': function() {
