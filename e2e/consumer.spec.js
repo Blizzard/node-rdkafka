@@ -25,7 +25,8 @@ describe('Consumer', function() {
       'bootstrap.servers': kafkaBrokerList,
       'group.id': grp,
       'debug': 'all',
-      'rebalance_cb': true
+      'rebalance_cb': true,
+      'enable.auto.commit': false
     };
   });
 
@@ -40,6 +41,16 @@ describe('Consumer', function() {
       });
 
       eventListener(consumer);
+    });
+
+    it('should allow commit with an array', function(done) {
+      consumer.commit([{ topic: topic, partition: 0, offset: -1 }]);
+      done();
+    });
+
+    it('should allow commit without an array', function(done) {
+      consumer.commit({ topic: topic, partition: 0, offset: -1 });
+      done();
     });
 
     afterEach(function(done) {
@@ -111,6 +122,7 @@ describe('Consumer', function() {
         done();
       });
     });
+
     it('after assign, before consume, position should return an array without offsets', function(done) {
       consumer.assign([{topic:topic, partition:0}]);
       var position = consumer.position();
