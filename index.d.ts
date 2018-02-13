@@ -160,7 +160,9 @@ declare interface ProducerStream extends NodeJS.WriteStream {
 }
 
 declare interface ConsumerStream extends NodeJS.ReadStream {
-    consumer: KafkaConsumer
+    consumer: KafkaConsumer;
+
+    close(callback: any): any;
 }
 
 export function createReadStream(conf: any, topicConf: any, streamOptions: any): ConsumerStream;
