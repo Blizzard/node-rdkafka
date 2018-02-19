@@ -278,7 +278,7 @@ The following table describes types of events.
 | `ready` | The `ready` event is emitted when the `Producer` is ready to send messages. |
 | `event` | The `event` event is emitted when `librdkafka` reports an event (if you opted in via the `event_cb` option). |
 | `event.log` | The `event.log` event is emitted when logging events come in (if you opted into logging via the `event_cb` option). <br><br>You will need to set a value for `debug` if you want to send information. |
-| `event.stats` | The  `event.stats` event is emitted when `librdkafka` reports stats (if you opted in). |
+| `event.stats` | The  `event.stats` event is emitted when `librdkafka` reports stats (if you opted in by setting the `statistics.interval.ms` to a non-zero value). |
 | `event.error` | The  `event.error` event is emitted when `librdkafka` reports an error |
 | `event.throttle` | The `event.throttle` event emitted  when `librdkafka` reports throttling. |
 | `delivery-report` | The `delivery-report` event is emitted when a delivery report has been found via polling. <br><br>To use this event, you must set `request.required.acks` to `1` or `-1` in topic configuration and `dr_cb` (or `dr_msg_cb` if you want the report to contain the message payload) to `true` in the `Producer` constructor options. |
@@ -453,7 +453,7 @@ The following table lists events for this API.
 |`ready` | The `ready` event is emitted when the `Consumer` is ready to read messages. |
 |`event` | The `event` event is emitted when `librdkafka` reports an event (if you opted in via the `event_cb` option).|
 |`event.log` | The `event.log` event is emitted when logging events occur (if you opted in for logging  via the `event_cb` option).<br><br> You will need to set a value for `debug` if you want information to send. |
-|`event.stats` | The `event.stats` event is emitted when `librdkafka` reports stats (if you opted in). |
+|`event.stats` | The  `event.stats` event is emitted when `librdkafka` reports stats (if you opted in by setting the `statistics.interval.ms` to a non-zero value). |
 |`event.throttle` | The `event.throttle` event is emitted when `librdkafka` reports throttling.|
 
 ## Reading current offsets from the broker for a topic
