@@ -382,6 +382,12 @@ stream.on('data', function(message) {
 });
 ```
 
+You can also get the `consumer` from the streamConsumer, for using consumer methods. The following example illustrates that:
+
+```js
+stream.consumer.commit(); // Commits all locally stored offsets
+```
+
 ### Standard API
 
 You can also use the Standard API and manage callbacks and events yourself.  You can choose different modes for consuming messages:
