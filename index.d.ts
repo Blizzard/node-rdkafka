@@ -163,6 +163,16 @@ declare interface ConsumerStream extends NodeJS.ReadStream {
     consumer: KafkaConsumer
 }
 
+declare interface ConsumerStreamMessage {
+  value: Buffer,
+  size: number,
+  topic: string,
+  offset: number,
+  partition: number,
+  key?: string,
+  timestamp?: number
+}
+
 export function createReadStream(conf: any, topicConf: any, streamOptions: any): ConsumerStream;
 
 export function createWriteStream(conf: any, topicConf: any, streamOptions: any): ProducerStream;
