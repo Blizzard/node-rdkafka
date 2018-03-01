@@ -3,7 +3,7 @@
 export class Client extends NodeJS.EventEmitter {
     constructor(globalConf: any, SubClientType: any, topicConf: any);
 
-    connect(metadataOptions: any, cb?: (err: any, data: any) => any): any;
+    connect(metadataOptions: any, cb?: (err: any, data: any) => any): Client;
 
     getClient(): any;
 
@@ -11,7 +11,7 @@ export class Client extends NodeJS.EventEmitter {
 
     getLastError(): any;
 
-    disconnect(cb?: (err: any, data: any) => any): any;
+    disconnect(cb?: (err: any, data: any) => any): Client;
 
     getMetadata(metadataOptions: any, cb?: (err: any, data: any) => any): any;
 
