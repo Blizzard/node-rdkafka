@@ -3,7 +3,7 @@
 export class Client extends NodeJS.EventEmitter {
     constructor(globalConf: any, SubClientType: any, topicConf: any);
 
-    connect(metadataOptions: any, cb?: (err: any, data: any) => any);
+    connect(metadataOptions: any, cb?: (err: any, data: any) => any): Client;
 
     getClient(): any;
 
@@ -11,11 +11,11 @@ export class Client extends NodeJS.EventEmitter {
 
     getLastError(): any;
 
-    disconnect(cb?: (err: any, data: any) => any);
+    disconnect(cb?: (err: any, data: any) => any): Client;
 
-    getMetadata(metadataOptions: any, cb?: (err: any, data: any) => any);
+    getMetadata(metadataOptions: any, cb?: (err: any, data: any) => any): any;
 
-    queryWatermarkOffsets(topic: any, partition: any, timeout: any, cb?: (err: any, offsets: any) => any);
+    queryWatermarkOffsets(topic: any, partition: any, timeout: any, cb?: (err: any, offsets: any) => any): any;
 
 }
 
