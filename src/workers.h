@@ -149,6 +149,25 @@ class MessageWorker : public ErrorAwareWorker {
   std::vector<RdKafka::Message*> m_asyncdata;
 };
 
+namespace Handle {
+class OffsetsForTimes : public ErrorAwareWorker {
+ public:
+  OffsetsForTimes(Nan::Callback*, NodeKafka::Connection*,
+    std::vector<RdKafka::TopicPartition*> &,
+    const int &);
+  ~OffsetsForTimes();
+
+  void Execute();
+  void HandleOKCallback();
+  void HandleErrorCallback();
+
+ private:
+  NodeKafka::Connection * m_handle;
+  std::vector<RdKafka::TopicPartition*> m_topic_partitions;
+  const int m_timeout_ms;
+};
+}  // namespace Handle
+
 class ConnectionMetadata : public ErrorAwareWorker {
  public:
   ConnectionMetadata(Nan::Callback*, NodeKafka::Connection*,
@@ -166,8 +185,6 @@ class ConnectionMetadata : public ErrorAwareWorker {
   bool m_all_topics;
 
   RdKafka::Metadata* m_metadata;
-
-  // Now this is the data that will get translated in the OK callback
 };
 
 class ConnectionQueryWatermarkOffsets : public ErrorAwareWorker {

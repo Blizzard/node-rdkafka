@@ -8,6 +8,7 @@
  */
 
 #include <string>
+#include <vector>
 
 #include "src/connection.h"
 #include "src/workers.h"
@@ -140,6 +141,39 @@ Baton Connection::QueryWatermarkOffsets(
   return Baton(err);
 }
 
+/**
+ * Look up the offsets for the given partitions by timestamp.
+ *
+ * The returned offset for each partition is the earliest offset whose
+ * timestamp is greater than or equal to the given timestamp in the
+ * corresponding partition.
+ *
+ * @returns A baton specifying the error state. If there was no error,
+ *          there still may be an error on a topic partition basis.
+ */
+Baton Connection::OffsetsForTimes(
+  std::vector<RdKafka::TopicPartition*> &toppars,
+  int timeout_ms) {
+  // Check if we are connected first
+
+  RdKafka::ErrorCode err;
+
+  if (IsConnected()) {
+    scoped_shared_read_lock lock(m_connection_lock);
+    if (IsConnected()) {
+      // Always send true - we
+      err = m_client->offsetsForTimes(toppars, timeout_ms);
+
+    } else {
+      err = RdKafka::ERR__STATE;
+    }
+  } else {
+    err = RdKafka::ERR__STATE;
+  }
+
+  return Baton(err);
+}
+
 Baton Connection::GetMetadata(
   bool all_topics, std::string topic_name, int timeout_ms) {
   RdKafka::Topic* topic = NULL;
@@ -210,6 +244,39 @@ NAN_METHOD(Connection::NodeGetMetadata) {
 
   Nan::AsyncQueueWorker(new Workers::ConnectionMetadata(
     callback, obj, topic, timeout_ms, allTopics));
+
+  info.GetReturnValue().Set(Nan::Null());
+}
+
+NAN_METHOD(Connection::NodeOffsetsForTimes) {
+  Nan::HandleScope scope;
+
+  if (info.Length() < 3 || !info[0]->IsArray()) {
+    // Just throw an exception
+    return Nan::ThrowError("Need to specify an array of topic partitions");
+  }
+
+  std::vector<RdKafka::TopicPartition *> toppars =
+    Conversion::TopicPartition::FromV8Array(info[0].As<v8::Array>());
+
+  int timeout_ms;
+  Nan::Maybe<uint32_t> maybeTimeout =
+    Nan::To<uint32_t>(info[1].As<v8::Number>());
+
+  if (maybeTimeout.IsNothing()) {
+    timeout_ms = 1000;
+  } else {
+    timeout_ms = static_cast<int>(maybeTimeout.FromJust());
+  }
+
+  v8::Local<v8::Function> cb = info[2].As<v8::Function>();
+  Nan::Callback *callback = new Nan::Callback(cb);
+
+  Connection* handle = ObjectWrap::Unwrap<Connection>(info.This());
+
+  Nan::AsyncQueueWorker(
+    new Workers::Handle::OffsetsForTimes(callback, handle,
+      toppars, timeout_ms));
 
   info.GetReturnValue().Set(Nan::Null());
 }

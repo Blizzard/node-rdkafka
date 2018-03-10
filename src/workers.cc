@@ -25,6 +25,60 @@ using NodeKafka::Connection;
 namespace NodeKafka {
 namespace Workers {
 
+namespace Handle {
+/**
+ * @brief Handle: get offsets for times.
+ *
+ * This callback will take a topic partition list with timestamps and
+ * for each topic partition, will fill in the offsets. It is done async
+ * because it has a timeout and I don't want node to block
+ *
+ * @see RdKafka::KafkaConsumer::Committed
+ */
+
+OffsetsForTimes::OffsetsForTimes(Nan::Callback *callback,
+                                 Connection* handle,
+                                 std::vector<RdKafka::TopicPartition*> & t,
+                                 const int & timeout_ms) :
+  ErrorAwareWorker(callback),
+  m_handle(handle),
+  m_topic_partitions(t),
+  m_timeout_ms(timeout_ms) {}
+
+OffsetsForTimes::~OffsetsForTimes() {
+  // Delete the underlying topic partitions as they are ephemeral or cloned
+  RdKafka::TopicPartition::destroy(m_topic_partitions);
+}
+
+void OffsetsForTimes::Execute() {
+  Baton b = m_handle->OffsetsForTimes(m_topic_partitions, m_timeout_ms);
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    SetErrorBaton(b);
+  }
+}
+
+void OffsetsForTimes::HandleOKCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 2;
+  v8::Local<v8::Value> argv[argc];
+
+  argv[0] = Nan::Null();
+  argv[1] = Conversion::TopicPartition::ToV8Array(m_topic_partitions);
+
+  callback->Call(argc, argv);
+}
+
+void OffsetsForTimes::HandleErrorCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc] = { GetErrorObject() };
+
+  callback->Call(argc, argv);
+}
+}  // namespace Handle
+
 ConnectionMetadata::ConnectionMetadata(
   Nan::Callback *callback, Connection* connection,
   std::string topic, int timeout_ms, bool all_topics) :
