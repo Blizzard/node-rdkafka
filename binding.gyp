@@ -50,8 +50,6 @@
             ]
           },
           {
-            # Still not fully clear why I need to do this
-            # These should have been done in the librdkafka makefile
             'conditions': [
               [ "<(BUILD_LIBRDKAFKA)==1",
                 {
