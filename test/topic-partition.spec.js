@@ -24,6 +24,22 @@ module.exports = {
       t.equal(toppar.offset, 0);
       t.equal(toppar.partition, 1);
     },
+    'be creatable using 0 as the partition': function() {
+      var toppar = new TopicPartition('topic', 0, 0);
+
+      t.equal(toppar.topic, 'topic');
+      t.equal(toppar.offset, 0);
+      t.equal(toppar.partition, 0);
+    },
+    'throw if partition is null or undefined': function() {
+      t.throws(function() {
+        var tp = new TopicPartition('topic', undefined, 0);
+      });
+
+      t.throws(function() {
+        var tp = new TopicPartition('topic', null, 0);
+      });
+    },
     'sets offset to stored by default': function() {
       var toppar = new TopicPartition('topic', 1);
 
