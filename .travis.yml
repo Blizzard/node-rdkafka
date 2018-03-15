@@ -39,6 +39,9 @@ matrix:
           tags: true
     - os: osx
       osx_image: xcode8
+      nodejs:
+        - 4
+        - 6
       script:
         - make lint
         - make test
