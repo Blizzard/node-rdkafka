@@ -64,9 +64,7 @@
                       'OS=="linux"',
                       {
                         "libraries": [
-                          "-L<(module_root_dir)/build/Release",
-                          "-lrdkafka++",
-                          "-lrdkafka",
+                          "<(module_root_dir)/build/Release/librdkafka++.so",
                           "-Wl,-rpath=<(module_root_dir)/build/Release",
                         ],
                       }
@@ -76,7 +74,6 @@
                       {
                         "libraries": [
                           "<(module_root_dir)/build/Release/librdkafka++.dylib",
-                          "<(module_root_dir)/build/Release/librdkafka.dylib",
                         ],
                       }
                     ]
