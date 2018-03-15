@@ -1,8 +1,8 @@
 {
   "variables": {
-      # may be redefined in command line on configuration stage
-      # "BUILD_LIBRDKAFKA%": "<!(echo ${BUILD_LIBRDKAFKA:-1})"
-      "BUILD_LIBRDKAFKA%": "<!(node ./util/get-env.js BUILD_LIBRDKAFKA 1)"
+    # may be redefined in command line on configuration stage
+    # "BUILD_LIBRDKAFKA%": "<!(echo ${BUILD_LIBRDKAFKA:-1})"
+    "BUILD_LIBRDKAFKA%": "<!(node ./util/get-env.js BUILD_LIBRDKAFKA 1)",
   },
   "targets": [
     {
@@ -43,7 +43,7 @@
             'msvs_version': '2013',
             'msbuild_toolset': 'v120',
             "dependencies": [
-              "<(module_root_dir)/deps/librdkafka.gyp:librdkafkacpp"
+              "<(module_root_dir)/deps/librdkafka.gyp:librdkafka"
             ],
             'include_dirs': [
               'deps/librdkafka/src-cpp'
@@ -54,9 +54,30 @@
               [ "<(BUILD_LIBRDKAFKA)==1",
                 {
                   "dependencies": [
-                      "<(module_root_dir)/deps/librdkafka.gyp:librdkafkacpp"
+                    "<(module_root_dir)/deps/librdkafka.gyp:librdkafka"
                   ],
-                  "include_dirs": [ "deps/librdkafka/src-cpp" ],
+                  "include_dirs": [
+                    "deps/librdkafka/src-cpp"
+                  ],
+                  'conditions': [
+                    [
+                      'OS=="linux"',
+                      {
+                        "libraries": [
+                          "<(module_root_dir)/build/Release/librdkafka++.so",
+                          "-Wl,-rpath=<(module_root_dir)/build/Release",
+                        ],
+                      }
+                    ],
+                    [
+                      'OS=="mac"',
+                      {
+                        "libraries": [
+                          "<(module_root_dir)/build/Release/librdkafka++.dylib",
+                        ],
+                      }
+                    ]
+                  ],
                 },
                 # Else link against globally installed rdkafka and use
                 # globally installed headers.  On Debian, you should

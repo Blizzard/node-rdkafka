@@ -199,7 +199,7 @@ Baton KafkaConsumer::Unassign() {
   return Baton(RdKafka::ERR_NO_ERROR);
 }
 
-Baton KafkaConsumer::Commit(std::string topic_name, int partition, int64_t offset) {  // NOLINT
+Baton KafkaConsumer::Commit(std::vector<RdKafka::TopicPartition*> toppars) {
   if (!IsConnected()) {
     return Baton(RdKafka::ERR__STATE);
   }
@@ -207,17 +207,22 @@ Baton KafkaConsumer::Commit(std::string topic_name, int partition, int64_t offse
   RdKafka::KafkaConsumer* consumer =
     dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
 
-  RdKafka::TopicPartition* topic =
-    RdKafka::TopicPartition::create(topic_name, partition);
-  topic->set_offset(offset);
+  RdKafka::ErrorCode err = consumer->commitAsync(toppars);
+
+  return Baton(err);
+}
+
+Baton KafkaConsumer::Commit(RdKafka::TopicPartition * toppar) {
+  if (!IsConnected()) {
+    return Baton(RdKafka::ERR__STATE, "KafkaConsumer is not connected");
+  }
+
+  RdKafka::KafkaConsumer* consumer =
+    dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
 
   // Need to put topic in a vector for it to work
-  std::vector<RdKafka::TopicPartition*> offsets = {topic};
-
+  std::vector<RdKafka::TopicPartition*> offsets = {toppar};
   RdKafka::ErrorCode err = consumer->commitAsync(offsets);
-
-  // We are done. Clean up our mess
-  delete topic;
 
   return Baton(err);
 }
@@ -237,7 +242,21 @@ Baton KafkaConsumer::Commit() {
 }
 
 // Synchronous commit events
-Baton KafkaConsumer::CommitSync(std::string topic_name, int partition, int64_t offset) {  // NOLINT
+Baton KafkaConsumer::CommitSync(std::vector<RdKafka::TopicPartition*> toppars) {
+  if (!IsConnected()) {
+    return Baton(RdKafka::ERR__STATE, "KafkaConsumer is not connected");
+  }
+
+  RdKafka::KafkaConsumer* consumer =
+    dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
+
+  RdKafka::ErrorCode err = consumer->commitSync(toppars);
+  // RdKafka::TopicPartition::destroy(toppars);
+
+  return Baton(err);
+}
+
+Baton KafkaConsumer::CommitSync(RdKafka::TopicPartition * toppar) {
   if (!IsConnected()) {
     return Baton(RdKafka::ERR__STATE);
   }
@@ -245,17 +264,9 @@ Baton KafkaConsumer::CommitSync(std::string topic_name, int partition, int64_t o
   RdKafka::KafkaConsumer* consumer =
     dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
 
-  RdKafka::TopicPartition* topic =
-    RdKafka::TopicPartition::create(topic_name, partition);
-  topic->set_offset(offset);
-
   // Need to put topic in a vector for it to work
-  std::vector<RdKafka::TopicPartition*> offsets = {topic};
-
+  std::vector<RdKafka::TopicPartition*> offsets = {toppar};
   RdKafka::ErrorCode err = consumer->commitSync(offsets);
-
-  // We are done. Clean up our mess
-  delete topic;
 
   return Baton(err);
 }
@@ -483,6 +494,7 @@ void KafkaConsumer::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(tpl, "disconnect", NodeDisconnect);
   Nan::SetPrototypeMethod(tpl, "getMetadata", NodeGetMetadata);
   Nan::SetPrototypeMethod(tpl, "queryWatermarkOffsets", NodeQueryWatermarkOffsets);  // NOLINT
+  Nan::SetPrototypeMethod(tpl, "offsetsForTimes", NodeOffsetsForTimes);
   Nan::SetPrototypeMethod(tpl, "getWatermarkOffsets", NodeGetWatermarkOffsets);
 
   /*
@@ -771,6 +783,7 @@ NAN_METHOD(KafkaConsumer::NodeUnsubscribe) {
 
 NAN_METHOD(KafkaConsumer::NodeCommit) {
   Nan::HandleScope scope;
+  int error_code;
 
   KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
@@ -779,27 +792,33 @@ NAN_METHOD(KafkaConsumer::NodeCommit) {
     return;
   }
 
-  int error_code;
-
-  // If we are provided a message object
-  if (info.Length() >= 1 && !info[0]->IsNull() && !info[0]->IsUndefined()) {
-    if (!info[0]->IsObject()) {
-      Nan::ThrowError("Parameter, when provided, must be an object");
-      return;
-    }
-    v8::Local<v8::Object> params = info[0].As<v8::Object>();
-
-    // This one is a buffer
-    std::string topic_name = GetParameter<std::string>(params, "topic", "");
-    int partition = GetParameter<int>(params, "partition", 0);
-    int64_t offset = GetParameter<int64_t>(params, "offset", -1);
-
-    // Do it sync i guess
-    Baton b = consumer->Commit(topic_name, partition, offset);
-    error_code = static_cast<int>(b.err());
-  } else {
+  if (info[0]->IsNull() || info[0]->IsUndefined()) {
     Baton b = consumer->Commit();
     error_code = static_cast<int>(b.err());
+  } else if (info[0]->IsArray()) {
+    std::vector<RdKafka::TopicPartition *> toppars =
+      Conversion::TopicPartition::FromV8Array(info[0].As<v8::Array>());
+
+    Baton b = consumer->Commit(toppars);
+    error_code = static_cast<int>(b.err());
+
+    RdKafka::TopicPartition::destroy(toppars);
+  } else if (info[0]->IsObject()) {
+    RdKafka::TopicPartition * toppar =
+      Conversion::TopicPartition::FromV8Object(info[0].As<v8::Object>());
+
+    if (toppar == NULL) {
+      Nan::ThrowError("Invalid topic partition provided");
+      return;
+    }
+
+    Baton b = consumer->Commit(toppar);
+    error_code = static_cast<int>(b.err());
+
+    delete toppar;
+  } else {
+    Nan::ThrowError("First parameter must be an object or an array");
+    return;
   }
 
   info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
@@ -807,6 +826,7 @@ NAN_METHOD(KafkaConsumer::NodeCommit) {
 
 NAN_METHOD(KafkaConsumer::NodeCommitSync) {
   Nan::HandleScope scope;
+  int error_code;
 
   KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
@@ -815,27 +835,33 @@ NAN_METHOD(KafkaConsumer::NodeCommitSync) {
     return;
   }
 
-  int error_code;
-
-  // If we are provided a message object
-  if (info.Length() >= 1 && !info[0]->IsNull() && !info[0]->IsUndefined()) {
-    if (!info[0]->IsObject()) {
-      Nan::ThrowError("Parameter, when provided, must be an object");
-      return;
-    }
-    v8::Local<v8::Object> params = info[0].As<v8::Object>();
-
-    // This one is a buffer
-    std::string topic_name = GetParameter<std::string>(params, "topic", "");
-    int partition = GetParameter<int>(params, "partition", 0);
-    int64_t offset = GetParameter<int64_t>(params, "offset", -1);
-
-    // Do it sync i guess
-    Baton b = consumer->CommitSync(topic_name, partition, offset);
-    error_code = static_cast<int>(b.err());
-  } else {
+  if (info[0]->IsNull() || info[0]->IsUndefined()) {
     Baton b = consumer->CommitSync();
     error_code = static_cast<int>(b.err());
+  } else if (info[0]->IsArray()) {
+    std::vector<RdKafka::TopicPartition *> toppars =
+      Conversion::TopicPartition::FromV8Array(info[0].As<v8::Array>());
+
+    Baton b = consumer->CommitSync(toppars);
+    error_code = static_cast<int>(b.err());
+
+    RdKafka::TopicPartition::destroy(toppars);
+  } else if (info[0]->IsObject()) {
+    RdKafka::TopicPartition * toppar =
+      Conversion::TopicPartition::FromV8Object(info[0].As<v8::Object>());
+
+    if (toppar == NULL) {
+      Nan::ThrowError("Invalid topic partition provided");
+      return;
+    }
+
+    Baton b = consumer->CommitSync(toppar);
+    error_code = static_cast<int>(b.err());
+
+    delete toppar;
+  } else {
+    Nan::ThrowError("First parameter must be an object or an array");
+    return;
   }
 
   info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));

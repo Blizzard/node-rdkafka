@@ -12,7 +12,7 @@ Copyright (c) 2016 Blizzard Entertainment.
 
 The `node-rdkafka` library is a high-performance NodeJS client for [Apache Kafka](http://kafka.apache.org/) that wraps the native  [librdkafka](https://github.com/edenhill/librdkafka) library.  All the complexity of balancing writes across partitions and managing (possibly ever-changing) brokers should be encapsulated in the library.
 
-__This library currently uses `librdkafka` version `0.11.1`.__
+__This library currently uses `librdkafka` version `0.11.3`.__
 
 ## Reference Docs
 
@@ -36,6 +36,10 @@ Play nice; Play fair.
 __NOTE:__ From the `librdkafka` docs
 
 > WARNING: Due to a bug in Apache Kafka 0.9.0.x, the ApiVersionRequest (as sent by the client when connecting to the broker) will be silently ignored by the broker causing the request to time out after 10 seconds. This causes client-broker connections to stall for 10 seconds during connection-setup before librdkafka falls back on the broker.version.fallback protocol features. The workaround is to explicitly configure api.version.request to false on clients communicating with &lt=0.9.0.x brokers.
+
+### Alpine
+
+Using Alpine Linux? Check out the [docs](https://github.com/Blizzard/node-rdkafka/blob/master/examples/docker-alpine.md).
 
 ### Windows
 
@@ -278,7 +282,7 @@ The following table describes types of events.
 | `ready` | The `ready` event is emitted when the `Producer` is ready to send messages. |
 | `event` | The `event` event is emitted when `librdkafka` reports an event (if you opted in via the `event_cb` option). |
 | `event.log` | The `event.log` event is emitted when logging events come in (if you opted into logging via the `event_cb` option). <br><br>You will need to set a value for `debug` if you want to send information. |
-| `event.stats` | The  `event.stats` event is emitted when `librdkafka` reports stats (if you opted in). |
+| `event.stats` | The  `event.stats` event is emitted when `librdkafka` reports stats (if you opted in by setting the `statistics.interval.ms` to a non-zero value). |
 | `event.error` | The  `event.error` event is emitted when `librdkafka` reports an error |
 | `event.throttle` | The `event.throttle` event emitted  when `librdkafka` reports throttling. |
 | `delivery-report` | The `delivery-report` event is emitted when a delivery report has been found via polling. <br><br>To use this event, you must set `request.required.acks` to `1` or `-1` in topic configuration and `dr_cb` (or `dr_msg_cb` if you want the report to contain the message payload) to `true` in the `Producer` constructor options. |
@@ -382,6 +386,12 @@ stream.on('data', function(message) {
 });
 ```
 
+You can also get the `consumer` from the streamConsumer, for using consumer methods. The following example illustrates that:
+
+```js
+stream.consumer.commit(); // Commits all locally stored offsets
+```
+
 ### Standard API
 
 You can also use the Standard API and manage callbacks and events yourself.  You can choose different modes for consuming messages:
@@ -453,7 +463,7 @@ The following table lists events for this API.
 |`ready` | The `ready` event is emitted when the `Consumer` is ready to read messages. |
 |`event` | The `event` event is emitted when `librdkafka` reports an event (if you opted in via the `event_cb` option).|
 |`event.log` | The `event.log` event is emitted when logging events occur (if you opted in for logging  via the `event_cb` option).<br><br> You will need to set a value for `debug` if you want information to send. |
-|`event.stats` | The `event.stats` event is emitted when `librdkafka` reports stats (if you opted in). |
+|`event.stats` | The  `event.stats` event is emitted when `librdkafka` reports stats (if you opted in by setting the `statistics.interval.ms` to a non-zero value). |
 |`event.throttle` | The `event.throttle` event is emitted when `librdkafka` reports throttling.|
 
 ## Reading current offsets from the broker for a topic

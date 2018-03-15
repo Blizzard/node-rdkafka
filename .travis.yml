@@ -1,29 +1,52 @@
-dist: trusty
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      sudo: required
+      nodejs:
+        - 4
+        - 6
+      services:
+        - docker
+      before_install:
+        - ./run_docker.sh
+      script:
+        - make lint
+        - make test
+        - make e2e
+    - os: linux
+      dist: trusty
+      sudo: required
+      nodejs: 8
+      before_deploy:
+        - openssl aes-256-cbc -K $encrypted_a2e08d5c220e_key -iv $encrypted_a2e08d5c220e_iv -in deploy.enc -out /tmp/deploy -d
+        - eval "$(ssh-agent -s)"
+        - chmod 600 /tmp/deploy
+        - ssh-add /tmp/deploy
+      services:
+        - docker
+      before_install:
+        - ./run_docker.sh
+      script:
+        - make lint
+        - make test
+        - make e2e
+      deploy:
+        provider: script
+        script: ./make_docs.sh
+        on:
+          branch: master
+          tags: true
+    - os: osx
+      osx_image: xcode8
+      nodejs:
+        - 4
+        - 6
+      script:
+        - make lint
+        - make test
+        - make check
 language: node_js
-sudo: required
-node_js:
-- '4'
-- '6'
-- '8'
 cache:
   directories:
   - node_modules
-services:
-- docker
-before_install:
-- ./run_docker.sh
-script:
-- make lint
-- make test
-- make e2e
-before_deploy:
-- openssl aes-256-cbc -K $encrypted_a2e08d5c220e_key -iv $encrypted_a2e08d5c220e_iv -in deploy.enc -out /tmp/deploy -d
-- eval "$(ssh-agent -s)"
-- chmod 600 /tmp/deploy
-- ssh-add /tmp/deploy
-deploy:
-  provider: script
-  script: ./make_docs.sh
-  on:
-    branch: master
-    tags: true

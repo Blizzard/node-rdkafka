@@ -50,14 +50,16 @@ class KafkaConsumer : public Connection {
   Baton Resume(std::vector<RdKafka::TopicPartition*> &);
 
   // Asynchronous commit events
-  Baton Commit(std::string, int, int64_t);
+  Baton Commit(std::vector<RdKafka::TopicPartition*>);
+  Baton Commit(RdKafka::TopicPartition*);
   Baton Commit();
-  Baton OffsetsStore(std::vector<RdKafka::TopicPartition*> &);
 
+  Baton OffsetsStore(std::vector<RdKafka::TopicPartition*> &);
   Baton GetWatermarkOffsets(std::string, int32_t, int64_t*, int64_t*);
 
   // Synchronous commit events
-  Baton CommitSync(std::string, int, int64_t);
+  Baton CommitSync(std::vector<RdKafka::TopicPartition*>);
+  Baton CommitSync(RdKafka::TopicPartition*);
   Baton CommitSync();
 
   Baton Committed(std::vector<RdKafka::TopicPartition*> &, int timeout_ms);
