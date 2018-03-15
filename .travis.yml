@@ -6,6 +6,14 @@ matrix:
       nodejs:
         - 4
         - 6
+      services:
+        - docker
+      before_install:
+        - ./run_docker.sh
+      script:
+        - make lint
+        - make test
+        - make e2e
     - os: linux
       dist: trusty
       sudo: required
@@ -15,6 +23,14 @@ matrix:
         - eval "$(ssh-agent -s)"
         - chmod 600 /tmp/deploy
         - ssh-add /tmp/deploy
+      services:
+        - docker
+      before_install:
+        - ./run_docker.sh
+      script:
+        - make lint
+        - make test
+        - make e2e
       deploy:
         provider: script
         script: ./make_docs.sh
@@ -23,15 +39,11 @@ matrix:
           tags: true
     - os: osx
       osx_image: xcode8
+      script:
+        - make lint
+        - make test
+        - make check
 language: node_js
 cache:
   directories:
   - node_modules
-services:
-  - docker
-before_install:
-  - ./run_docker.sh
-script:
-  - make lint
-  - make test
-  - make e2e
