@@ -87,6 +87,25 @@ module.exports = {
         });
       },
 
+      'forwards connectOptions to client options when provided': function(cb) {
+        var testClientOptions = { timeout: 3000 };
+
+        fakeClient._isConnected = false;
+        fakeClient.isConnected = function() {
+          return false;
+        };
+        var fakeConnect = fakeClient.connect
+        fakeClient.connect = function(opts, callback) {
+          t.deepEqual(opts, testClientOptions);
+          cb();
+        };
+
+        var stream = new ProducerStream(fakeClient, {
+          topic: 'topic',
+          connectOptions: testClientOptions
+        });
+      },
+
       'automatically disconnects when autoclose is not provided': function(cb) {
         fakeClient.once('disconnected', cb);
 
