@@ -94,7 +94,7 @@ module.exports = {
         fakeClient.isConnected = function() {
           return false;
         };
-        var fakeConnect = fakeClient.connect
+        var fakeConnect = fakeClient.connect;
         fakeClient.connect = function(opts, callback) {
           t.deepEqual(opts, testClientOptions);
           cb();
