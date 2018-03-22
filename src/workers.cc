@@ -501,7 +501,7 @@ void KafkaConsumerConsumeLoop::HandleErrorCallback() {
 /**
  * @brief KafkaConsumer get messages worker.
  *
- * This callback will get a number of message. Can be of use in streams or
+ * This callback will get a number of messages. Can be of use in streams or
  * places where you don't want an infinite loop managed in C++land and would
  * rather manage it in Node.
  *
