@@ -158,11 +158,14 @@ export const features: string[];
 export const librdkafkaVersion: string;
 
 declare interface ProducerStream extends Writable {
-    producer: Producer
+    producer: Producer;
+    connect(): void;
+    close(cb?: Function): void;
 }
 
 declare interface ConsumerStream extends Readable {
-    consumer: KafkaConsumer
+    consumer: KafkaConsumer;
+    connect(options: any): void;
     close(cb?: Function): void;
 }
 
