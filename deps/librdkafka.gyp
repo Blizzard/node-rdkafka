@@ -60,39 +60,6 @@
             },
           },
           {
-            "conditions": [
-              [
-                'OS=="mac"',
-                {
-                  'copies': [
-                    {
-                      'files': [
-                        '<(module_root_dir)/deps/librdkafka/src-cpp/librdkafka++.dylib',
-                        '<(module_root_dir)/deps/librdkafka/src-cpp/librdkafka++.1.dylib',
-                        '<(module_root_dir)/deps/librdkafka/src/librdkafka.dylib',
-                        '<(module_root_dir)/deps/librdkafka/src/librdkafka.1.dylib'
-                      ],
-                      'destination': '<(module_root_dir)/build/Release'
-                    }
-                  ],
-                },
-                {
-                  'copies': [
-                    {
-                      'files': [
-                        '<(module_root_dir)/deps/librdkafka/src-cpp/librdkafka++.so',
-                        '<(module_root_dir)/deps/librdkafka/src-cpp/librdkafka++.so.1',
-                        '<(module_root_dir)/deps/librdkafka/src/librdkafka.so',
-                        '<(module_root_dir)/deps/librdkafka/src/librdkafka.so.1',
-                        '<(module_root_dir)/deps/librdkafka/src-cpp/librdkafka++.a',
-                        '<(module_root_dir)/deps/librdkafka/src/librdkafka.a',
-                      ],
-                      'destination': '<(module_root_dir)/build/Release'
-                    }
-                  ],
-                }
-              ]
-            ],
             "actions": [
               {
                 "action_name": "build_dependencies",
@@ -100,7 +67,7 @@
                   "<(module_root_dir)/deps/librdkafka/config.h",
                 ],
                 "action": [
-                  "make", "-C", "<(module_root_dir)/deps/librdkafka", "libs"
+                  "make", "-C", "<(module_root_dir)/deps/librdkafka", "libs", "install"
                 ],
                 "conditions": [
                   [

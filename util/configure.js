@@ -6,8 +6,7 @@ var fs = require('fs');
 var path = require('path');
 
 var baseDir = path.resolve(__dirname, '../');
-var releaseDir = path.join(baseDir, 'build', 'Release');
-var debugDir = path.join(baseDir, 'build', 'Debug');
+var releaseDir = path.join(baseDir, 'build', 'deps');
 
 var isWin = /^win/.test(process.platform);
 
