@@ -83,6 +83,7 @@ describe('Consumer/Producer', function() {
   });
 
   afterEach(function(done) {
+    this.timeout(6000);
     var finished = 0;
     var called = false;
 
