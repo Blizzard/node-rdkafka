@@ -64,6 +64,7 @@
                       'OS=="linux"',
                       {
                         "libraries": [
+                          "<(module_root_dir)/build/deps/librdkafka.so",
                           "<(module_root_dir)/build/deps/librdkafka++.so",
                           "-Wl,-rpath=<(module_root_dir)/build/deps",
                         ],
