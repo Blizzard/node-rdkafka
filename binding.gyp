@@ -74,6 +74,7 @@
                       'OS=="mac"',
                       {
                         "libraries": [
+                          "<(module_root_dir)/build/deps/librdkafka.dylib",
                           "<(module_root_dir)/build/deps/librdkafka++.dylib",
                         ],
                       }
