@@ -31,12 +31,24 @@
               '-std=c++11'
             ],
             'msvs_settings': {
+              'VCLinkerTool': {
+                'AdditionalDependencies': [
+                  'librdkafka.lib',
+                  'librdkafkacpp.lib'
+                ],
+                'AdditionalLibraryDirectories': [
+                  '<(module_root_dir)/deps/librdkafka/win32/outdir/v120/x64/Release/'
+                ]
+              },
               'VCCLCompilerTool': {
                 'AdditionalOptions': [
                   '/GR'
                 ],
                 'AdditionalUsingDirectories': [
                   '<(module_root_dir)/deps/librdkafka/win32/outdir/v120/x64/Release/'
+                ],
+                'AdditionalIncludeDirectories': [
+                  'deps/librdkafka/src-cpp'
                 ]
               }
             },
