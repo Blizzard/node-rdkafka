@@ -473,12 +473,12 @@ Some times you find yourself in the situation where you need to know the latest 
 ```js
 var timeout = 5000, partition = 0;
 consumer.queryWatermarkOffsets('my-topic', partition, timeout, function(err, offsets) {
-  var high = offsets.highOffest;
+  var high = offsets.highOffset;
   var low = offsets.lowOffset;
 });
 
 producer.queryWatermarkOffsets('my-topic', partition, timeout, function(err, offsets) {
-  var high = offsets.highOffest;
+  var high = offsets.highOffset;
   var low = offsets.lowOffset;
 });
 
