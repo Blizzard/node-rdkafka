@@ -603,6 +603,59 @@ module.exports = {
         };
         fakeClient.connect();
       },
+
+      'properly handles queue errors while draining': function(done) {
+        var message;
+        var currentMessage = 0;
+
+        fakeClient.produce = function(topic, partition, message, key) {
+          currentMessage++;
+          if (currentMessage === 3) {
+            var err = new Error('Queue full');
+            err.code = -184;
+            throw err;
+          } else if (currentMessage === 4) {
+            done();
+          }
+        };
+
+        var stream = new ProducerStream(fakeClient, {
+          objectMode: true
+        });
+        stream.on('error', function(err) {
+          t.fail(err);
+        });
+
+        fakeClient._isConnected = false;
+        fakeClient._isConnecting = true;
+        fakeClient.isConnected = function() {
+          return false;
+        };
+
+        stream.write({
+          value: new Buffer('Awesome1'),
+          topic: 'topic'
+        });
+        stream.write({
+          value: new Buffer('Awesome2'),
+          topic: 'topic'
+        });
+        stream.write({
+          value: new Buffer('Awesome3'),
+          topic: 'topic'
+        });
+        stream.write({
+          value: new Buffer('Awesome4'),
+          topic: 'topic'
+        });
+
+        fakeClient._isConnected = true;
+        fakeClient._isConnecting = false;
+        fakeClient.isConnected = function() {
+          return true;
+        };
+        fakeClient.connect();
+      }
     }
 
   }
