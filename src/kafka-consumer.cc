@@ -728,8 +728,11 @@ NAN_METHOD(KafkaConsumer::NodeAssign) {
         part = Connection::GetPartition(topic, partition);
       }
 
-      int64_t offset = GetParameter<int64_t>(partition_obj, "offset", -1);
-      if (offset >= 0) {
+      // Set the default value to offset invalid. If provided, we will not set
+      // the offset.
+      int64_t offset = GetParameter<int64_t>(
+        partition_obj, "offset", RdKafka::Topic::OFFSET_INVALID);
+      if (offset != RdKafka::Topic::OFFSET_INVALID) {
         part->set_offset(offset);
       }
 
