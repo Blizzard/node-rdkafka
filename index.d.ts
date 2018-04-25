@@ -38,7 +38,8 @@ export class KafkaConsumer extends Client {
 
     committed(toppars: any, timeout: any, cb: any, ...args: any[]): any;
 
-    consume(number: any, cb: any): void;
+    consume(number: any, cb?: any): void;
+    consume(): void;
 
     getWatermarkOffsets(topic: any, partition: any): any;
 
