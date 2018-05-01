@@ -62,6 +62,16 @@
           {
             "actions": [
               {
+                "action_name": "configure",
+                "inputs": [],
+                "outputs": [
+                  "<(module_root_dir)/deps/librdkafka/config.h",
+                ],
+                "action": [
+                  "node", "<(module_root_dir)/util/configure"
+                ]
+              },
+              {
                 "action_name": "build_dependencies",
                 "inputs": [
                   "<(module_root_dir)/deps/librdkafka/config.h",

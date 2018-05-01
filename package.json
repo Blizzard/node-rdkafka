@@ -7,7 +7,6 @@
     "configure": "node-gyp configure",
     "build": "node-gyp build",
     "test": "make test",
-    "preinstall": "node util/configure",
     "install": "node-gyp rebuild"
   },
   "keywords": [
