@@ -5,3 +5,4 @@ deps/
 Dockerfile
 deps/librdkafka/config.h
 build
+.github

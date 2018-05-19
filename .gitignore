@@ -9,3 +9,5 @@ deps/*
 !deps/*.gyp
 
 .DS_Store
+
+package-lock.json
