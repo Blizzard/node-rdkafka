@@ -192,7 +192,7 @@ export function createWriteStream(conf: any, topicConf: any, streamOptions: any)
 
 declare interface EventCallbackRepositoryArityOne {
   // domain events
-  'data': ConsumerMessage,
+  'data': ConsumerStreamMessage,
   'rebalance': any,
   'error': any,
 
