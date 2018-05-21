@@ -17,6 +17,11 @@ export class Client extends NodeJS.EventEmitter {
 
     queryWatermarkOffsets(topic: any, partition: any, timeout: any, cb?: (err: any, offsets: any) => any): any;
 
+    // currently need to overload signature for different callback arities because of https://github.com/Microsoft/TypeScript/issues/15972
+    on<T extends keyof EventCallbackRepositoryArityOne, K extends EventCallbackRepositoryArityOne[T]>(val: T, listener: (arg: K) => void): this;
+    on<T extends keyof EventCallbackRepositoryArityTwo, K extends EventCallbackRepositoryArityTwo[T]>(val: T, listener: (arg0: K[0], arg1: K[1]) => void): this;
+    once<T extends keyof EventCallbackRepository, K extends EventCallbackRepository[T]>(val: T, listener: (arg: K) => void): this;
+    once<T extends keyof EventCallbackRepositoryArityTwo, K extends EventCallbackRepositoryArityTwo[T]>(val: T, listener: (arg0: K[0], arg1: K[1]) => void): this;
 }
 
 export type ErrorWrap<T> = boolean | T;
@@ -184,3 +189,28 @@ declare interface ConsumerStreamMessage {
 export function createReadStream(conf: any, topicConf: any, streamOptions: any): ConsumerStream;
 
 export function createWriteStream(conf: any, topicConf: any, streamOptions: any): ProducerStream;
+
+declare interface EventCallbackRepositoryArityOne {
+  // domain events
+  'data': ConsumerMessage,
+  'rebalance': any,
+  'error': any,
+
+  // connectity events
+  'end': any,
+  'close': any,
+  'disconnected': any,
+  'ready': any,
+  'exit': any,
+  'unsubscribed': any,'connection.failure': any,
+
+  // event messages
+  'event.error': any,
+  'event.log': any,
+  'event.throttle': any,
+  'event.event': any,
+}
+
+declare interface EventCallbackRepositoryArityTwo {
+  'delivery-report': [any, any]
+}
