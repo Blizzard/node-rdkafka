@@ -29,6 +29,7 @@ export class KafkaConsumer extends Client {
     assignments(): ErrorWrap<any>;
 
     commit(topicPartition: any): this;
+    commit(): this;
 
     commitMessage(msg: any): this;
 
@@ -38,7 +39,7 @@ export class KafkaConsumer extends Client {
 
     committed(toppars: any, timeout: any, cb: (err: any, topicPartitions: any) => void, ...args: any[]): ErrorWrap<any>;
 
-    consume(number: any, cb?: any): void;
+    consume(number: number, cb?: any): void;
     consume(): void;
 
     getWatermarkOffsets(topic: any, partition: any): ErrorWrap<any>;
