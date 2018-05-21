@@ -19,47 +19,49 @@ export class Client extends NodeJS.EventEmitter {
 
 }
 
+export type ErrorWrap<T> = boolean | T;
+
 export class KafkaConsumer extends Client {
     constructor(conf: any, topicConf: any);
 
-    assign(assignments: any): any;
+    assign(assignments: any): this;
 
-    assignments(): any;
+    assignments(): ErrorWrap<any>;
 
-    commit(topicPartition: any): any;
+    commit(topicPartition: any): this;
 
-    commitMessage(msg: any): any;
+    commitMessage(msg: any): this;
 
-    commitMessageSync(msg: any): any;
+    commitMessageSync(msg: any): this;
 
-    commitSync(topicPartition: any): any;
+    commitSync(topicPartition: any): this;
 
-    committed(toppars: any, timeout: any, cb: any, ...args: any[]): any;
+    committed(toppars: any, timeout: any, cb: (err: any, topicPartitions: any) => void, ...args: any[]): ErrorWrap<any>;
 
     consume(number: any, cb?: any): void;
     consume(): void;
 
-    getWatermarkOffsets(topic: any, partition: any): any;
+    getWatermarkOffsets(topic: any, partition: any): ErrorWrap<any>;
 
-    offsetsStore(topicPartitions: any): any;
+    offsetsStore(topicPartitions: any): ErrorWrap<any>;
 
-    pause(topicPartitions: any): any;
+    pause(topicPartitions: any): ErrorWrap<any>;
 
-    position(toppars: any): any;
+    position(toppars: any): ErrorWrap<any>;
 
-    resume(topicPartitions: any): any;
+    resume(topicPartitions: any): ErrorWrap<any>;
 
-    seek(toppar: any, timeout: any, cb: any): any;
+    seek(toppar: any, timeout: any, cb: any): this;
 
     setDefaultConsumeTimeout(timeoutMs: any): void;
 
-    subscribe(topics: any): any;
+    subscribe(topics: any): this;
 
-    subscription(): any;
+    subscription(): ErrorWrap<any>;
 
-    unassign(): any;
+    unassign(): this;
 
-    unsubscribe(): any;
+    unsubscribe(): this;
 
 }
 
