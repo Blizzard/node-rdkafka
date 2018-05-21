@@ -3,7 +3,7 @@ import { Readable, Writable } from 'stream';
 export class Client extends NodeJS.EventEmitter {
     constructor(globalConf: any, SubClientType: any, topicConf: any);
 
-    connect(metadataOptions: any, cb?: (err: any, data: any) => any): Client;
+    connect(metadataOptions?: any, cb?: (err: any, data: any) => any): this;
 
     getClient(): any;
 
@@ -11,7 +11,7 @@ export class Client extends NodeJS.EventEmitter {
 
     getLastError(): any;
 
-    disconnect(cb?: (err: any, data: any) => any): Client;
+    disconnect(cb?: (err: any, data: any) => any): this;
 
     getMetadata(metadataOptions: any, cb?: (err: any, data: any) => any): any;
 
