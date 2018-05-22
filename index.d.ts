@@ -20,7 +20,7 @@ export class Client extends NodeJS.EventEmitter {
     // currently need to overload signature for different callback arities because of https://github.com/Microsoft/TypeScript/issues/15972
     on<T extends keyof EventCallbackRepositoryArityOne, K extends EventCallbackRepositoryArityOne[T]>(val: T, listener: (arg: K) => void): this;
     on<T extends keyof EventCallbackRepositoryArityTwo, K extends EventCallbackRepositoryArityTwo[T]>(val: T, listener: (arg0: K[0], arg1: K[1]) => void): this;
-    once<T extends keyof EventCallbackRepository, K extends EventCallbackRepository[T]>(val: T, listener: (arg: K) => void): this;
+    once<T extends keyof EventCallbackRepositoryArityOne, K extends EventCallbackRepositoryArityOne[T]>(val: T, listener: (arg: K) => void): this;
     once<T extends keyof EventCallbackRepositoryArityTwo, K extends EventCallbackRepositoryArityTwo[T]>(val: T, listener: (arg0: K[0], arg1: K[1]) => void): this;
 }
 
