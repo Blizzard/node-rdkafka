@@ -410,14 +410,8 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Message *message, bool include_payload
       Nan::Set(pack, Nan::New<v8::String>("value").ToLocalChecked(),
         Nan::Undefined());
     } else if (message_payload) {
-      void* payload = malloc(message->len());
-      memcpy(payload, message_payload, message->len());
-
-      Nan::MaybeLocal<v8::Object> buff = Nan::NewBuffer(
-        static_cast<char*>(payload), static_cast<int>(message->len()));
-
       Nan::Set(pack, Nan::New<v8::String>("value").ToLocalChecked(),
-        buff.ToLocalChecked());
+        Nan::Encode(message_payload, message->len()));
     } else {
       Nan::Set(pack, Nan::New<v8::String>("value").ToLocalChecked(),
         Nan::Null());
@@ -431,14 +425,8 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Message *message, bool include_payload
     if (key_payload) {
       // We want this to also be a buffer to avoid corruption
       // https://github.com/Blizzard/node-rdkafka/issues/208
-      void* key = malloc(message->key_len());
-      memcpy(key, key_payload, message->key_len());
-
-      Nan::MaybeLocal<v8::Object> buff = Nan::NewBuffer(
-        static_cast<char*>(key), static_cast<int>(message->key_len()));
-
       Nan::Set(pack, Nan::New<v8::String>("key").ToLocalChecked(),
-        buff.ToLocalChecked());
+        Nan::Encode(key_payload, message->key_len()));
     } else {
       Nan::Set(pack, Nan::New<v8::String>("key").ToLocalChecked(),
         Nan::Null());
