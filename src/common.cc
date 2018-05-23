@@ -411,7 +411,7 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Message *message, bool include_payload
         Nan::Undefined());
     } else if (message_payload) {
       Nan::Set(pack, Nan::New<v8::String>("value").ToLocalChecked(),
-        Nan::Encode(message_payload, message->len()));
+        Nan::Encode(message_payload, message->len(), Nan::Encoding::BUFFER));
     } else {
       Nan::Set(pack, Nan::New<v8::String>("value").ToLocalChecked(),
         Nan::Null());
@@ -426,7 +426,7 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Message *message, bool include_payload
       // We want this to also be a buffer to avoid corruption
       // https://github.com/Blizzard/node-rdkafka/issues/208
       Nan::Set(pack, Nan::New<v8::String>("key").ToLocalChecked(),
-        Nan::Encode(key_payload, message->key_len()));
+        Nan::Encode(key_payload, message->key_len(), Nan::Encoding::BUFFER));
     } else {
       Nan::Set(pack, Nan::New<v8::String>("key").ToLocalChecked(),
         Nan::Null());
