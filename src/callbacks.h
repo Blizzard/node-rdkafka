@@ -110,6 +110,7 @@ class DeliveryReport {
   std::string topic_name;
   int32_t partition;
   int64_t offset;
+  int64_t timestamp;
 
   // Opaque token used. Local value
   void* opaque;

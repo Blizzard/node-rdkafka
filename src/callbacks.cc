@@ -317,6 +317,11 @@ void DeliveryReportDispatcher::Flush() {
       delete persistent;
     }
 
+    if (event.timestamp > -1) {
+      Nan::Set(jsobj, Nan::New("timestamp").ToLocalChecked(),
+              Nan::New<v8::Number>(event.timestamp));
+    }
+
     if (event.m_include_payload) {
       if (event.payload) {
         Nan::MaybeLocal<v8::Object> buff = Nan::NewBuffer(
@@ -358,6 +363,14 @@ DeliveryReport::DeliveryReport(RdKafka::Message &message, bool include_payload) 
   topic_name = message.topic_name();
   partition = message.partition();
   offset = message.offset();
+
+  if (message.timestamp().type !=
+    RdKafka::MessageTimestamp::MSG_TIMESTAMP_NOT_AVAILABLE) {
+    timestamp = message.timestamp().timestamp;
+  } else {
+    timestamp = -1;
+  }
+
 
   // Key length.
   key_len = message.key_len();
