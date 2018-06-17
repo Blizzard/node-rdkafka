@@ -32,6 +32,18 @@ Play nice; Play fair.
 * Node.js >=4
 * Linux/Mac
 * Windows?! See below
+* openssl 1.0.2
+
+### Mac OS High Sierra
+
+OpenSSL has been upgraded in High Sierra and homebrew does not overwrite default system libraries. That means when building node-rdkafka, because you are using openssl, you need to tell the linker where to find it:
+
+```sh
+export CPPFLAGS=-I/usr/local/opt/openssl/include
+export LDFLAGS=-L/usr/local/opt/openssl/lib
+```
+
+Then you can run `npm install` on your application to get it to build correctly.
 
 __NOTE:__ From the `librdkafka` docs
 
