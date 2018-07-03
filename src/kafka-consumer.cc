@@ -358,7 +358,7 @@ Baton KafkaConsumer::Unsubscribe() {
 }
 
 Baton KafkaConsumer::Pause(std::vector<RdKafka::TopicPartition*> & toppars) {
-  if (IsConnected() && IsSubscribed()) {
+  if (IsConnected()) {
     RdKafka::KafkaConsumer* consumer =
       dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
     RdKafka::ErrorCode err = consumer->pause(toppars);
@@ -370,7 +370,7 @@ Baton KafkaConsumer::Pause(std::vector<RdKafka::TopicPartition*> & toppars) {
 }
 
 Baton KafkaConsumer::Resume(std::vector<RdKafka::TopicPartition*> & toppars) {
-  if (IsConnected() && IsSubscribed()) {
+  if (IsConnected()) {
     RdKafka::KafkaConsumer* consumer =
       dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
     RdKafka::ErrorCode err = consumer->resume(toppars);
