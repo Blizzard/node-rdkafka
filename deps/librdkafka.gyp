@@ -13,7 +13,7 @@
               {
                 'action_name': 'nuget_restore',
                 'inputs': [
-                  '<(module_root_dir)/deps/librdkafka/win32/librdkafka.sln'
+                  'deps/librdkafka/win32/librdkafka.sln'
                 ],
                 'outputs': [ ],
                 'action': ['nuget', 'restore', '<@(_inputs)']
@@ -21,11 +21,11 @@
               {
                 'action_name': 'build_dependencies',
                 'inputs': [
-                  '<(module_root_dir)/deps/librdkafka/win32/librdkafka.sln'
+                  'deps/librdkafka/win32/librdkafka.sln'
                 ],
                 'outputs': [
-                  '<(module_root_dir)/deps/librdkafka/win32/outdir/v120/x64/Release/librdkafkacpp.lib',
-                  '<(module_root_dir)/deps/librdkafka/win32/outdir/v120/x64/Release/librdkafka.lib'
+                  'deps/librdkafka/win32/outdir/v120/x64/Release/librdkafkacpp.lib',
+                  'deps/librdkafka/win32/outdir/v120/x64/Release/librdkafka.lib'
                 ],
                 # Fun story export PATH="$PATH:/c/Program Files (x86)/MSBuild/12.0/Bin/"
                 # I wish there was a better way, but can't find one right now
@@ -35,26 +35,26 @@
             'copies': [
               {
                 'files': [
-                  '<(module_root_dir)/deps/librdkafka/win32/outdir/v120/x64/Release/zlib.dll',
-                  '<(module_root_dir)/deps/librdkafka/win32/outdir/v120/x64/Release/librdkafka.dll',
-                  '<(module_root_dir)/deps/librdkafka/win32/outdir/v120/x64/Release/librdkafkacpp.dll'
+                  'deps/librdkafka/win32/outdir/v120/x64/Release/zlib.dll',
+                  'deps/librdkafka/win32/outdir/v120/x64/Release/librdkafka.dll',
+                  'deps/librdkafka/win32/outdir/v120/x64/Release/librdkafkacpp.dll'
                 ],
-                'destination': '<(module_root_dir)/build/Release'
+                'destination': '../build/Release'
               }
             ],
             'libraries': [
-              '<(module_root_dir)/deps/librdkafka/win32/outdir/v120/x64/Release/librdkafkacpp.lib',
-              '<(module_root_dir)/deps/librdkafka/win32/outdir/v120/x64/Release/librdkafka.lib'
+              'deps/librdkafka/win32/outdir/v120/x64/Release/librdkafkacpp.lib',
+              'deps/librdkafka/win32/outdir/v120/x64/Release/librdkafka.lib'
             ],
             'build_files': [
-              '<(module_root_dir)/deps/librdkafka/win32/outdir/v120/x64/Release/zlib.dll',
-              '<(module_root_dir)/deps/librdkafka/win32/outdir/v120/x64/Release/librdkafka.dll',
-              '<(module_root_dir)/deps/librdkafka/win32/outdir/v120/x64/Release/librdkafkacpp.dll',
+              'deps/librdkafka/win32/outdir/v120/x64/Release/zlib.dll',
+              'deps/librdkafka/win32/outdir/v120/x64/Release/librdkafka.dll',
+              'deps/librdkafka/win32/outdir/v120/x64/Release/librdkafkacpp.dll',
             ],
             'msvs_settings': {
               'VCCLCompilerTool': {
                 'AdditionalUsingDirectories': [
-                  '<(module_root_dir)/deps/librdkafka/win32/outdir/v120/x64/Release/'
+                  'deps/librdkafka/win32/outdir/v120/x64/Release/'
                 ]
               }
             },
@@ -65,39 +65,39 @@
                 "action_name": "configure",
                 "inputs": [],
                 "outputs": [
-                  "<(module_root_dir)/deps/librdkafka/config.h",
+                  "librdkafka/config.h",
                 ],
                 "action": [
-                  "node", "<(module_root_dir)/util/configure"
+                  "node", "../util/configure"
                 ]
               },
               {
                 "action_name": "build_dependencies",
                 "inputs": [
-                  "<(module_root_dir)/deps/librdkafka/config.h",
+                  "librdkafka/config.h",
                 ],
                 "action": [
-                  "make", "-C", "<(module_root_dir)/deps/librdkafka", "libs", "install"
+                  "make", "-C", "librdkafka", "libs", "install"
                 ],
                 "conditions": [
                   [
                     'OS=="mac"',
                     {
                       'outputs': [
-                        '<(module_root_dir)/deps/librdkafka/src-cpp/librdkafka++.dylib',
-                        '<(module_root_dir)/deps/librdkafka/src-cpp/librdkafka++.1.dylib',
-                        '<(module_root_dir)/deps/librdkafka/src/librdkafka.dylib',
-                        '<(module_root_dir)/deps/librdkafka/src/librdkafka.1.dylib'
+                        'deps/librdkafka/src-cpp/librdkafka++.dylib',
+                        'deps/librdkafka/src-cpp/librdkafka++.1.dylib',
+                        'deps/librdkafka/src/librdkafka.dylib',
+                        'deps/librdkafka/src/librdkafka.1.dylib'
                       ],
                     },
                     {
                       'outputs': [
-                        '<(module_root_dir)/deps/librdkafka/src-cpp/librdkafka++.so',
-                        '<(module_root_dir)/deps/librdkafka/src-cpp/librdkafka++.so.1',
-                        '<(module_root_dir)/deps/librdkafka/src/librdkafka.so',
-                        '<(module_root_dir)/deps/librdkafka/src/librdkafka.so.1',
-                        '<(module_root_dir)/deps/librdkafka/src-cpp/librdkafka++.a',
-                        '<(module_root_dir)/deps/librdkafka/src/librdkafka.a',
+                        'deps/librdkafka/src-cpp/librdkafka++.so',
+                        'deps/librdkafka/src-cpp/librdkafka++.so.1',
+                        'deps/librdkafka/src/librdkafka.so',
+                        'deps/librdkafka/src/librdkafka.so.1',
+                        'deps/librdkafka/src-cpp/librdkafka++.a',
+                        'deps/librdkafka/src/librdkafka.a',
                       ],
                     }
                   ]
