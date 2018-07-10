@@ -86,8 +86,8 @@
                       'OS=="mac"',
                       {
                         "libraries": [
-                          "build/deps/librdkafka.dylib",
-                          "build/deps/librdkafka++.dylib",
+                          "../build/deps/librdkafka.dylib",
+                          "../build/deps/librdkafka++.dylib",
                         ],
                       }
                     ]
@@ -122,7 +122,11 @@
                   'xcode_settings': {
                     'MACOSX_DEPLOYMENT_TARGET': '10.11',
                     'GCC_ENABLE_CPP_RTTI': 'YES',
-                    'OTHER_CPLUSPLUSFLAGS': [
+                    'LDFLAGS': [
+                      '-L/usr/local/opt/openssl/lib'
+                    ],
+                    'CPLUSPLUSFLAGS': [
+                      '-I/usr/local/opt/openssl/include',
                       '-std=c++11'
                     ],
                   },
