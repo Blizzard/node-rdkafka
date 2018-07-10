@@ -533,6 +533,7 @@ void KafkaConsumerConsumeNum::Execute() {
       case RdKafka::ERR__TIMED_OUT:
       case RdKafka::ERR__TIMED_OUT_QUEUE:
         // Break of the loop if we timed out
+        SetErrorBaton(b);
         looping = false;
         break;
       case RdKafka::ERR_NO_ERROR:
