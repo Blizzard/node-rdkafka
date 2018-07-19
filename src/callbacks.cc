@@ -47,69 +47,6 @@ v8::Local<v8::Array> TopicPartitionListToV8Array(
   return tp_array;
 }
 
-Dispatcher::Dispatcher() {
-  async = NULL;
-  uv_mutex_init(&async_lock);
-}
-
-Dispatcher::~Dispatcher() {
-  if (callbacks.size() < 1) return;
-
-  for (size_t i=0; i < callbacks.size(); i++) {
-    callbacks[i].Reset();
-  }
-
-  uv_mutex_destroy(&async_lock);
-}
-
-// Only run this if we aren't already listening
-void Dispatcher::Activate() {
-  if (!async) {
-    async = new uv_async_t;
-    uv_async_init(uv_default_loop(), async, AsyncMessage_);
-
-    async->data = this;
-  }
-}
-
-// Should be able to run this regardless of whether it is active or not
-void Dispatcher::Deactivate() {
-  if (async) {
-    uv_close(reinterpret_cast<uv_handle_t*>(async), NULL);
-    async = NULL;
-  }
-}
-
-bool Dispatcher::HasCallbacks() {
-  return callbacks.size() > 0;
-}
-
-void Dispatcher::Execute() {
-  if (async) {
-    uv_async_send(async);
-  }
-}
-
-void Dispatcher::Dispatch(const int _argc, Local<Value> _argv[]) {
-  // This should probably be an array of v8 values
-  if (!HasCallbacks()) {
-    return;
-  }
-
-  for (size_t i=0; i < callbacks.size(); i++) {
-    v8::Local<v8::Function> f = Nan::New<v8::Function>(callbacks[i]);
-    Nan::Callback cb(f);
-    cb.Call(_argc, _argv);
-  }
-}
-
-void Dispatcher::AddCallback(v8::Local<v8::Function> func) {
-  Nan::Persistent<v8::Function,
-                  Nan::CopyablePersistentTraits<v8::Function> > value(func);
-  // PersistentCopyableFunction value(func);
-  callbacks.push_back(value);
-}
-
 event_t::event_t(const RdKafka::Event &event) {
   message = "";
   fac = "";
@@ -164,34 +101,29 @@ void Event::event_cb(RdKafka::Event &event) {
 EventDispatcher::EventDispatcher() {}
 EventDispatcher::~EventDispatcher() {}
 
-void EventDispatcher::Add(const event_t &e) {
-  scoped_mutex_lock lock(async_lock);
-  events.push_back(e);
-}
-
 void EventDispatcher::Flush() {
   Nan::HandleScope scope;
   // Iterate through each of the currently stored events
   // generate a callback object for each, setting to the members
   // then
-  if (events.size() < 1) return;
+  if (m_events.size() < 1) return;
 
   const unsigned int argc = 2;
 
-  std::vector<event_t> _events;
+  std::vector<event_t> events;
   {
     scoped_mutex_lock lock(async_lock);
-    events.swap(_events);
+    m_events.swap(events);
   }
 
-  for (size_t i=0; i < _events.size(); i++) {
+  for (size_t i=0; i < events.size(); i++) {
     Local<Value> argv[argc] = {};
     Local<Object> jsobj = Nan::New<Object>();
 
-    switch (_events[i].type) {
+    switch (events[i].type) {
       case RdKafka::Event::EVENT_ERROR:
         argv[0] = Nan::New("error").ToLocalChecked();
-        argv[1] = Nan::Error(_events[i].message.c_str());
+        argv[1] = Nan::Error(events[i].message.c_str());
 
         // if (event->err() == RdKafka::ERR__ALL_BROKERS_DOWN). Stop running
         // This may be better suited to the node side of things
@@ -200,32 +132,32 @@ void EventDispatcher::Flush() {
         argv[0] = Nan::New("stats").ToLocalChecked();
 
         Nan::Set(jsobj, Nan::New("message").ToLocalChecked(),
-          Nan::New<String>(_events[i].message.c_str()).ToLocalChecked());
+          Nan::New<String>(events[i].message.c_str()).ToLocalChecked());
 
         break;
       case RdKafka::Event::EVENT_LOG:
         argv[0] = Nan::New("log").ToLocalChecked();
 
         Nan::Set(jsobj, Nan::New("severity").ToLocalChecked(),
-          Nan::New(_events[i].severity));
+          Nan::New(events[i].severity));
         Nan::Set(jsobj, Nan::New("fac").ToLocalChecked(),
-          Nan::New(_events[i].fac.c_str()).ToLocalChecked());
+          Nan::New(events[i].fac.c_str()).ToLocalChecked());
         Nan::Set(jsobj, Nan::New("message").ToLocalChecked(),
-          Nan::New(_events[i].message.c_str()).ToLocalChecked());
+          Nan::New(events[i].message.c_str()).ToLocalChecked());
 
         break;
       case RdKafka::Event::EVENT_THROTTLE:
         argv[0] = Nan::New("throttle").ToLocalChecked();
 
         Nan::Set(jsobj, Nan::New("message").ToLocalChecked(),
-          Nan::New(_events[i].message.c_str()).ToLocalChecked());
+          Nan::New(events[i].message.c_str()).ToLocalChecked());
 
         Nan::Set(jsobj, Nan::New("throttleTime").ToLocalChecked(),
-          Nan::New(_events[i].throttle_time));
+          Nan::New(events[i].throttle_time));
         Nan::Set(jsobj, Nan::New("brokerName").ToLocalChecked(),
-          Nan::New(_events[i].broker_name).ToLocalChecked());
+          Nan::New(events[i].broker_name).ToLocalChecked());
         Nan::Set(jsobj, Nan::New("brokerId").ToLocalChecked(),
-          Nan::New<Number>(_events[i].broker_id));
+          Nan::New<Number>(events[i].broker_id));
 
         break;
       default:
@@ -237,7 +169,7 @@ void EventDispatcher::Flush() {
         break;
     }
 
-    if (_events[i].type != RdKafka::Event::EVENT_ERROR) {
+    if (events[i].type != RdKafka::Event::EVENT_ERROR) {
       // error would be assigned already
       argv[1] = jsobj;
     }
@@ -248,11 +180,6 @@ void EventDispatcher::Flush() {
 
 DeliveryReportDispatcher::DeliveryReportDispatcher() {}
 DeliveryReportDispatcher::~DeliveryReportDispatcher() {}
-
-void DeliveryReportDispatcher::Add(const DeliveryReport &e) {
-  scoped_mutex_lock lock(async_lock);
-  events.push_back(e);
-}
 
 void DeliveryReportDispatcher::AddCallback(v8::Local<v8::Function> func) {
   Nan::Persistent<v8::Function,
@@ -431,11 +358,6 @@ void Delivery::dr_cb(RdKafka::Message &message) {
 RebalanceDispatcher::RebalanceDispatcher() {}
 RebalanceDispatcher::~RebalanceDispatcher() {}
 
-void RebalanceDispatcher::Add(const rebalance_event_t &e) {
-  scoped_mutex_lock lock(async_lock);
-  m_events.push_back(e);
-}
-
 void RebalanceDispatcher::Flush() {
   Nan::HandleScope scope;
   // Iterate through each of the currently stored events
@@ -486,11 +408,6 @@ void Rebalance::rebalance_cb(RdKafka::KafkaConsumer *consumer,
 
 OffsetCommitDispatcher::OffsetCommitDispatcher() {}
 OffsetCommitDispatcher::~OffsetCommitDispatcher() {}
-
-void OffsetCommitDispatcher::Add(const offset_commit_event_t &e) {
-  scoped_mutex_lock lock(async_lock);
-  m_events.push_back(e);
-}
 
 void OffsetCommitDispatcher::Flush() {
   Nan::HandleScope scope;

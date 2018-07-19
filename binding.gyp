@@ -66,7 +66,7 @@
               [ "<(BUILD_LIBRDKAFKA)==1",
                 {
                   "dependencies": [
-                    "deps/librdkafka.gyp:librdkafka"
+#                    "deps/librdkafka.gyp:librdkafka"
                   ],
                   "include_dirs": [
                     "deps/librdkafka/src-cpp"

@@ -37,7 +37,7 @@ class ErrorAwareWorker : public Nan::AsyncWorker {
     const unsigned int argc = 1;
     v8::Local<v8::Value> argv[argc] = { Nan::Error(ErrorMessage()) };
 
-    callback->Call(argc, argv);
+    callback->Call(argc, argv, async_resource);
   }
 
  protected:

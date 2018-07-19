@@ -16,43 +16,19 @@
 
 #include "rdkafkacpp.h"
 #include "src/common.h"
+#include "src/node_rdkafka_int.h"
 
 typedef Nan::Persistent<v8::Function,
   Nan::CopyablePersistentTraits<v8::Function> > PersistentCopyableFunction;
 typedef std::vector<PersistentCopyableFunction> CopyableFunctionList;
+
+using NodeKafka::Util::Dispatcher;
 
 namespace NodeKafka {
 
 class KafkaConsumer;
 
 namespace Callbacks {
-
-class Dispatcher {
- public:
-  Dispatcher();
-  ~Dispatcher();
-  void Dispatch(const int, v8::Local<v8::Value> []);
-  void AddCallback(v8::Local<v8::Function>);
-  bool HasCallbacks();
-  virtual void Flush() = 0;
-  void Execute();
-  void Activate();
-  void Deactivate();
-
- protected:
-  std::vector<v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function> > > callbacks;  // NOLINT
-
-  uv_mutex_t async_lock;
-
- private:
-  NAN_INLINE static NAUV_WORK_CB(AsyncMessage_) {
-     Dispatcher *dispatcher =
-            static_cast<Dispatcher*>(async->data);
-     dispatcher->Flush();
-  }
-
-  uv_async_t *async;
-};
 
 struct event_t {
   RdKafka::Event::Type type;
@@ -69,14 +45,11 @@ struct event_t {
   ~event_t();
 };
 
-class EventDispatcher : public Dispatcher {
+class EventDispatcher : public Dispatcher<event_t> {
  public:
   EventDispatcher();
   ~EventDispatcher();
-  void Add(const event_t &);
   void Flush();
- protected:
-  std::vector<event_t> events;
 };
 
 class Event : public RdKafka::EventCb {
@@ -124,12 +97,11 @@ class DeliveryReport {
   void* payload;
 };
 
-class DeliveryReportDispatcher : public Dispatcher {
+class DeliveryReportDispatcher : public Dispatcher<DeliveryReport> {
  public:
   DeliveryReportDispatcher();
   ~DeliveryReportDispatcher();
   void Flush();
-  void Add(const DeliveryReport &);
   void AddCallback(v8::Local<v8::Function>);
  protected:
   std::vector<DeliveryReport> events;
@@ -206,14 +178,11 @@ struct offset_commit_event_t {
   }
 };
 
-class RebalanceDispatcher : public Dispatcher {
+class RebalanceDispatcher : public Dispatcher<rebalance_event_t> {
  public:
   RebalanceDispatcher();
   ~RebalanceDispatcher();
-  void Add(const rebalance_event_t &);
   void Flush();
- protected:
-  std::vector<rebalance_event_t> m_events;
 };
 
 class Rebalance : public RdKafka::RebalanceCb {
@@ -229,14 +198,11 @@ class Rebalance : public RdKafka::RebalanceCb {
   v8::Persistent<v8::Function> m_cb;
 };
 
-class OffsetCommitDispatcher : public Dispatcher {
+class OffsetCommitDispatcher : public Dispatcher<offset_commit_event_t> {
  public:
   OffsetCommitDispatcher();
   ~OffsetCommitDispatcher();
-  void Add(const offset_commit_event_t &);
   void Flush();
- protected:
-  std::vector<offset_commit_event_t> m_events;
 };
 
 class OffsetCommit : public RdKafka::OffsetCommitCb {
