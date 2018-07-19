@@ -37,7 +37,7 @@
                   'librdkafkacpp.lib'
                 ],
                 'AdditionalLibraryDirectories': [
-                  '<(module_root_dir)/deps/librdkafka/win32/outdir/v120/x64/Release/'
+                  'deps/librdkafka/win32/outdir/v120/x64/Release/'
                 ]
               },
               'VCCLCompilerTool': {
@@ -45,7 +45,7 @@
                   '/GR'
                 ],
                 'AdditionalUsingDirectories': [
-                  '<(module_root_dir)/deps/librdkafka/win32/outdir/v120/x64/Release/'
+                  'deps/librdkafka/win32/outdir/v120/x64/Release/'
                 ],
                 'AdditionalIncludeDirectories': [
                   'deps/librdkafka/src-cpp'
@@ -55,7 +55,7 @@
             'msvs_version': '2013',
             'msbuild_toolset': 'v120',
             "dependencies": [
-              "<(module_root_dir)/deps/librdkafka.gyp:librdkafka"
+              "deps/librdkafka.gyp:librdkafka"
             ],
             'include_dirs': [
               'deps/librdkafka/src-cpp'
@@ -66,7 +66,7 @@
               [ "<(BUILD_LIBRDKAFKA)==1",
                 {
                   "dependencies": [
-                    "<(module_root_dir)/deps/librdkafka.gyp:librdkafka"
+                    "deps/librdkafka.gyp:librdkafka"
                   ],
                   "include_dirs": [
                     "deps/librdkafka/src-cpp"
@@ -76,9 +76,9 @@
                       'OS=="linux"',
                       {
                         "libraries": [
-                          "<(module_root_dir)/build/deps/librdkafka.so",
-                          "<(module_root_dir)/build/deps/librdkafka++.so",
-                          "-Wl,-rpath=<(module_root_dir)/build/deps",
+                          "../build/deps/librdkafka.so",
+                          "../build/deps/librdkafka++.so",
+                          "-Wl,-rpath=build/deps",
                         ],
                       }
                     ],
@@ -86,8 +86,8 @@
                       'OS=="mac"',
                       {
                         "libraries": [
-                          "<(module_root_dir)/build/deps/librdkafka.dylib",
-                          "<(module_root_dir)/build/deps/librdkafka++.dylib",
+                          "../build/deps/librdkafka.dylib",
+                          "../build/deps/librdkafka++.dylib",
                         ],
                       }
                     ]
@@ -122,7 +122,11 @@
                   'xcode_settings': {
                     'MACOSX_DEPLOYMENT_TARGET': '10.11',
                     'GCC_ENABLE_CPP_RTTI': 'YES',
+                    'OTHER_LDFLAGS': [
+                      '-L/usr/local/opt/openssl/lib'
+                    ],
                     'OTHER_CPLUSPLUSFLAGS': [
+                      '-I/usr/local/opt/openssl/include',
                       '-std=c++11'
                     ],
                   },
