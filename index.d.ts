@@ -17,6 +17,9 @@ export class Client extends NodeJS.EventEmitter {
 
     queryWatermarkOffsets(topic: any, partition: any, timeout: any, cb?: (err: any, offsets: any) => any): any;
 
+    offsetsForTimes(topicPartitions: any[], timeout: number, cb?: (err: any, offsets: any) => any): void;
+    offsetsForTimes(topicPartitions: any[], cb?: (err: any, offsets: any) => any): void;
+
     // currently need to overload signature for different callback arities because of https://github.com/Microsoft/TypeScript/issues/15972
     on<T extends keyof EventCallbackRepositoryArityOne, K extends EventCallbackRepositoryArityOne[T]>(val: T, listener: (arg: K) => void): this;
     on<T extends keyof EventCallbackRepositoryArityTwo, K extends EventCallbackRepositoryArityTwo[T]>(val: T, listener: (arg0: K[0], arg1: K[1]) => void): this;
