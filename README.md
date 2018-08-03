@@ -476,6 +476,7 @@ The following table lists events for this API.
 |`event` | The `event` event is emitted when `librdkafka` reports an event (if you opted in via the `event_cb` option).|
 |`event.log` | The `event.log` event is emitted when logging events occur (if you opted in for logging  via the `event_cb` option).<br><br> You will need to set a value for `debug` if you want information to send. |
 |`event.stats` | The  `event.stats` event is emitted when `librdkafka` reports stats (if you opted in by setting the `statistics.interval.ms` to a non-zero value). |
+|`event.error` | The  `event.error` event is emitted when `librdkafka` reports an error |
 |`event.throttle` | The `event.throttle` event is emitted when `librdkafka` reports throttling.|
 
 ## Reading current offsets from the broker for a topic
