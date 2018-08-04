@@ -17,13 +17,14 @@ var defaultConfig = {
   'metadata.broker.list': 'localhost:9092',
   'socket.timeout.ms': 250
 };
+var topicConfig = {};
 
 var server;
 
 module.exports = {
   'Producer client': {
     'beforeEach': function() {
-      client = new Producer(defaultConfig, {});
+      client = new Producer(defaultConfig, topicConfig);
     },
     'afterEach': function() {
       client = null;
@@ -44,6 +45,24 @@ module.exports = {
     },
     'has "_disconnect" override': function() {
       t.equal(typeof(client._disconnect), 'function', 'Producer is missing base _disconnect method');
+    },
+    'does not modify config and clones it': function () {
+      t.deepStrictEqual(defaultConfig, {
+        'client.id': 'kafka-mocha',
+        'metadata.broker.list': 'localhost:9092',
+        'socket.timeout.ms': 250
+      });
+      t.deepStrictEqual(client.globalConfig, {
+        'client.id': 'kafka-mocha',
+        'metadata.broker.list': 'localhost:9092',
+        'socket.timeout.ms': 250
+      });
+      t.notEqual(defaultConfig, client.globalConfig);
+    },
+    'does not modify topic config and clones it': function () {
+      t.deepStrictEqual(topicConfig, {});
+      t.deepStrictEqual(client.topicConfig, {});
+      t.notEqual(topicConfig, client.topicConfig);
     },
     'disconnect method': {
       'calls flush before it runs': function(next) {
