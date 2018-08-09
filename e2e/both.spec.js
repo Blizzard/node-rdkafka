@@ -14,6 +14,7 @@ var Kafka = require('../');
 var kafkaBrokerList = process.env.KAFKA_HOST || 'localhost:9092';
 var eventListener = require('./listener');
 var topic = 'test';
+var topic2 = 'test2';
 
 describe('Consumer/Producer', function() {
 
@@ -161,6 +162,46 @@ describe('Consumer/Producer', function() {
       // Consume until we get it or time out
       consumeOne();
 
+    });
+  });
+  
+  it('should return ready messages on partition EOF', function(done) {
+    this.timeout(8000);
+    crypto.randomBytes(4096, function(ex, buffer) {
+      producer.setPollInterval(10);
+
+      producer.once('delivery-report', function(err, report) {
+        t.ifError(err);
+      });
+
+      consumer.subscribe([topic]);
+
+      var consumeAll = function() {
+        // Make sure we get the message fast when consuming with large timeout
+        consumer.setDefaultConsumeTimeout(1000000);
+        consumer.consume(100000, function(err, messages) {
+          t.ifError(err);
+          t.equal(messages.length, 1);
+          done();
+        });
+      };
+
+      var consumeNone = function() {
+        // With no new messages, the consume should wait whole timeout
+        var start = Date.now();
+        consumer.setDefaultConsumeTimeout(1000);
+        consumer.consume(100000, function(err, messages) {
+          t.ifError(err);
+          t.ok(Date.now() - start >= 998);
+          t.equal(messages.length, 0);
+
+          // Produce one message to cause EOF with waiting message when consuming all
+          producer.produce(topic, null, buffer, null);
+          consumeAll();
+        });
+      };
+
+      consumeNone();
     });
   });
 
