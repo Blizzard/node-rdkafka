@@ -523,12 +523,18 @@ KafkaConsumerConsumeNum::~KafkaConsumerConsumeNum() {}
 void KafkaConsumerConsumeNum::Execute() {
   std::size_t max = static_cast<std::size_t>(m_num_messages);
   bool looping = true;
+  int timeout_ms = m_timeout_ms;
+
   while (m_messages.size() < max && looping) {
     // Get a message
-    Baton b = m_consumer->Consume(m_timeout_ms);
+    Baton b = m_consumer->Consume(timeout_ms);
     switch (b.err()) {
       case RdKafka::ERR__PARTITION_EOF:
-        // If we reached the end of the partition, retry
+        // If partition EOF and have consumed messages, retry with timeout 1
+        // This allows getting ready messages, while not waiting for new ones
+        if (m_messages.size() > 0) {
+          timeout_ms = 1;
+        }
         break;
       case RdKafka::ERR__TIMED_OUT:
       case RdKafka::ERR__TIMED_OUT_QUEUE:
