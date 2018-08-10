@@ -103,7 +103,7 @@ var Kafka = require('node-rdkafka');
 
 ## Configuration
 
-You can pass many configuration options to `librdkafka`.  A full list can be found in `librdkafka`'s [Configuration.md](https://github.com/edenhill/librdkafka/blob/0.11.1.x/CONFIGURATION.md)
+You can pass many configuration options to `librdkafka`.  A full list can be found in `librdkafka`'s [Configuration.md](https://github.com/edenhill/librdkafka/blob/v0.11.5/CONFIGURATION.md)
 
 Configuration keys that have the suffix `_cb` are designated as callbacks. Some
 of these keys are informational and you can choose to opt-in (for example, `dr_cb`). Others are callbacks designed to
