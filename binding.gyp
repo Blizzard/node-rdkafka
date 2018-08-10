@@ -78,7 +78,7 @@
                         "libraries": [
                           "../build/deps/librdkafka.so",
                           "../build/deps/librdkafka++.so",
-                          "-Wl,-rpath=build/deps",
+                          "-Wl,-rpath='$$ORIGIN/../deps'",
                         ],
                       }
                     ],
