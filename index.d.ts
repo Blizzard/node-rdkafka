@@ -12,6 +12,7 @@ export class Client extends NodeJS.EventEmitter {
     getLastError(): any;
 
     disconnect(cb?: (err: any, data: any) => any): this;
+    isConnected(): boolean;
 
     getMetadata(metadataOptions: any, cb?: (err: any, data: any) => any): any;
 
