@@ -52,7 +52,7 @@ if (cluster.isMaster) {
   var sendMessage = function() {
     var ret = producer.sendMessage({
       topic: 'librdtesting-01',
-      message: new Buffer('message ' + total)
+      message: Buffer.from('message ' + total)
     }, function() {
     });
     total++;

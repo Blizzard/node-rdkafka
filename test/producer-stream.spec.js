@@ -148,7 +148,7 @@ module.exports = {
           t.fail(err);
         });
 
-        stream.write(new Buffer('Awesome'));
+        stream.write(Buffer.from('Awesome'));
       },
 
       'passes a topic string if options are not provided': function(done) {
@@ -168,7 +168,7 @@ module.exports = {
           t.fail(err);
         });
 
-        stream.write(new Buffer('Awesome'));
+        stream.write(Buffer.from('Awesome'));
       },
 
       'properly handles queue errors': function(done) {
@@ -197,7 +197,7 @@ module.exports = {
           t.fail(err);
         });
 
-        stream.write(new Buffer('Awesome'));
+        stream.write(Buffer.from('Awesome'));
       },
 
       'errors out when a non-queue related error occurs': function(done) {
@@ -219,7 +219,7 @@ module.exports = {
           // This is good
         });
 
-        stream.write(new Buffer('Awesome'));
+        stream.write(Buffer.from('Awesome'));
       },
 
       'errors out when a non-queue related error occurs but does not disconnect if autoclose is false': function(done) {
@@ -242,7 +242,7 @@ module.exports = {
           // This is good
         });
 
-        stream.write(new Buffer('Awesome'));
+        stream.write(Buffer.from('Awesome'));
 
         setTimeout(done, 10);
       },
@@ -269,8 +269,8 @@ module.exports = {
           t.fail(err);
         });
 
-        stream.write(new Buffer('Awesome1'));
-        stream.write(new Buffer('Awesome2'));
+        stream.write(Buffer.from('Awesome1'));
+        stream.write(Buffer.from('Awesome2'));
       },
 
       'can be piped into a readable': function(done) {
@@ -338,9 +338,9 @@ module.exports = {
           return false;
         };
 
-        stream.write(new Buffer('Awesome1'));
-        stream.write(new Buffer('Awesome2'));
-        stream.write(new Buffer('Awesome3'));
+        stream.write(Buffer.from('Awesome1'));
+        stream.write(Buffer.from('Awesome2'));
+        stream.write(Buffer.from('Awesome3'));
 
         fakeClient._isConnected = true;
         fakeClient._isConnecting = false;
@@ -384,7 +384,7 @@ module.exports = {
 
         stream.write({
           topic: 'topic',
-          value: new Buffer('Awesome'),
+          value: Buffer.from('Awesome'),
           partition: 10,
           key: 'key',
           timestamp: _timestamp,
@@ -422,7 +422,7 @@ module.exports = {
 
         stream.write({
           topic: 'topic',
-          value: new Buffer('Awesome'),
+          value: Buffer.from('Awesome'),
           partition: 10,
           key: 'key'
         });
@@ -447,7 +447,7 @@ module.exports = {
           // This is good
         });
 
-        stream.write(new Buffer('Awesome'));
+        stream.write(Buffer.from('Awesome'));
       },
 
       'errors out when a non-queue related error occurs but does not disconnect if autoclose is false': function(done) {
@@ -471,7 +471,7 @@ module.exports = {
         });
 
         stream.write({
-          value: new Buffer('Awesome'),
+          value: Buffer.from('Awesome'),
           topic: 'topic'
         });
 
@@ -501,11 +501,11 @@ module.exports = {
         });
 
         stream.write({
-          value: new Buffer('Awesome1'),
+          value: Buffer.from('Awesome1'),
           topic: 'topic'
         });
         stream.write({
-          value: new Buffer('Awesome2'),
+          value: Buffer.from('Awesome2'),
           topic: 'topic'
         });
       },
@@ -525,11 +525,11 @@ module.exports = {
             } else {
               this.push({
                 topic: 'topic',
-                value: new Buffer('Awesome1')
+                value: Buffer.from('Awesome1')
               });
               this.push({
                 topic: 'topic',
-                value: new Buffer('Awesome2')
+                value: Buffer.from('Awesome2')
               });
             }
           }
@@ -584,15 +584,15 @@ module.exports = {
         };
 
         stream.write({
-          value: new Buffer('Awesome1'),
+          value: Buffer.from('Awesome1'),
           topic: 'topic'
         });
         stream.write({
-          value: new Buffer('Awesome2'),
+          value: Buffer.from('Awesome2'),
           topic: 'topic'
         });
         stream.write({
-          value: new Buffer('Awesome3'),
+          value: Buffer.from('Awesome3'),
           topic: 'topic'
         });
 
@@ -633,19 +633,19 @@ module.exports = {
         };
 
         stream.write({
-          value: new Buffer('Awesome1'),
+          value: Buffer.from('Awesome1'),
           topic: 'topic'
         });
         stream.write({
-          value: new Buffer('Awesome2'),
+          value: Buffer.from('Awesome2'),
           topic: 'topic'
         });
         stream.write({
-          value: new Buffer('Awesome3'),
+          value: Buffer.from('Awesome3'),
           topic: 'topic'
         });
         stream.write({
-          value: new Buffer('Awesome4'),
+          value: Buffer.from('Awesome4'),
           topic: 'topic'
         });
 
@@ -688,19 +688,19 @@ module.exports = {
         };
 
         stream.write({
-          value: new Buffer('Awesome1'),
+          value: Buffer.from('Awesome1'),
           topic: 'topic'
         });
         stream.write({
-          value: new Buffer('Awesome2'),
+          value: Buffer.from('Awesome2'),
           topic: 'topic'
         });
         stream.write({
-          value: new Buffer('Awesome3'),
+          value: Buffer.from('Awesome3'),
           topic: 'topic'
         });
         stream.write({
-          value: new Buffer('Awesome4'),
+          value: Buffer.from('Awesome4'),
           topic: 'topic'
         });
 

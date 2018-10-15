@@ -182,7 +182,7 @@ var stream = Kafka.Producer.createWriteStream({
 });
 
 // Writes a message to the stream
-var queuedSuccess = stream.write(new Buffer('Awesome message'));
+var queuedSuccess = stream.write(Buffer.from('Awesome message'));
 
 if (queuedSuccess) {
   console.log('We queued our message!');
@@ -225,7 +225,7 @@ producer.on('ready', function() {
       // this defaults to -1 - which will use librdkafka's default partitioner (consistent random for keyed messages, random for unkeyed messages)
       null,
       // Message to send. Must be a buffer
-      new Buffer('Awesome message'),
+      Buffer.from('Awesome message'),
       // for keyed messages, we also specify the key - note that this field is optional
       'Stormwind',
       // you can send a timestamp here. If your broker version supports it,
@@ -372,7 +372,7 @@ Messages that are returned by the `KafkaConsumer` have the following structure.
 
 ```js
 {
-  value: new Buffer('hi'), // message contents as a Buffer
+  value: Buffer.from('hi'), // message contents as a Buffer
   size: 2, // size of the message, in bytes
   topic: 'librdtesting-01', // topic the message comes from
   offset: 1337, // offset the message was read from
