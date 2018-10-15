@@ -243,7 +243,7 @@ describe('Consumer/Producer', function() {
   it('should be able to produce and consume messages: empty key and empty value', function(done) {
     this.timeout(20000);
     var key = '';
-    var value = new Buffer('');
+    var value = Buffer.from('');
 
     producer.setPollInterval(10);
 
@@ -319,7 +319,7 @@ describe('Consumer/Producer', function() {
     it('should async commit after consuming', function(done) {
       this.timeout(25000);
       var key = '';
-      var value = new Buffer('');
+      var value = Buffer.from('');
 
       var lastOffset = null;
 
@@ -398,7 +398,7 @@ describe('Consumer/Producer', function() {
         consumer.subscribe([topic]);
         consumer.consume();
         setTimeout(function() {
-          producer.produce(topic, null, new Buffer(''), '');
+          producer.produce(topic, null, Buffer.from(''), '');
         }, 2000);
       });
 

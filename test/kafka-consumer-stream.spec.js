@@ -43,7 +43,7 @@ module.exports = {
           'Provided callback should always be a function');
         setImmediate(function() {
           cb(null, [{
-            value: new Buffer('test'),
+            value: Buffer.from('test'),
             key: 'testkey',
             offset: 1
           }]);
@@ -151,7 +151,7 @@ module.exports = {
           numSent++;
           setImmediate(function() {
             cb(null, [{
-              value: new Buffer('test'),
+              value: Buffer.from('test'),
               offset: 1
             }]);
           });
@@ -209,7 +209,7 @@ module.exports = {
           numSent++;
           setImmediate(function() {
             cb(null, [{
-              value: new Buffer('test'),
+              value: Buffer.from('test'),
               offset: 1
             }]);
           });
@@ -250,7 +250,7 @@ module.exports = {
           numSent++;
           setImmediate(function() {
             cb(null, [{
-              value: new Buffer('test'),
+              value: Buffer.from('test'),
               offset: 1
             }]);
           });

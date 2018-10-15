@@ -43,7 +43,7 @@ producer.on('ready', function(arg) {
   console.log('producer ready.' + JSON.stringify(arg));
 
   for (var i = 0; i < maxMessages; i++) {
-    var value = new Buffer('value-' +i);
+    var value = Buffer.from('value-' +i);
     var key = "key-"+i;
     // if partition is set to -1, librdkafka will use the default partitioner
     var partition = -1;
