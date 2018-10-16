@@ -35,9 +35,6 @@
                   'deps/windows-install.py'
                 ],
                 'outputs': [
-                  'deps/precompiled/librdkafka.dll',
-                  'deps/precompiled/librdkafkacpp.dll',
-                  'deps/precompiled/zlib.dll',
                   'deps/precompiled/librdkafka.lib',
                   'deps/precompiled/librdkafkacpp.lib'
                 ],

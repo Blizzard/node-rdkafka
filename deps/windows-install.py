@@ -38,10 +38,6 @@ createdir(depsPrecompiledDir)
 createdir(depsIncludeDir)
 createdir(buildReleaseDir)
 
-shutil.copy2(dllPath + '/zlib.dll', depsPrecompiledDir)
-shutil.copy2(dllPath + '/librdkafka.dll', depsPrecompiledDir)
-shutil.copy2(dllPath + '/librdkafkacpp.dll', depsPrecompiledDir)
-
 shutil.copy2(libPath + '/librdkafka.lib', depsPrecompiledDir)
 shutil.copy2(libPath + '/librdkafkacpp.lib', depsPrecompiledDir)
 
@@ -49,6 +45,7 @@ shutil.copy2(includePath + '/rdkafka.h', depsIncludeDir)
 shutil.copy2(includePath + '/rdkafkacpp.h', depsIncludeDir)
 
 shutil.copy2(dllPath + '/zlib.dll', buildReleaseDir)
+shutil.copy2(dllPath + '/msvcr120.dll', buildReleaseDir)
 shutil.copy2(dllPath + '/librdkafka.dll', buildReleaseDir)
 shutil.copy2(dllPath + '/librdkafkacpp.dll', buildReleaseDir)
 
