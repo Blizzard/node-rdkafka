@@ -89,6 +89,8 @@ You can run both types of tests by using `Makefile`. Doing so calls `mocha` in y
 
 # Usage
 
+First, for unix machines, ensure you have `libsasl2-dev` installed on your system.
+
 You can install the `node-rdkafka` module like any other module:
 
 ```
