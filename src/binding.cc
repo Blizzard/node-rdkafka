@@ -12,6 +12,7 @@
 
 using NodeKafka::Producer;
 using NodeKafka::KafkaConsumer;
+using NodeKafka::AdminClient;
 using NodeKafka::Topic;
 
 using node::AtExit;
@@ -154,6 +155,7 @@ void Init(v8::Local<v8::Object> exports, v8::Local<v8::Object> module) {
   AtExit(RdKafkaCleanup);
   KafkaConsumer::Init(exports);
   Producer::Init(exports);
+  AdminClient::Init(exports);
   Topic::Init(exports);
   ConstantsInit(exports);
 

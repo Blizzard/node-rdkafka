@@ -20,5 +20,6 @@
 #include "src/kafka-consumer.h"
 #include "src/producer.h"
 #include "src/topic.h"
+#include "src/admin.h"
 
 #endif  // SRC_BINDING_H_

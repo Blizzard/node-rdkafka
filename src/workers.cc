@@ -767,5 +767,58 @@ void KafkaConsumerSeek::HandleErrorCallback() {
   callback->Call(argc, argv);
 }
 
+/**
+ * @brief  seek
+ *
+ * This callback will take a topic partition list with offsets and
+ * seek messages from there
+ *
+ * @see RdKafka::KafkaConsumer::seek
+ *
+ * @remark Consumtion for the given partition must have started for the
+ *         seek to work. Use assign() to set the starting offset.
+ */
+
+AdminClientCreateTopic::AdminClientCreateTopic(Nan::Callback *callback,
+                                               AdminClient* client,
+                                               rd_kafka_NewTopic_t* topic,
+                                               const int & timeout_ms) :
+  ErrorAwareWorker(callback),
+  m_client(client),
+  m_topic(topic),
+  m_timeout_ms(timeout_ms) {}
+
+AdminClientCreateTopic::~AdminClientCreateTopic() {
+  // Destroy the topic creation request when we are done
+  rd_kafka_NewTopic_destroy(m_topic);
+}
+
+void AdminClientCreateTopic::Execute() {
+  Baton b = m_client->CreateTopic(m_topic, m_timeout_ms);
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    SetErrorBaton(b);
+  }
+}
+
+void AdminClientCreateTopic::HandleOKCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc];
+
+  argv[0] = Nan::Null();
+
+  callback->Call(argc, argv);
+}
+
+void AdminClientCreateTopic::HandleErrorCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc] = { GetErrorObject() };
+
+  callback->Call(argc, argv);
+}
+
 }  // namespace Workers
 }  // namespace NodeKafka

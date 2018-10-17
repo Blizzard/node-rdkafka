@@ -449,6 +449,91 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Message *message, bool include_payload
 
 }  // namespace Message
 
+/**
+ * @section Admin API models
+ */
+
+namespace Admin {
+
+/**
+ * Create a low level rdkafka handle to represent a topic
+ *
+ *
+ */
+rd_kafka_NewTopic_t* FromV8TopicObject(v8::Local<v8::Object> object, std::string &errstr) {
+  std::string topic_name = GetParameter<std::string>(object, "topic", "");
+  int num_partitions = GetParameter<int>(object, "num_partitions", 0);
+  int replication_factor = GetParameter<int>(object, "replication_factor", 0);
+
+  // Too slow to allocate this every call but admin api shouldn't be called that often
+  char* errbuf = (char*) malloc(100);
+  size_t errstr_size = 100;
+
+  rd_kafka_NewTopic_t* new_topic = rd_kafka_NewTopic_new(
+    topic_name.c_str(),
+    num_partitions,
+    replication_factor,
+    errbuf,
+    errstr_size
+  );
+
+  if (new_topic == NULL) {
+    errstr = std::string(errbuf, errstr_size);
+    free(errbuf);
+    return NULL;
+  }
+
+  rd_kafka_resp_err_t err;
+
+  if (Nan::Has(object, Nan::New("config").ToLocalChecked()).FromMaybe(false)) {
+    // Get the config v8::Object that we can get parameters on
+    v8::Local<v8::Object> config =
+      Nan::Get(object, Nan::New("config").ToLocalChecked()).ToLocalChecked().As<v8::Object>();
+
+    // Get all of the keys of the object
+    v8::MaybeLocal<v8::Array> config_keys = Nan::GetOwnPropertyNames(config);
+
+    if (!config_keys.IsEmpty()) {
+      v8::Local<v8::Array> field_array = config_keys.ToLocalChecked();
+      for (size_t i = 0; i < field_array->Length(); i++) {
+        v8::Local<v8::String> config_key = field_array->Get(i).As<v8::String>();
+        v8::Local<v8::Value> config_value = Nan::Get(config, config_key).ToLocalChecked();
+
+        // If the config value is a string...
+        if (config_value->IsString()) {
+          Nan::Utf8String pKeyVal(config_key);
+          std::string pKeyString(*pKeyVal);
+
+          Nan::Utf8String pValueVal(config_value.As<v8::String>());
+          std::string pValString(*pValueVal);
+
+          err = rd_kafka_NewTopic_set_config(new_topic, pKeyString.c_str(), pValString.c_str());
+
+          if (err != RdKafka::ERR_NO_ERROR) {
+            errstr = rd_kafka_err2str(err);
+            rd_kafka_NewTopic_destroy(new_topic);
+            return NULL;
+          }
+        } else {
+          errstr = "Config values must all be provided as strings.";
+          rd_kafka_NewTopic_destroy(new_topic);
+          return NULL;
+        }
+      }
+    }
+  }
+
+  // Free it again cuz we malloc'd it.
+  // free(errbuf);
+  return new_topic;
+}
+
+rd_kafka_NewTopic_t** FromV8TopicObjectArray(v8::Local<v8::Array>) {
+  return NULL;
+}
+
+}
+
 }  // namespace Conversion
 
 }  // namespace NodeKafka

@@ -18,6 +18,8 @@
 #include "src/common.h"
 #include "src/producer.h"
 #include "src/kafka-consumer.h"
+#include "src/admin.h"
+#include "rdkafka.h"
 
 namespace NodeKafka {
 namespace Workers {
@@ -347,6 +349,24 @@ class KafkaConsumerConsumeNum : public ErrorAwareWorker {
   const uint32_t m_num_messages;
   const int m_timeout_ms;
   std::vector<RdKafka::Message*> m_messages;
+};
+
+/**
+ * @brief Create a kafka topic on a remote broker cluster
+ */
+class AdminClientCreateTopic : public ErrorAwareWorker {
+ public:
+  AdminClientCreateTopic(Nan::Callback*, NodeKafka::AdminClient*,
+    rd_kafka_NewTopic_t*, const int &);
+  ~AdminClientCreateTopic();
+
+  void Execute();
+  void HandleOKCallback();
+  void HandleErrorCallback();
+ private:
+  NodeKafka::AdminClient * m_client;
+  rd_kafka_NewTopic_t* m_topic;
+  const int m_timeout_ms;
 };
 
 }  // namespace Workers
