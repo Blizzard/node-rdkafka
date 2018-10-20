@@ -212,56 +212,56 @@ void AdminClient::DeactivateDispatchers() {
  * C++ Exported prototype functions
  */
 
- NAN_METHOD(AdminClient::NodeConnect) {
-   Nan::HandleScope scope;
+NAN_METHOD(AdminClient::NodeConnect) {
+  Nan::HandleScope scope;
 
-   AdminClient* client = ObjectWrap::Unwrap<AdminClient>(info.This());
+  AdminClient* client = ObjectWrap::Unwrap<AdminClient>(info.This());
 
-   Baton b = client->Connect();
-   // Let the JS library throw if we need to so the error can be more rich
-   int error_code = static_cast<int>(b.err());
-   return info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
- }
+  Baton b = client->Connect();
+  // Let the JS library throw if we need to so the error can be more rich
+  int error_code = static_cast<int>(b.err());
+  return info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
+}
 
- NAN_METHOD(AdminClient::NodeDisconnect) {
-   Nan::HandleScope scope;
+NAN_METHOD(AdminClient::NodeDisconnect) {
+  Nan::HandleScope scope;
 
-   AdminClient* client = ObjectWrap::Unwrap<AdminClient>(info.This());
+  AdminClient* client = ObjectWrap::Unwrap<AdminClient>(info.This());
 
-   Baton b = client->Disconnect();
-   // Let the JS library throw if we need to so the error can be more rich
-   int error_code = static_cast<int>(b.err());
-   return info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
- }
+  Baton b = client->Disconnect();
+  // Let the JS library throw if we need to so the error can be more rich
+  int error_code = static_cast<int>(b.err());
+  return info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
+}
 
 /**
  * Create topic
  */
 NAN_METHOD(AdminClient::NodeCreateTopic) {
-   Nan::HandleScope scope;
+  Nan::HandleScope scope;
 
-   if (info.Length() < 2 || !info[1]->IsFunction()) {
-     // Just throw an exception
-     return Nan::ThrowError("Need to specify a callback");
-   }
+  if (info.Length() < 2 || !info[1]->IsFunction()) {
+    // Just throw an exception
+    return Nan::ThrowError("Need to specify a callback");
+  }
 
-   v8::Local<v8::Function> cb = info[1].As<v8::Function>();
-   Nan::Callback *callback = new Nan::Callback(cb);
-   AdminClient* client = ObjectWrap::Unwrap<AdminClient>(info.This());
+  v8::Local<v8::Function> cb = info[1].As<v8::Function>();
+  Nan::Callback *callback = new Nan::Callback(cb);
+  AdminClient* client = ObjectWrap::Unwrap<AdminClient>(info.This());
 
-   std::string errstr;
-   // Get that topic we want to create
-   rd_kafka_NewTopic_t* topic = Conversion::Admin::FromV8TopicObject(info[0].As<v8::Object>(), errstr);
+  std::string errstr;
+  // Get that topic we want to create
+  rd_kafka_NewTopic_t* topic = Conversion::Admin::FromV8TopicObject(info[0].As<v8::Object>(), errstr);
 
-   if (topic == NULL) {
-     Nan::ThrowError(errstr.c_str());
-     return;
-   }
+  if (topic == NULL) {
+    Nan::ThrowError(errstr.c_str());
+    return;
+  }
 
-   // Queue up dat work
-   Nan::AsyncQueueWorker(new Workers::AdminClientCreateTopic(callback, client, topic, 1000));
+  // Queue up dat work
+  Nan::AsyncQueueWorker(new Workers::AdminClientCreateTopic(callback, client, topic, 1000));
 
-   return info.GetReturnValue().Set(Nan::Null());
- }
+  return info.GetReturnValue().Set(Nan::Null());
+}
 
 }  // namespace NodeKafka

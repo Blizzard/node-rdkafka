@@ -713,7 +713,7 @@ void KafkaConsumerCommitted::HandleErrorCallback() {
  *
  * @see RdKafka::KafkaConsumer::seek
  *
- * @remark Consumtion for the given partition must have started for the
+ * @remark Consumption for the given partition must have started for the
  *         seek to work. Use assign() to set the starting offset.
  */
 
@@ -768,15 +768,10 @@ void KafkaConsumerSeek::HandleErrorCallback() {
 }
 
 /**
- * @brief  seek
+ * @brief createTopic
  *
- * This callback will take a topic partition list with offsets and
- * seek messages from there
+ * This callback will create a topic
  *
- * @see RdKafka::KafkaConsumer::seek
- *
- * @remark Consumtion for the given partition must have started for the
- *         seek to work. Use assign() to set the starting offset.
  */
 
 AdminClientCreateTopic::AdminClientCreateTopic(Nan::Callback *callback,

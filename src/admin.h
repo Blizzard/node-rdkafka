@@ -52,13 +52,12 @@ class AdminClient : public Connection {
   static Nan::Persistent<v8::Function> constructor;
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
 
-  AdminClient(Conf* globalConfig);
+  explicit AdminClient(Conf* globalConfig);
   ~AdminClient();
 
   rd_kafka_queue_t* rkqu;
 
  private:
-
   // Node methods
   static NAN_METHOD(NodeValidateTopic);
   static NAN_METHOD(NodeCreateTopic);
