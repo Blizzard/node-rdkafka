@@ -32,7 +32,7 @@
     "jshint": "2.x",
     "jsdoc": "^3.4.0",
     "toolkit-jsdoc": "^1.0.0",
-    "mocha": "2.x",
+    "mocha": "^5.2.0",
     "node-gyp": "3.x"
   },
   "dependencies": {

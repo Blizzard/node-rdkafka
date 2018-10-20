@@ -474,8 +474,7 @@ rd_kafka_NewTopic_t* FromV8TopicObject(v8::Local<v8::Object> object, std::string
     num_partitions,
     replication_factor,
     errbuf,
-    errstr_size
-  );
+    errstr_size);
 
   if (new_topic == NULL) {
     errstr = std::string(errbuf, errstr_size);
@@ -532,7 +531,7 @@ rd_kafka_NewTopic_t** FromV8TopicObjectArray(v8::Local<v8::Array>) {
   return NULL;
 }
 
-}
+}  // namespace Admin
 
 }  // namespace Conversion
 

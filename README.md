@@ -47,7 +47,7 @@ Then you can run `npm install` on your application to get it to build correctly.
 
 __NOTE:__ From the `librdkafka` docs
 
-> WARNING: Due to a bug in Apache Kafka 0.9.0.x, the ApiVersionRequest (as sent by the client when connecting to the broker) will be silently ignored by the broker causing the request to time out after 10 seconds. This causes client-broker connections to stall for 10 seconds during connection-setup before librdkafka falls back on the broker.version.fallback protocol features. The workaround is to explicitly configure api.version.request to false on clients communicating with <=0.9.0.x brokers.
+> WARNING: Due to a bug in Apache Kafka 0.9.0.x, the ApiVersionRequest (as sent by the client when connecting to the broker) will be silently ignored by the broker causing the request to time out after 10 seconds. This causes client-broker connections to stall for 10 seconds during connection-setup before librdkafka falls back on the `broker.version.fallback` protocol features. The workaround is to explicitly configure `api.version.request` to `false` on clients communicating with <=0.9.0.x brokers.
 
 ### Alpine
 
