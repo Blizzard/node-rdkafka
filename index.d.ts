@@ -218,3 +218,20 @@ declare interface EventCallbackRepositoryArityOne {
 declare interface EventCallbackRepositoryArityTwo {
   'delivery-report': [any, any]
 }
+
+declare interface NewTopic {
+    topic: string;
+    num_partitions: number;
+    replication_factor: number;
+    config: object
+}
+
+declare interface InternalAdminClient {
+    createTopic(topic: NewTopic, cb?: (err: any, data: any) => any): void;
+    createTopic(topic: NewTopic, timeout?: number, cb?: (err: any, data: any) => any): void;
+    disconnect(): void;
+}
+
+export class AdminClient {
+    create(conf: object): InternalAdminClient;
+}
