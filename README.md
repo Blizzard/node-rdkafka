@@ -34,7 +34,7 @@ Play nice; Play fair.
 * Windows?! See below
 * openssl 1.0.2
 
-### Mac OS High Sierra
+### Mac OS High Sierra / Mojave
 
 OpenSSL has been upgraded in High Sierra and homebrew does not overwrite default system libraries. That means when building node-rdkafka, because you are using openssl, you need to tell the linker where to find it:
 
