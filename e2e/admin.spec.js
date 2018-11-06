@@ -17,16 +17,11 @@ describe('Admin', function() {
 
   var client;
 
-  beforeEach(function(done) {
+  beforeEach(function() {
       client = Kafka.AdminClient.create({
         'client.id': 'kafka-test',
         'metadata.broker.list': kafkaBrokerList
       });
-      client.connect({}, function(err) {
-        t.ifError(err);
-        done();
-      });
-      //eventListener(producer);
   });
 
 
