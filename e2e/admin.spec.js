@@ -31,6 +31,7 @@ describe('Admin', function() {
 
 
   it('should create topic sucessfully', function(done) {
+    this.timeout(30000);
     client.createTopic({
         topic: 'admin-test-topic',
         num_partitions: 1,
@@ -42,6 +43,7 @@ describe('Admin', function() {
   });
 
   it('should raise an error when partitions are larger than number of brokers', function(done) {
+    this.timeout(30000);
     client.createTopic({
         topic: 'admin-test-topic',
         num_partitions: 99999999999,
