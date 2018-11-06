@@ -42,8 +42,8 @@ describe('Admin', function() {
     this.timeout(30000);
     client.createTopic({
         topic: 'admin-test-topic',
-        num_partitions: 99999999999,
-        replication_factor: 99999999999
+        num_partitions: 9999,
+        replication_factor: 9999
     }, function(err) {
       t.equal(typeof err, 'object', 'an error should be returned');
       done();
