@@ -18,6 +18,7 @@ describe('Admin', function() {
   var client;
 
   beforeEach(function() {
+      this.timeout(10000);
       client = Kafka.AdminClient.create({
         'client.id': 'kafka-test',
         'metadata.broker.list': kafkaBrokerList
