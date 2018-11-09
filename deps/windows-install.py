@@ -15,7 +15,7 @@ bundledDllsZip = '../deps/windows-install.zip'
 import urllib2
 filedata = urllib2.urlopen(librdkafkaNugetUrl)
 datatowrite = filedata.read()
-with open(outputFile, 'wb') as f:  
+with open(outputFile, 'wb') as f:
     f.write(datatowrite)
 
 # extract package
