@@ -1,17 +1,23 @@
-librdkafkaVersion = '0.11.5'
+librdkafkaVersion = ''
+# read librdkafka version from package.json
+import json
+with open('../package.json') as f:
+    librdkafkaVersion = json.load(f)['librdkafka']
+librdkafkaWinSufix = '7' if librdkafkaVersion == '0.11.5' else '';
+
 depsPrecompiledDir = '../deps/precompiled'
 depsIncludeDir = '../deps/include'
 buildReleaseDir = 'Release'
 
-librdkafkaNugetUrl = 'https://api.nuget.org/v3-flatcontainer/librdkafka.redist/{}/librdkafka.redist.{}.nupkg'.format(librdkafkaVersion, librdkafkaVersion)
+# alternative: 'https://api.nuget.org/v3-flatcontainer/librdkafka.redist/{}/librdkafka.redist.{}.nupkg'.format(librdkafkaVersion, librdkafkaVersion)
+librdkafkaNugetUrl = 'https://www.nuget.org/api/v2/package/librdkafka.redist/{}'.format(librdkafkaVersion)
 outputDir = 'librdkafka.redist'
 outputFile = outputDir + '.zip'
-dllPath = outputDir + '/runtimes/win7-x64/native'
-libPath = outputDir + '/build/native/lib/win7/x64/win7-x64-Release/v120'
+dllPath = outputDir + '/runtimes/win{}-x64/native'.format(librdkafkaWinSufix)
+libPath = outputDir + '/build/native/lib/win{}/x64/win{}-x64-Release/v120'.format(librdkafkaWinSufix, librdkafkaWinSufix)
 includePath = outputDir + '/build/native/include/librdkafka'
-bundledDllsZip = '../deps/windows-install.zip'
 
-# download librdkafka frmo nuget
+# download librdkafka from nuget
 import urllib2
 filedata = urllib2.urlopen(librdkafkaNugetUrl)
 datatowrite = filedata.read()
@@ -48,12 +54,6 @@ shutil.copy2(dllPath + '/zlib.dll', buildReleaseDir)
 shutil.copy2(dllPath + '/msvcr120.dll', buildReleaseDir)
 shutil.copy2(dllPath + '/librdkafka.dll', buildReleaseDir)
 shutil.copy2(dllPath + '/librdkafkacpp.dll', buildReleaseDir)
-
-# unfortunately vs2015 build tools are not shipped with msvcp120.dll (only msvcr120.dll is included)
-# librdkafka nuget package also only ships with msvcr120.dll
-zip_ref = zipfile.ZipFile(bundledDllsZip, 'r')
-zip_ref.extractall(buildReleaseDir)
-zip_ref.close()
 
 # clean up
 os.remove(outputFile)
