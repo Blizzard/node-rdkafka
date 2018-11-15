@@ -283,6 +283,44 @@ describe('Consumer/Producer', function() {
     }, 2000);
   });
 
+  it('should be able to produce and consume messages: after an error', function(done) {
+    this.timeout(20000);
+
+    var consumerOpts = {
+        'metadata.broker.list': kafkaBrokerList,
+        'group.id': grp,
+        'fetch.wait.max.ms': 1000,
+        'session.timeout.ms': 10000,
+        'enable.auto.commit': false,
+        'debug': 'all',
+    };
+    consumer = new Kafka.KafkaConsumer(consumerOpts, {
+      'auto.offset.reset': 'largest',
+    });
+    eventListener(consumer);
+
+    consumer.connect({}, function(err, d) {
+      t.ifError(err);
+      t.equal(typeof d, 'object', 'metadata should be returned');
+      consumer.subscribe([topic]);
+      consumer.consume();
+      setTimeout(function() {
+        producer.produce(topic, null, Buffer.from(''), '');
+      }, 2000);
+    });
+    const count = 0;
+    consumer.once('data', function(message) {
+      count++;
+      if (count == 2) {
+        consumer.commitMessage(message);
+        done();
+      } else {
+        throw Error('We had an error, this message should retry');
+      }
+    });
+  });
+
+
   describe('Exceptional case -  offset_commit_cb true', function() {
     var grp = 'kafka-mocha-grp-' + crypto.randomBytes(20).toString('hex');
     var consumerOpts = {
