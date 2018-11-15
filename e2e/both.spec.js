@@ -314,8 +314,6 @@ describe('Consumer/Producer', function() {
       if (count == 2) {
         consumer.commitMessage(message);
         done();
-      } else {
-        throw Error('We had an error, this message should retry');
       }
     });
   });
