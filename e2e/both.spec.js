@@ -285,7 +285,7 @@ describe('Consumer/Producer', function() {
 
   it('should be able to produce and consume messages: after an error', function(done) {
     this.timeout(20000);
-
+    var grp = 'kafka-mocha-grp-' + crypto.randomBytes(20).toString('hex');
     var consumerOpts = {
         'metadata.broker.list': kafkaBrokerList,
         'group.id': grp,
