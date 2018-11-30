@@ -38,7 +38,7 @@
                   'librdkafkacpp.lib'
                 ],
                 'AdditionalLibraryDirectories': [
-                  'deps/librdkafka/win32/outdir/v120/x64/Release/'
+                  '../deps/librdkafka/win32/outdir/v120/x64/Release/'
                 ]
               },
               'VCCLCompilerTool': {
@@ -46,11 +46,11 @@
                   '/GR'
                 ],
                 'AdditionalUsingDirectories': [
-                  'deps/librdkafka/win32/outdir/v120/x64/Release/'
+                  '../deps/librdkafka/win32/outdir/v120/x64/Release/'
                 ],
                 'AdditionalIncludeDirectories': [
-                  'deps/librdkafka/src',
-                  'deps/librdkafka/src-cpp'
+                  '../deps/librdkafka/src',
+                  '../deps/librdkafka/src-cpp'
                 ]
               }
             },
@@ -60,8 +60,8 @@
               "deps/librdkafka.gyp:librdkafka"
             ],
             'include_dirs': [
-              'deps/librdkafka/src',
-              'deps/librdkafka/src-cpp'
+              '../deps/librdkafka/src',
+              '../deps/librdkafka/src-cpp'
             ]
           },
           {

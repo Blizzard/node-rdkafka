@@ -12,20 +12,18 @@
             'actions': [
               {
                 'action_name': 'nuget_restore',
-                'inputs': [
-                  'deps/librdkafka/win32/librdkafka.sln'
-                ],
+                'inputs': [ ],
                 'outputs': [ ],
-                'action': ['nuget', 'restore', '<@(_inputs)']
+                'action': ['nuget.exe', 'restore', 'librdkafka/win32/librdkafka.sln']
               },
               {
                 'action_name': 'build_dependencies',
                 'inputs': [
-                  'deps/librdkafka/win32/librdkafka.sln'
+                  'librdkafka/win32/librdkafka.sln'
                 ],
                 'outputs': [
-                  'deps/librdkafka/win32/outdir/v120/x64/Release/librdkafkacpp.lib',
-                  'deps/librdkafka/win32/outdir/v120/x64/Release/librdkafka.lib'
+                  'librdkafka/win32/outdir/v120/x64/Release/librdkafkacpp.lib',
+                  'librdkafka/win32/outdir/v120/x64/Release/librdkafka.lib'
                 ],
                 # Fun story export PATH="$PATH:/c/Program Files (x86)/MSBuild/12.0/Bin/"
                 # I wish there was a better way, but can't find one right now
@@ -35,26 +33,26 @@
             'copies': [
               {
                 'files': [
-                  'deps/librdkafka/win32/outdir/v120/x64/Release/zlib.dll',
-                  'deps/librdkafka/win32/outdir/v120/x64/Release/librdkafka.dll',
-                  'deps/librdkafka/win32/outdir/v120/x64/Release/librdkafkacpp.dll'
+                  'librdkafka/win32/outdir/v120/x64/Release/zlib.dll',
+                  'librdkafka/win32/outdir/v120/x64/Release/librdkafka.dll',
+                  'librdkafka/win32/outdir/v120/x64/Release/librdkafkacpp.dll'
                 ],
                 'destination': '../build/Release'
               }
             ],
             'libraries': [
-              'deps/librdkafka/win32/outdir/v120/x64/Release/librdkafkacpp.lib',
-              'deps/librdkafka/win32/outdir/v120/x64/Release/librdkafka.lib'
+              'librdkafka/win32/outdir/v120/x64/Release/librdkafkacpp.lib',
+              'librdkafka/win32/outdir/v120/x64/Release/librdkafka.lib'
             ],
             'build_files': [
-              'deps/librdkafka/win32/outdir/v120/x64/Release/zlib.dll',
-              'deps/librdkafka/win32/outdir/v120/x64/Release/librdkafka.dll',
-              'deps/librdkafka/win32/outdir/v120/x64/Release/librdkafkacpp.dll',
+              'librdkafka/win32/outdir/v120/x64/Release/zlib.dll',
+              'librdkafka/win32/outdir/v120/x64/Release/librdkafka.dll',
+              'librdkafka/win32/outdir/v120/x64/Release/librdkafkacpp.dll',
             ],
             'msvs_settings': {
               'VCCLCompilerTool': {
                 'AdditionalUsingDirectories': [
-                  'deps/librdkafka/win32/outdir/v120/x64/Release/'
+                  'librdkafka/win32/outdir/v120/x64/Release/'
                 ]
               }
             },
