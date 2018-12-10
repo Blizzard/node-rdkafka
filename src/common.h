@@ -125,6 +125,10 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Message*, bool);
 
 }  // namespace Conversion
 
+namespace Util {
+  std::string FromV8String(v8::Local<v8::String>);
+}
+
 }  // namespace NodeKafka
 
 #endif  // SRC_COMMON_H_

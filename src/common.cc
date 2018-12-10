@@ -540,4 +540,11 @@ rd_kafka_NewTopic_t** FromV8TopicObjectArray(v8::Local<v8::Array>) {
 
 }  // namespace Conversion
 
+namespace Util {
+  std::string FromV8String(v8::Local<v8::String> val) {
+    Nan::Utf8String keyUTF8(val);
+    return std::string(*keyUTF8);
+  }
+}  // Namespace Util
+
 }  // namespace NodeKafka

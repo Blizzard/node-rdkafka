@@ -773,7 +773,6 @@ void KafkaConsumerSeek::HandleErrorCallback() {
  * This callback will create a topic
  *
  */
-
 AdminClientCreateTopic::AdminClientCreateTopic(Nan::Callback *callback,
                                                AdminClient* client,
                                                rd_kafka_NewTopic_t* topic,
@@ -807,6 +806,53 @@ void AdminClientCreateTopic::HandleOKCallback() {
 }
 
 void AdminClientCreateTopic::HandleErrorCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc] = { GetErrorObject() };
+
+  callback->Call(argc, argv);
+}
+
+/**
+ * @brief Delete a topic in an asynchronous worker.
+ *
+ * This callback will delete a topic
+ *
+ */
+AdminClientDeleteTopic::AdminClientDeleteTopic(Nan::Callback *callback,
+                                               AdminClient* client,
+                                               rd_kafka_DeleteTopic_t* topic,
+                                               const int & timeout_ms) :
+  ErrorAwareWorker(callback),
+  m_client(client),
+  m_topic(topic),
+  m_timeout_ms(timeout_ms) {}
+
+AdminClientDeleteTopic::~AdminClientDeleteTopic() {
+  // Destroy the topic creation request when we are done
+  rd_kafka_DeleteTopic_destroy(m_topic);
+}
+
+void AdminClientDeleteTopic::Execute() {
+  Baton b = m_client->DeleteTopic(m_topic, m_timeout_ms);
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    SetErrorBaton(b);
+  }
+}
+
+void AdminClientDeleteTopic::HandleOKCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc];
+
+  argv[0] = Nan::Null();
+
+  callback->Call(argc, argv);
+}
+
+void AdminClientDeleteTopic::HandleErrorCallback() {
   Nan::HandleScope scope;
 
   const unsigned int argc = 1;

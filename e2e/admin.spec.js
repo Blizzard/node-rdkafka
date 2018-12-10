@@ -116,4 +116,23 @@ describe('Admin', function() {
     });
   });
 
+  it('should be able to delete a topic after creation', function(done) {
+    var topicName = 'admin-test-topic-2bdeleted-' + time;
+    this.timeout(30000);
+    client.createTopic({
+      topic: topicName,
+      num_partitions: 1,
+      replication_factor: 1
+    }, function(err) {
+      pollForTopic(producer, topicName, 10, 1000, function(err) {
+        t.ifError(err);
+        client.deleteTopic(topicName, function(deleteErr) {
+          // Fail if we got an error
+          t.ifError(deleteErr);
+          done();
+        });
+      });
+    });
+  });
+
 });

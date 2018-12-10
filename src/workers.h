@@ -369,6 +369,24 @@ class AdminClientCreateTopic : public ErrorAwareWorker {
   const int m_timeout_ms;
 };
 
+/**
+ * @brief Delete a kafka topic on a remote broker cluster
+ */
+class AdminClientDeleteTopic : public ErrorAwareWorker {
+ public:
+  AdminClientDeleteTopic(Nan::Callback*, NodeKafka::AdminClient*,
+    rd_kafka_DeleteTopic_t*, const int &);
+  ~AdminClientDeleteTopic();
+
+  void Execute();
+  void HandleOKCallback();
+  void HandleErrorCallback();
+ private:
+  NodeKafka::AdminClient * m_client;
+  rd_kafka_DeleteTopic_t* m_topic;
+  const int m_timeout_ms;
+};
+
 }  // namespace Workers
 
 }  // namespace NodeKafka

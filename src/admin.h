@@ -47,6 +47,10 @@ class AdminClient : public Connection {
   Baton Disconnect();
 
   Baton CreateTopic(rd_kafka_NewTopic_t* topic, int timeout_ms);
+  Baton DeleteTopic(rd_kafka_DeleteTopic_t* topic, int timeout_ms);
+  // Baton CreatePartitions(rd_kafka_NewTopic_t* topic, int timeout_ms);
+  // Baton AlterConfig(rd_kafka_NewTopic_t* topic, int timeout_ms);
+  // Baton DescribeConfig(rd_kafka_NewTopic_t* topic, int timeout_ms);
 
  protected:
   static Nan::Persistent<v8::Function> constructor;
@@ -59,10 +63,10 @@ class AdminClient : public Connection {
 
  private:
   // Node methods
-  static NAN_METHOD(NodeValidateTopic);
+  // static NAN_METHOD(NodeValidateTopic);
   static NAN_METHOD(NodeCreateTopic);
-  static NAN_METHOD(NodeDestroyTopic);
-  static NAN_METHOD(NodeCreatePartitions);
+  static NAN_METHOD(NodeDeleteTopic);
+  // static NAN_METHOD(NodeCreatePartitions);
 
   static NAN_METHOD(NodeConnect);
   static NAN_METHOD(NodeDisconnect);
