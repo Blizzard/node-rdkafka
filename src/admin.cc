@@ -312,7 +312,9 @@ Baton AdminClient::DeleteTopic(rd_kafka_DeleteTopic_t* topic, int timeout_ms) {
   }
 }
 
-Baton AdminClient::CreatePartitions(rd_kafka_NewPartitions_t* partitions, int timeout_ms) {
+Baton AdminClient::CreatePartitions(
+  rd_kafka_NewPartitions_t* partitions,
+  int timeout_ms) {
   if (!IsConnected()) {
     return Baton(RdKafka::ERR__STATE);
   }
@@ -332,7 +334,8 @@ Baton AdminClient::CreatePartitions(rd_kafka_NewPartitions_t* partitions, int ti
     // for RAII
     rd_kafka_queue_t * topic_rkqu = rd_kafka_queue_new(m_client->c_ptr());
 
-    rd_kafka_CreatePartitions(m_client->c_ptr(), &partitions, 1, options, topic_rkqu);
+    rd_kafka_CreatePartitions(m_client->c_ptr(),
+      &partitions, 1, options, topic_rkqu);
 
     // Poll for an event by type in that queue
     rd_kafka_event_t * event_response = PollForEvent(
@@ -369,7 +372,7 @@ Baton AdminClient::CreatePartitions(rd_kafka_NewPartitions_t* partitions, int ti
       create_partitions_results,
       &created_partitions_topic_count);
 
-    for (int i = 0 ; i < static_cast<int>(created_partitions_topic_count) ; i++) {
+    for (int i = 0 ; i < static_cast<int>(created_partitions_topic_count) ; i++) {  // NOLINT
       const rd_kafka_topic_result_t *terr = restopics[i];
       const rd_kafka_resp_err_t errcode = rd_kafka_topic_result_error(terr);
 
@@ -521,7 +524,8 @@ NAN_METHOD(AdminClient::NodeCreatePartitions) {
   }
 
   if (!info[2]->IsNumber() || !info[1]->IsNumber() || !info[0]->IsString()) {
-    return Nan::ThrowError("Must provide 'totalPartitions', 'timeout', and 'topicName'");
+    return Nan::ThrowError(
+      "Must provide 'totalPartitions', 'timeout', and 'topicName'");
   }
 
   // Create the final callback object
@@ -552,8 +556,8 @@ NAN_METHOD(AdminClient::NodeCreatePartitions) {
   }
 
   // Queue up dat work
-  Nan::AsyncQueueWorker(
-    new Workers::AdminClientCreatePartitions(callback, client, new_partitions, 1000));
+  Nan::AsyncQueueWorker(new Workers::AdminClientCreatePartitions(
+    callback, client, new_partitions, 1000));
 
   return info.GetReturnValue().Set(Nan::Null());
 }

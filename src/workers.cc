@@ -868,10 +868,10 @@ void AdminClientDeleteTopic::HandleErrorCallback() {
  *
  */
 AdminClientCreatePartitions::AdminClientCreatePartitions(
-                                             Nan::Callback *callback,
-                                             AdminClient* client,
-                                             rd_kafka_NewPartitions_t* partitions,
-                                             const int & timeout_ms) :
+                                         Nan::Callback *callback,
+                                         AdminClient* client,
+                                         rd_kafka_NewPartitions_t* partitions,
+                                         const int & timeout_ms) :
   ErrorAwareWorker(callback),
   m_client(client),
   m_partitions(partitions),
