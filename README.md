@@ -291,6 +291,35 @@ The following table describes types of events.
 | `event.throttle` | The `event.throttle` event emitted  when `librdkafka` reports throttling. |
 | `delivery-report` | The `delivery-report` event is emitted when a delivery report has been found via polling. <br><br>To use this event, you must set `request.required.acks` to `1` or `-1` in topic configuration and `dr_cb` (or `dr_msg_cb` if you want the report to contain the message payload) to `true` in the `Producer` constructor options. |
 
+### Higher Level Producer
+
+The higher level producer is a variant of the producer which can propagate callbacks to you upon message delivery.
+
+```js
+var producer = new Kafka.HighLevelProducer({
+  'metadata.broker.list': 'localhost:9092',
+});
+```
+
+This will enrich the produce call so it will have a callback to tell you when the message has been delivered. You lose the ability to specify opaque tokens.
+
+```js
+producer.produce(topicName, null, Buffer.from('alliance4ever'), null, Date.now(), (err, offset) => {
+  // The offset if our acknowledgement level allows us to receive delivery offsets
+  console.log(offset);
+});
+```
+
+Additionally you can add serializers to modify the value of a produce for a key or value before it is sent over to Kafka.
+
+```js
+producer.setValueSerializer(function(value) {
+  return Buffer.from(JSON.stringify(value));
+});
+```
+
+Otherwise the behavior of the class should be exactly the same.
+
 ## Kafka.KafkaConsumer
 
 To read messages from Kafka, you use a `KafkaConsumer`.  You instantiate a `KafkaConsumer` object as follows:
