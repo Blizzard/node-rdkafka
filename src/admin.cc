@@ -83,6 +83,7 @@ void AdminClient::Init(v8::Local<v8::Object> exports) {
   // Admin client operations
   Nan::SetPrototypeMethod(tpl, "createTopic", NodeCreateTopic);
   Nan::SetPrototypeMethod(tpl, "deleteTopic", NodeDeleteTopic);
+  Nan::SetPrototypeMethod(tpl, "createPartitions", NodeCreatePartitions);
 
   Nan::SetPrototypeMethod(tpl, "connect", NodeConnect);
   Nan::SetPrototypeMethod(tpl, "disconnect", NodeDisconnect);
@@ -311,6 +312,76 @@ Baton AdminClient::DeleteTopic(rd_kafka_DeleteTopic_t* topic, int timeout_ms) {
   }
 }
 
+Baton AdminClient::CreatePartitions(rd_kafka_NewPartitions_t* partitions, int timeout_ms) {
+  if (!IsConnected()) {
+    return Baton(RdKafka::ERR__STATE);
+  }
+
+  {
+    scoped_shared_write_lock lock(m_connection_lock);
+    if (!IsConnected()) {
+      return Baton(RdKafka::ERR__STATE);
+    }
+
+    // Make admin options to establish that we are deleting topics
+    rd_kafka_AdminOptions_t *options = rd_kafka_AdminOptions_new(
+      m_client->c_ptr(), RD_KAFKA_ADMIN_OP_CREATEPARTITIONS);
+
+    // Create queue just for this operation.
+    // May be worth making a "scoped queue" class or something like a lock
+    // for RAII
+    rd_kafka_queue_t * topic_rkqu = rd_kafka_queue_new(m_client->c_ptr());
+
+    rd_kafka_CreatePartitions(m_client->c_ptr(), &partitions, 1, options, topic_rkqu);
+
+    // Poll for an event by type in that queue
+    rd_kafka_event_t * event_response = PollForEvent(
+      topic_rkqu,
+      RD_KAFKA_EVENT_CREATEPARTITIONS_RESULT,
+      5,
+      1000);
+
+    // Destroy the queue since we are done with it.
+    rd_kafka_queue_destroy(topic_rkqu);
+
+    // Destroy the options we just made because we polled already
+    rd_kafka_AdminOptions_destroy(options);
+
+    // If we got no response from that operation, this is a failure
+    // likely due to time out
+    if (event_response == NULL) {
+      return Baton(RdKafka::ERR__TIMED_OUT);
+    }
+
+    // Now we can get the error code from the event
+    if (rd_kafka_event_error(event_response)) {
+      // If we had a special error code, get out of here with it
+      return Baton(static_cast<RdKafka::ErrorCode>(
+        rd_kafka_event_error(event_response)));
+    }
+
+    // get the created results
+    const rd_kafka_CreatePartitions_result_t * create_partitions_results =
+      rd_kafka_event_CreatePartitions_result(event_response);
+
+    size_t created_partitions_topic_count;
+    const rd_kafka_topic_result_t **restopics = rd_kafka_CreatePartitions_result_topics(  // NOLINT
+      create_partitions_results,
+      &created_partitions_topic_count);
+
+    for (int i = 0 ; i < static_cast<int>(created_partitions_topic_count) ; i++) {
+      const rd_kafka_topic_result_t *terr = restopics[i];
+      const rd_kafka_resp_err_t errcode = rd_kafka_topic_result_error(terr);
+
+      if (errcode != RD_KAFKA_EVENT_CREATEPARTITIONS_RESULT) {
+        return Baton(static_cast<RdKafka::ErrorCode>(errcode));
+      }
+    }
+
+    return Baton(RdKafka::ERR_NO_ERROR);
+  }
+}
+
 void AdminClient::ActivateDispatchers() {
   // Listen to global config
   m_gconfig->listen();
@@ -413,6 +484,60 @@ NAN_METHOD(AdminClient::NodeDeleteTopic) {
   // Queue up dat work
   Nan::AsyncQueueWorker(
     new Workers::AdminClientDeleteTopic(callback, client, topic, 1000));
+
+  return info.GetReturnValue().Set(Nan::Null());
+}
+
+/**
+ * Delete topic
+ */
+NAN_METHOD(AdminClient::NodeCreatePartitions) {
+  Nan::HandleScope scope;
+
+  if (info.Length() < 4) {
+    // Just throw an exception
+    return Nan::ThrowError("Need to specify a callback");
+  }
+
+  if (!info[3]->IsFunction()) {
+    // Just throw an exception
+    return Nan::ThrowError("Need to specify a callback 2");
+  }
+
+  if (!info[2]->IsNumber() || !info[1]->IsNumber() || !info[0]->IsString()) {
+    return Nan::ThrowError("Must provide 'totalPartitions', 'timeout', and 'topicName'");
+  }
+
+  // Create the final callback object
+  v8::Local<v8::Function> cb = info[3].As<v8::Function>();
+  Nan::Callback *callback = new Nan::Callback(cb);
+  AdminClient* client = ObjectWrap::Unwrap<AdminClient>(info.This());
+
+  // Get the timeout
+  int timeout = Nan::To<int32_t>(info[2]).FromJust();
+
+  // Get the total number of desired partitions
+  int partition_total_count = Nan::To<int32_t>(info[1]).FromJust();
+
+  // Get the topic name from the string
+  std::string topic_name = Util::FromV8String(info[0]->ToString());
+
+  // Create an error buffer we can throw
+  char* errbuf = reinterpret_cast<char*>(malloc(100));
+
+  // Create the new partitions request
+  rd_kafka_NewPartitions_t* new_partitions = rd_kafka_NewPartitions_new(
+    topic_name.c_str(), partition_total_count, errbuf, 100);
+
+  // If we got a failure on the create new partitions request,
+  // fail here
+  if (new_partitions == NULL) {
+    return Nan::ThrowError(errbuf);
+  }
+
+  // Queue up dat work
+  Nan::AsyncQueueWorker(
+    new Workers::AdminClientCreatePartitions(callback, client, new_partitions, 1000));
 
   return info.GetReturnValue().Set(Nan::Null());
 }

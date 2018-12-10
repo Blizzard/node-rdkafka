@@ -861,5 +861,53 @@ void AdminClientDeleteTopic::HandleErrorCallback() {
   callback->Call(argc, argv);
 }
 
+/**
+ * @brief Delete a topic in an asynchronous worker.
+ *
+ * This callback will delete a topic
+ *
+ */
+AdminClientCreatePartitions::AdminClientCreatePartitions(
+                                             Nan::Callback *callback,
+                                             AdminClient* client,
+                                             rd_kafka_NewPartitions_t* partitions,
+                                             const int & timeout_ms) :
+  ErrorAwareWorker(callback),
+  m_client(client),
+  m_partitions(partitions),
+  m_timeout_ms(timeout_ms) {}
+
+AdminClientCreatePartitions::~AdminClientCreatePartitions() {
+  // Destroy the topic creation request when we are done
+  rd_kafka_NewPartitions_destroy(m_partitions);
+}
+
+void AdminClientCreatePartitions::Execute() {
+  Baton b = m_client->CreatePartitions(m_partitions, m_timeout_ms);
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    SetErrorBaton(b);
+  }
+}
+
+void AdminClientCreatePartitions::HandleOKCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc];
+
+  argv[0] = Nan::Null();
+
+  callback->Call(argc, argv);
+}
+
+void AdminClientCreatePartitions::HandleErrorCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc] = { GetErrorObject() };
+
+  callback->Call(argc, argv);
+}
+
 }  // namespace Workers
 }  // namespace NodeKafka
