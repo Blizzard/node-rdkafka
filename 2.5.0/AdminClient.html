@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Class: AdminClient</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="toolkit/css/toolkit/bnet-responsive.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/main.css">
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="navbar-static">
+  <header class="navbar header">
+    <div class="grid-container">
+      <div class="grid-25">
+        <a class="brand mark" href="index.html">
+          Class: AdminClient
+          <span class="tag">3.5.5</span>
+        </a>
+      </div>
+      <div class="grid-75">
+        <ul class="nav navbar-nav navbar-right">
+          <li class="dropdown"><a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#" onclick="return false;">Classes</a><ul class="dropdown-menu" role="menu"><li><a href="AdminClient.html">AdminClient</a></li><li><a href="Client.html">Client</a></li><li><a href="KafkaConsumer.html">KafkaConsumer</a></li><li><a href="KafkaConsumerStream.html">KafkaConsumerStream</a></li><li><a href="LibrdKafkaError.html">LibrdKafkaError</a></li><li><a href="Producer.html">Producer</a></li><li><a href="ProducerStream.html">ProducerStream</a></li></ul></li><li class="dropdown"><a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#" onclick="return false;">Events</a><ul class="dropdown-menu" role="menu"><li><a href="Client.html#event:disconnected">disconnected</a></li><li><a href="Client.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:data">data</a></li><li><a href="KafkaConsumer.html#event:disconnected">disconnected</a></li><li><a href="KafkaConsumer.html#event:ready">ready</a></li><li><a href="Producer.html#event:disconnected">disconnected</a></li><li><a href="Producer.html#event:ready">ready</a></li></ul></li><li class="dropdown"><a class="dropdown-toggle" role="button" data-toggle="dropdown" href="#" onclick="return false;">Tutorials</a><ul class="dropdown-menu" role="menu"><li><a href="tutorial-consumer-flow.html">consumer-flow</a></li><li><a href="tutorial-consumer.html">consumer</a></li><li><a href="tutorial-docker-alpine.html">docker-alpine</a></li><li><a href="tutorial-metadata.html">metadata</a></li><li><a href="tutorial-producer-cluster.html">producer-cluster</a></li><li><a href="tutorial-producer_.html">producer</a></li></ul></li><h3>Global</h3><ul><li><a href="global.html#createAdminClient">createAdminClient</a></li><li><a href="global.html#Topic">Topic</a></li><li><a href="global.html#TopicPartition">TopicPartition</a></li></ul>
+        </ul>
+      </div>
+    </div>
+  </header>
+</div>
+<!-- /HEADER -->
+
+<div class="body-content">
+  <div class="grid-container project-container">
+
+    <div class="grid-75 push-25">
+      <h1>Class: AdminClient</h1>
+
+      
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>AdminClient</h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+
+    
+
+    <h4 class="name" id="AdminClient">
+        <span class="type-signature"></span>new AdminClient<span class="signature">(conf)</span><span class="type-signature"></span>
+    </h4>
+
+    
+
+
+
+<div class="description">
+    <p>AdminClient class for administering Kafka
+
+This client is the way you can interface with the Kafka Admin APIs.
+This class should not be made using the constructor, but instead
+should be made using the factory method.
+
+<code>
+var client = AdminClient.create({ ... });
+</code>
+
+Once you instantiate this object, it will have a handle to the kafka broker.
+Unlike the other node-rdkafka classes, this class does not ensure that
+it is connected to the upstream broker. Instead, making an action will
+validate that.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <div class="clearfix">
+  <div class="grid-75">
+    <h4 class="heading-3">Parameters:</h4>
+  </div>
+</div>
+
+    
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">conf</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Key value pairs to configure the admin client
+topic configuration</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source">
+        <ul class="pager"><li>
+        <a href="admin.js.html#line58">admin.js, line 58</a>
+        </li></ul>
+    </dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    </div>
+
+    
+
+    
+
+    
+
+     
+
+    
+
+    
+
+    
+        <div class="clearfix">
+  <div class="grid-75">
+    <h3 class="heading-2">Methods:</h3>
+  </div>
+  <div class="grid-25 top-link">
+    <small>
+      <a href="#top" class="inverse">
+        <i class="icon-chevron-up"></i>
+        &nbsp;Back to top.
+      </a>
+    </small>
+  </div>
+</div>
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="connect">
+        <span class="type-signature"></span>connect<span class="signature">()</span><span class="type-signature"></span>
+    </h4>
+
+    
+
+
+
+<div class="description">
+    <p>Connect using the admin client.
+
+Should be run using the factory method, so should never
+need to be called outside.
+
+Unlike the other connect methods, this one is synchronous.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source">
+        <ul class="pager"><li>
+        <a href="admin.js.html#line92">admin.js, line 92</a>
+        </li></ul>
+    </dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="createPartitions">
+        <span class="type-signature"></span>createPartitions<span class="signature">(topic, totalPartitions, timeout, cb)</span><span class="type-signature"></span>
+    </h4>
+
+    
+
+
+
+<div class="description">
+    <p>Create new partitions for a topic.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <div class="clearfix">
+  <div class="grid-75">
+    <h4 class="heading-3">Parameters:</h4>
+  </div>
+</div>
+
+    
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">topic</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The topic to add partitions to, by name.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">totalPartitions</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The total number of partitions the topic should have
+                                  after the request</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">timeout</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Number of milliseconds to wait while trying to delete the topic.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">cb</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The callback to be executed when finished</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source">
+        <ul class="pager"><li>
+        <a href="admin.js.html#line187">admin.js, line 187</a>
+        </li></ul>
+    </dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="createTopic">
+        <span class="type-signature"></span>createTopic<span class="signature">(topic, timeout, cb)</span><span class="type-signature"></span>
+    </h4>
+
+    
+
+
+
+<div class="description">
+    <p>Create a topic with a given config.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <div class="clearfix">
+  <div class="grid-75">
+    <h4 class="heading-3">Parameters:</h4>
+  </div>
+</div>
+
+    
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">topic</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">NewTopic</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Topic to create.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">timeout</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Number of milliseconds to wait while trying to create the topic.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">cb</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The callback to be executed when finished</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source">
+        <ul class="pager"><li>
+        <a href="admin.js.html#line115">admin.js, line 115</a>
+        </li></ul>
+    </dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="deleteTopic">
+        <span class="type-signature"></span>deleteTopic<span class="signature">(topic, timeout, cb)</span><span class="type-signature"></span>
+    </h4>
+
+    
+
+
+
+<div class="description">
+    <p>Delete a topic.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <div class="clearfix">
+  <div class="grid-75">
+    <h4 class="heading-3">Parameters:</h4>
+  </div>
+</div>
+
+    
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">topic</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The topic to delete, by name.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">timeout</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Number of milliseconds to wait while trying to delete the topic.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">cb</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The callback to be executed when finished</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source">
+        <ul class="pager"><li>
+        <a href="admin.js.html#line150">admin.js, line 150</a>
+        </li></ul>
+    </dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="disconnect">
+        <span class="type-signature"></span>disconnect<span class="signature">()</span><span class="type-signature"></span>
+    </h4>
+
+    
+
+
+
+<div class="description">
+    <p>Disconnect the admin client.
+
+This is a synchronous method, but all it does is clean up
+some memory and shut some threads down</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source">
+        <ul class="pager"><li>
+        <a href="admin.js.html#line103">admin.js, line 103</a>
+        </li></ul>
+    </dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+    
+
+    
+        <div class="clearfix">
+  <div class="grid-75">
+    <h3 class="heading-2">Type Definitions:</h3>
+  </div>
+  <div class="grid-25 top-link">
+    <small>
+      <a href="#top" class="inverse">
+        <i class="icon-chevron-up"></i>
+        &nbsp;Back to top.
+      </a>
+    </small>
+  </div>
+</div>
+
+
+        
+                
+<h4 class="name" id="~NewTopic">NewTopic</h4>
+
+
+
+
+<div class="description">
+  <p>
+    NewTopic model.
+
+This is the representation of a new message that is requested to be made
+using the Admin client.
+  </p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">object</span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name">topic</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">the topic name to create</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">num_partitions</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">the number of partitions to give the topic</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">replication_factor</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">the replication factor of the topic</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name">config</td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">a list of key values to be passed as configuration
+for the topic.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source">
+        <ul class="pager"><li>
+        <a href="admin.js.html#line65">admin.js, line 65</a>
+        </li></ul>
+    </dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+            
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+    </div>
+    <div class="grid-25 pull-75">
+      <div class="navigation-sidebar">
+        <ul class="nav nav-list">
+          <li><a href="javascript: void(0);">Classes</a><ul class="nav nav-list" role="menu"><li><a href="AdminClient.html">AdminClient</a></li><li><a href="Client.html">Client</a></li><li><a href="KafkaConsumer.html">KafkaConsumer</a></li><li><a href="KafkaConsumerStream.html">KafkaConsumerStream</a></li><li><a href="LibrdKafkaError.html">LibrdKafkaError</a></li><li><a href="Producer.html">Producer</a></li><li><a href="ProducerStream.html">ProducerStream</a></li></ul></li><li><a href="javascript: void(0);">Events</a><ul class="nav nav-list" role="menu"><li><a href="Client.html#event:disconnected">disconnected</a></li><li><a href="Client.html#event:ready">ready</a></li><li><a href="KafkaConsumer.html#event:data">data</a></li><li><a href="KafkaConsumer.html#event:disconnected">disconnected</a></li><li><a href="KafkaConsumer.html#event:ready">ready</a></li><li><a href="Producer.html#event:disconnected">disconnected</a></li><li><a href="Producer.html#event:ready">ready</a></li></ul></li><li><a href="javascript: void(0);">Tutorials</a><ul class="nav nav-list" role="menu"><li><a href="tutorial-consumer-flow.html">consumer-flow</a></li><li><a href="tutorial-consumer.html">consumer</a></li><li><a href="tutorial-docker-alpine.html">docker-alpine</a></li><li><a href="tutorial-metadata.html">metadata</a></li><li><a href="tutorial-producer-cluster.html">producer-cluster</a></li><li><a href="tutorial-producer_.html">producer</a></li></ul></li><h3>Global</h3><ul><li><a href="global.html#createAdminClient">createAdminClient</a></li><li><a href="global.html#Topic">Topic</a></li><li><a href="global.html#TopicPartition">TopicPartition</a></li></ul>
+        </ul>
+        <!-- <ul class="nav nav-list collapse"> -->
+      </div>
+    </div>
+</div>
+
+  </div>
+</div> <!-- /.body-content -->
+
+<br class="clear">
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="grid-container">
+    <div class="footer-content">
+      <div class="grid-75">
+        <div class="legal">
+            Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc </a> on Mon Dec 10 2018 15:35:55 GMT-0800 (PST)
+        </div>
+      </div>
+      <div class="grid-25">
+        <span class="blizzard">Blizzard® Entertainment</span>
+      </div>
+    </div>
+  </div>
+</footer>
+<!-- /FOOTER -->
+
+<script> prettyPrint(); </script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<script src="toolkit/js/toolkit/toolkit.min.js"> </script>
+</body>
+</html>
