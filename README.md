@@ -182,6 +182,8 @@ if (queuedSuccess) {
   console.log('Too many messages in our queue already');
 }
 
+// NOTE: MAKE SURE TO LISTEN TO THIS IF YOU WANT THE STREAM TO BE DURABLE
+// Otherwise, any error will bubble up as an uncaught exception.
 stream.on('error', function (err) {
   // Here's where we'll know if something went wrong sending to Kafka
   console.error('Error in our kafka stream');
