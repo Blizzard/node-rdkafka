@@ -161,9 +161,10 @@ Baton AdminClient::CreateTopic(rd_kafka_NewTopic_t* topic, int timeout_ms) {
         // Destroy the options we just made
         rd_kafka_AdminOptions_destroy(options);
 
-        return Baton(static_cast<RdKafka::ErrorCode>(rd_kafka_event_error(event_response)));
+        return Baton(static_cast<RdKafka::ErrorCode>(
+          rd_kafka_event_error(event_response)));
       }
-    } while (rd_kafka_event_type(event_response) != RD_KAFKA_EVENT_CREATETOPICS_RESULT);
+    } while (rd_kafka_event_type(event_response) != RD_KAFKA_EVENT_CREATETOPICS_RESULT);  // NOLINT
 
     // Destroy the options we just made
     rd_kafka_AdminOptions_destroy(options);
@@ -251,7 +252,8 @@ NAN_METHOD(AdminClient::NodeCreateTopic) {
 
   std::string errstr;
   // Get that topic we want to create
-  rd_kafka_NewTopic_t* topic = Conversion::Admin::FromV8TopicObject(info[0].As<v8::Object>(), errstr);
+  rd_kafka_NewTopic_t* topic = Conversion::Admin::FromV8TopicObject(
+    info[0].As<v8::Object>(), errstr);
 
   if (topic == NULL) {
     Nan::ThrowError(errstr.c_str());
@@ -259,7 +261,8 @@ NAN_METHOD(AdminClient::NodeCreateTopic) {
   }
 
   // Queue up dat work
-  Nan::AsyncQueueWorker(new Workers::AdminClientCreateTopic(callback, client, topic, 1000));
+  Nan::AsyncQueueWorker(
+    new Workers::AdminClientCreateTopic(callback, client, topic, 1000));
 
   return info.GetReturnValue().Set(Nan::Null());
 }

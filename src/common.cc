@@ -460,13 +460,15 @@ namespace Admin {
  *
  *
  */
-rd_kafka_NewTopic_t* FromV8TopicObject(v8::Local<v8::Object> object, std::string &errstr) {
+rd_kafka_NewTopic_t* FromV8TopicObject(
+  v8::Local<v8::Object> object, std::string &errstr) {  // NOLINT
   std::string topic_name = GetParameter<std::string>(object, "topic", "");
   int num_partitions = GetParameter<int>(object, "num_partitions", 0);
   int replication_factor = GetParameter<int>(object, "replication_factor", 0);
 
-  // Too slow to allocate this every call but admin api shouldn't be called that often
-  char* errbuf = (char*) malloc(100);
+  // Too slow to allocate this every call but admin api
+  // shouldn't be called that often
+  char* errbuf = reinterpret_cast<char*>(malloc(100));
   size_t errstr_size = 100;
 
   rd_kafka_NewTopic_t* new_topic = rd_kafka_NewTopic_new(
@@ -487,7 +489,8 @@ rd_kafka_NewTopic_t* FromV8TopicObject(v8::Local<v8::Object> object, std::string
   if (Nan::Has(object, Nan::New("config").ToLocalChecked()).FromMaybe(false)) {
     // Get the config v8::Object that we can get parameters on
     v8::Local<v8::Object> config =
-      Nan::Get(object, Nan::New("config").ToLocalChecked()).ToLocalChecked().As<v8::Object>();
+      Nan::Get(object, Nan::New("config").ToLocalChecked())
+      .ToLocalChecked().As<v8::Object>();
 
     // Get all of the keys of the object
     v8::MaybeLocal<v8::Array> config_keys = Nan::GetOwnPropertyNames(config);
@@ -496,7 +499,8 @@ rd_kafka_NewTopic_t* FromV8TopicObject(v8::Local<v8::Object> object, std::string
       v8::Local<v8::Array> field_array = config_keys.ToLocalChecked();
       for (size_t i = 0; i < field_array->Length(); i++) {
         v8::Local<v8::String> config_key = field_array->Get(i).As<v8::String>();
-        v8::Local<v8::Value> config_value = Nan::Get(config, config_key).ToLocalChecked();
+        v8::Local<v8::Value> config_value = Nan::Get(config, config_key)
+          .ToLocalChecked();
 
         // If the config value is a string...
         if (config_value->IsString()) {
@@ -506,7 +510,8 @@ rd_kafka_NewTopic_t* FromV8TopicObject(v8::Local<v8::Object> object, std::string
           Nan::Utf8String pValueVal(config_value.As<v8::String>());
           std::string pValString(*pValueVal);
 
-          err = rd_kafka_NewTopic_set_config(new_topic, pKeyString.c_str(), pValString.c_str());
+          err = rd_kafka_NewTopic_set_config(
+            new_topic, pKeyString.c_str(), pValString.c_str());
 
           if (err != RdKafka::ERR_NO_ERROR) {
             errstr = rd_kafka_err2str(err);

@@ -17,7 +17,7 @@
 #include <vector>
 
 #include "rdkafkacpp.h"
-#include "rdkafka.h"
+#include "rdkafka.h"  // NOLINT
 
 #include "src/common.h"
 #include "src/connection.h"

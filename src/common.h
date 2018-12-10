@@ -17,7 +17,7 @@
 #include <vector>
 
 #include "rdkafkacpp.h"
-#include "rdkafka.h"
+#include "rdkafka.h"  // NOLINT
 
 #include "src/errors.h"
 
@@ -92,7 +92,8 @@ namespace Conversion {
 
 namespace Admin {
   // Topics from topic object, or topic object array
-  rd_kafka_NewTopic_t* FromV8TopicObject(v8::Local<v8::Object>, std::string &errstr);
+  rd_kafka_NewTopic_t* FromV8TopicObject(
+    v8::Local<v8::Object>, std::string &errstr);  // NOLINT
   rd_kafka_NewTopic_t** FromV8TopicObjectArray(v8::Local<v8::Array>);
 }
 

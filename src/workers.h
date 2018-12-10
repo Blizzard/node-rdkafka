@@ -19,7 +19,7 @@
 #include "src/producer.h"
 #include "src/kafka-consumer.h"
 #include "src/admin.h"
-#include "rdkafka.h"
+#include "rdkafka.h"  // NOLINT
 
 namespace NodeKafka {
 namespace Workers {
