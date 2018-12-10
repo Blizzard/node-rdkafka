@@ -543,3 +543,43 @@ producer.getMetadata(opts, function(err, metadata) {
   }
 });
 ```
+
+## Admin Client
+
+`node-rdkafka` now supports the admin client for creating, deleting, and scaling out topics. The `librdkafka` APIs also support altering configuration of topics and broker, but that is not currently implemented.
+
+To create an Admin client, you can do as follows:
+
+```js
+const Kafka = require('node-rdkafka');
+
+const client = Kafka.AdminClient.create({
+  'client.id': 'kafka-admin',
+  'metadata.broker.list': 'broker01'
+});
+```
+
+This will instantiate the `AdminClient`, which will allow the calling of the admin methods.
+
+```js
+client.createTopic({
+  topic: topicName,
+  num_partitions: 1,
+  replication_factor: 1
+}, function(err) {
+  // Done!
+});
+```
+
+All of the admin api methods can have an optional timeout as their penultimate parameter.
+
+The following table lists important methods for this API.
+
+|Method|Description|
+|-------|----------|
+|`client.disconnect()` | Destroy the admin client, making it invalid for further use. |
+|`client.createTopic(topic, timeout, cb)` | Create a topic on the broker with the given configuration. See JS doc for more on structure of the topic object |
+|`client.deleteTopic(topicName, timeout, cb)` | Delete a topic of the given name |
+|`client.createPartitions(topicName, desiredPartitions, timeout, cb)` | Create partitions until the topic has the desired number of partitions. |
+
+Check the tests for an example of how to use this API!

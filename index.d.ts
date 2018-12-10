@@ -229,6 +229,13 @@ declare interface NewTopic {
 declare interface InternalAdminClient {
     createTopic(topic: NewTopic, cb?: (err: any, data: any) => any): void;
     createTopic(topic: NewTopic, timeout?: number, cb?: (err: any, data: any) => any): void;
+
+    deleteTopic(topic: String, cb?: (err: any, data: any) => any): void;
+    deleteTopic(topic: String, timeout?: number, cb?: (err: any, data: any) => any): void;
+
+    createPartitions(topic: String, desiredPartitions: number, cb?: (err: any, data: any) => any): void;
+    createPartitions(topic: String, desiredPartitions: number, timeout?: number, cb?: (err: any, data: any) => any): void;
+
     disconnect(): void;
 }
 
