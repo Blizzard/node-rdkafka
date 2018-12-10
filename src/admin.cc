@@ -433,14 +433,22 @@ NAN_METHOD(AdminClient::NodeDisconnect) {
 NAN_METHOD(AdminClient::NodeCreateTopic) {
   Nan::HandleScope scope;
 
-  if (info.Length() < 2 || !info[1]->IsFunction()) {
+  if (info.Length() < 3 || !info[2]->IsFunction()) {
     // Just throw an exception
     return Nan::ThrowError("Need to specify a callback");
   }
 
-  v8::Local<v8::Function> cb = info[1].As<v8::Function>();
+  if (!info[1]->IsNumber()) {
+    return Nan::ThrowError("Must provide 'timeout'");
+  }
+
+  // Create the final callback object
+  v8::Local<v8::Function> cb = info[2].As<v8::Function>();
   Nan::Callback *callback = new Nan::Callback(cb);
   AdminClient* client = ObjectWrap::Unwrap<AdminClient>(info.This());
+
+  // Get the timeout
+  int timeout = Nan::To<int32_t>(info[2]).FromJust();
 
   std::string errstr;
   // Get that topic we want to create
@@ -454,7 +462,7 @@ NAN_METHOD(AdminClient::NodeCreateTopic) {
 
   // Queue up dat work
   Nan::AsyncQueueWorker(
-    new Workers::AdminClientCreateTopic(callback, client, topic, 1000));
+    new Workers::AdminClientCreateTopic(callback, client, topic, timeout));
 
   return info.GetReturnValue().Set(Nan::Null());
 }
@@ -465,17 +473,25 @@ NAN_METHOD(AdminClient::NodeCreateTopic) {
 NAN_METHOD(AdminClient::NodeDeleteTopic) {
   Nan::HandleScope scope;
 
-  if (info.Length() < 2 || !info[1]->IsFunction()) {
+  if (info.Length() < 3 || !info[2]->IsFunction()) {
     // Just throw an exception
     return Nan::ThrowError("Need to specify a callback");
   }
 
-  v8::Local<v8::Function> cb = info[1].As<v8::Function>();
+  if (!info[1]->IsNumber() || !info[0]->IsString()) {
+    return Nan::ThrowError("Must provide 'timeout', and 'topicName'");
+  }
+
+  // Create the final callback object
+  v8::Local<v8::Function> cb = info[2].As<v8::Function>();
   Nan::Callback *callback = new Nan::Callback(cb);
   AdminClient* client = ObjectWrap::Unwrap<AdminClient>(info.This());
 
   // Get the topic name from the string
   std::string topic_name = Util::FromV8String(info[0]->ToString());
+
+  // Get the timeout
+  int timeout = Nan::To<int32_t>(info[2]).FromJust();
 
   // Get that topic we want to create
   rd_kafka_DeleteTopic_t* topic = rd_kafka_DeleteTopic_new(
@@ -483,7 +499,7 @@ NAN_METHOD(AdminClient::NodeDeleteTopic) {
 
   // Queue up dat work
   Nan::AsyncQueueWorker(
-    new Workers::AdminClientDeleteTopic(callback, client, topic, 1000));
+    new Workers::AdminClientDeleteTopic(callback, client, topic, timeout));
 
   return info.GetReturnValue().Set(Nan::Null());
 }
