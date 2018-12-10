@@ -136,30 +136,36 @@ v8::Local<v8::Object> AdminClient::NewInstance(v8::Local<v8::Value> arg) {
 }
 
 Baton AdminClient::CreateTopic(rd_kafka_NewTopic_t* topic, int timeout_ms) {
-  if (!IsConnected() || rkqu == NULL) {
+  if (!IsConnected()) {
     return Baton(RdKafka::ERR__STATE);
   }
 
   {
     scoped_shared_write_lock lock(m_connection_lock);
-    if (!IsConnected() || rkqu == NULL) {
+    if (!IsConnected()) {
       return Baton(RdKafka::ERR__STATE);
     }
+
+    // Create queue just for this operation
+    rd_kafka_queue_t * topic_rkqu = rd_kafka_queue_new(m_client->c_ptr());
 
     // Make admin options to establish that we are creating topics
     rd_kafka_AdminOptions_t *options = rd_kafka_AdminOptions_new(
       m_client->c_ptr(), RD_KAFKA_ADMIN_OP_CREATETOPICS);
 
-    rd_kafka_CreateTopics(m_client->c_ptr(), &topic, 1, options, rkqu);
+    rd_kafka_CreateTopics(m_client->c_ptr(), &topic, 1, options, topic_rkqu);
 
     rd_kafka_event_t * event_response;
 
     // Poll the event queue until we get it
     do {
-      event_response = rd_kafka_queue_poll(rkqu, timeout_ms);
+      event_response = rd_kafka_queue_poll(topic_rkqu, timeout_ms);
       if (rd_kafka_event_error(event_response)) {
         // Destroy the options we just made
         rd_kafka_AdminOptions_destroy(options);
+
+        // Destroy the queue since we are done with it.
+        rd_kafka_queue_destroy(topic_rkqu);
 
         return Baton(static_cast<RdKafka::ErrorCode>(
           rd_kafka_event_error(event_response)));
@@ -169,22 +175,26 @@ Baton AdminClient::CreateTopic(rd_kafka_NewTopic_t* topic, int timeout_ms) {
     // Destroy the options we just made
     rd_kafka_AdminOptions_destroy(options);
 
-    /*
+    // Destroy the queue since we are done with it.
+    rd_kafka_queue_destroy(topic_rkqu);
+
     // get the created results
     const rd_kafka_CreateTopics_result_t * create_topic_results =
       rd_kafka_event_CreateTopics_result(event_response);
 
     size_t created_topic_count;
-    const rd_kafka_topic_result_t **restopics = rd_kafka_CreateTopics_result_topics(
+    const rd_kafka_topic_result_t **restopics = rd_kafka_CreateTopics_result_topics(  // NOLINT
       create_topic_results,
-      &created_topic_count
-    );
+      &created_topic_count);
 
-    for (int i = 0 ; i < (int)created_topic_count ; i++) {
+    for (int i = 0 ; i < static_cast<int>(created_topic_count) ; i++) {
       const rd_kafka_topic_result_t *terr = restopics[i];
+      const rd_kafka_resp_err_t errcode = rd_kafka_topic_result_error(terr);
 
-      Log(rd_kafka_topic_result_name(terr));
-    }*/
+      if (errcode != RD_KAFKA_EVENT_CREATETOPICS_RESULT) {
+        return Baton(static_cast<RdKafka::ErrorCode>(errcode));
+      }
+    }
 
     return Baton(RdKafka::ERR_NO_ERROR);
   }
