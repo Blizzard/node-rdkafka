@@ -28,6 +28,20 @@
         [
           'OS=="win"',
           {
+            'actions': [
+              {
+                'action_name': 'nuget_librdkafka_download',
+                'inputs': [
+                  'deps/windows-install.py'
+                ],
+                'outputs': [
+                  'deps/precompiled/librdkafka.lib',
+                  'deps/precompiled/librdkafkacpp.lib'
+                ],
+                'message': 'Getting librdkafka from nuget',
+                'action': ['python', '<@(_inputs)']
+              }
+            ],
             'cflags_cc' : [
               '-std=c++11'
             ],
@@ -38,7 +52,7 @@
                   'librdkafkacpp.lib'
                 ],
                 'AdditionalLibraryDirectories': [
-                  'deps/librdkafka/win32/outdir/v120/x64/Release/'
+                  '../deps/precompiled/'
                 ]
               },
               'VCCLCompilerTool': {
@@ -46,7 +60,7 @@
                   '/GR'
                 ],
                 'AdditionalUsingDirectories': [
-                  'deps/librdkafka/win32/outdir/v120/x64/Release/'
+                  'deps/precompiled/'
                 ],
                 'AdditionalIncludeDirectories': [
                   'deps/librdkafka/src',
@@ -54,14 +68,10 @@
                 ]
               }
             },
-            'msvs_version': '2013',
-            'msbuild_toolset': 'v120',
-            "dependencies": [
-              "deps/librdkafka.gyp:librdkafka"
-            ],
+            'msvs_version': '2015',
+            'msbuild_toolset': 'v140',
             'include_dirs': [
-              'deps/librdkafka/src',
-              'deps/librdkafka/src-cpp'
+              'deps/include'
             ]
           },
           {

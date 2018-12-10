@@ -55,21 +55,11 @@ Using Alpine Linux? Check out the [docs](https://github.com/Blizzard/node-rdkafk
 
 ### Windows
 
-Installing `node-rdkafka` on Windows is now possible thanks to [#248](https://github.com/Blizzard/node-rdkafka/pull/248). However, it does require some special instructions.
+Windows build **is not** compiled from `librdkafka` source but it is rather linked against appropriate version of static binary that gets downloaded from [librdkafka.redist NuGet package](https://www.nuget.org/packages/librdkafka.redist/) during installation.
 
-You can read the [Librdkafka Windows Instructions](https://github.com/edenhill/librdkafka/blob/master/README.win32) here. As it says in that document, you must be using Microsoft Visual Studio 2013 to compile `librdkafka`. This is because a version of openssl that is used requires this version of Visual Studio.
-
-If you have multiple versions of Visual Studio on your machine you may need to ensure that the correct MSBuild is called by node-gyp. For whatever reason, gyp just uses the MSBuild in your path if there is one, so you will need to ensure it resolves to the right place. The `bin` directory for MSBuild will usually be similar to `C:/Program Files (x86)/MSBuild/12.0/Bin/` so ensure it comes late in your path.
-
-Additionally, `librdkafka` requires a few dependencies be installed via `nuget` before it will build properly on Windows. You will need to [download the nuget command line tools](https://www.nuget.org/downloads) and make sure `nuget.exe` is available in your path. It is recommended that you install the latest stable version, as versions before `v4.3.0` did not always correctly read dependencies.
-
-Lastly, you may need to set the MS build tools gyp uses to the correct version.
-
-```sh
-node-gyp configure --msvs_version=2013
-```
-
-After that it should compile!
+Requirements:
+ * [node-gyp for Windows](https://github.com/nodejs/node-gyp#on-windows)  (the easies way to get it: `npm --vs2015 install --global --production windows-build-tools`)
+ * [Visual C++ Redistributable Packages for Visual Studio 2013](https://www.microsoft.com/en-us/download/details.aspx?id=40784)
 
 **Note:** I _still_ do not recommend using `node-rdkafka` in production on Windows. This feature was in high demand and is provided to help develop, but we do not test against Windows, and windows support may lag behind Linux/Mac support because those platforms are the ones used to develop this library. Contributors are welcome if any Windows issues are found :)
 
