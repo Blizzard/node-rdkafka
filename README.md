@@ -106,6 +106,8 @@ The library currently supports the following callbacks:
 * `partitioner_cb`
 * `dr_cb` or `dr_msg_cb`
 * `event_cb`
+* `rebalance_cb` (see [Rebalancing](#rebalancing))
+* `offset_commit_cb` (see [Commits](#commits))
 
 ### Librdkafka Methods
 
