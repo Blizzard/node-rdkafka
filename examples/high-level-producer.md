@@ -1,4 +1,4 @@
-// ```js
+```js
 var Kafka = require('../');
 
 var producer = new Kafka.HighLevelProducer({
@@ -9,9 +9,8 @@ var producer = new Kafka.HighLevelProducer({
 producer.setKeySerializer(function(v) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      console.log('done key serializing');
       resolve(null);
-    }, 1000);
+    }, 20);
   });
 });
 
@@ -24,12 +23,10 @@ producer.connect(null, function() {
   producer.produce('test', null, {
     message: 'alliance4ever',
   }, null, Date.now(), function(err, offset) {
-    console.log(err);
-    console.log(offset);
     // The offset if our acknowledgement level allows us to receive delivery offsets
     setImmediate(function() {
       producer.disconnect();
     });
   });
 });
-// ```
+```
