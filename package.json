@@ -30,6 +30,7 @@
   ],
   "license": "MIT",
   "devDependencies": {
+    "bluebird": "^3.5.3",
     "jsdoc": "^3.4.0",
     "jshint": "^2.9.7",
     "mocha": "^5.2.0",
