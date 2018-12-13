@@ -236,7 +236,7 @@ Baton AdminClient::CreateTopic(rd_kafka_NewTopic_t* topic, int timeout_ms) {
 
       if (errcode != RD_KAFKA_EVENT_CREATETOPICS_RESULT) {
         if (errmsg) {
-          return Baton(static_cast<RdKafka::ErrorCode>(errcode), std::string(errmsg));
+          return Baton(static_cast<RdKafka::ErrorCode>(errcode), std::string(errmsg)); // NOLINT
         } else {
           return Baton(static_cast<RdKafka::ErrorCode>(errcode));
         }
@@ -384,7 +384,7 @@ Baton AdminClient::CreatePartitions(
 
       if (errcode != RD_KAFKA_EVENT_CREATEPARTITIONS_RESULT) {
         if (errmsg) {
-          return Baton(static_cast<RdKafka::ErrorCode>(errcode), std::string(errmsg));
+          return Baton(static_cast<RdKafka::ErrorCode>(errcode), std::string(errmsg)); // NOLINT
         } else {
           return Baton(static_cast<RdKafka::ErrorCode>(errcode));
         }
