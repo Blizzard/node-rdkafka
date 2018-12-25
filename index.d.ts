@@ -20,12 +20,49 @@ export class Client extends NodeJS.EventEmitter {
 
     offsetsForTimes(topicPartitions: any[], timeout: number, cb?: (err: any, offsets: any) => any): void;
     offsetsForTimes(topicPartitions: any[], cb?: (err: any, offsets: any) => any): void;
+// ON
+    // domain events
+    on(event: 'data', listener: (arg: ConsumerStreamMessage) => void): this;
+    on(event: 'rebalance', listener: (err: Error, assignment: any) => void): this;
+    on(event: 'error', listener: (err: Error) => void): this;
+    // connectivity events
+    on(event: 'end', listener: () => void): this;
+    on(event: 'close', listener: () => void): this;
+    on(event: 'disconnected', listener: (metrics: any) => void): this;
+    on(event: 'ready', listener: (info: any, metadata: any) => void): this;
+    on(event: 'exit', listener: () => void): this;
+    on(event: 'unsubscribe', listener: () => void): this;  // actually emitted with [] didn't see the need to add
+    on(event: 'connection.failure', listener: (error: Error, metrics: any) => void): this;
+    // event messages
+    on(event: 'event.error', listener: (error: Error) => void): this;
+    on(event: 'event.stats', listener: (eventData: any) => void): this;
+    on(event: 'event.log', listener: (eventData: any) => void): this;
+    on(event: 'event.event', listener: (eventData: any) => void): this;
+    on(event: 'event.throttle', listener: (eventData: any) => void): this;
+    // delivery
+    on(event: 'delivery-report', listener: (error: Error, report: any) => void): this;
+// ONCE
+    // domain events
+    once(event: 'data', listener: (arg: ConsumerStreamMessage) => void): this;
+    once(event: 'rebalance', listener: (err: Error, assignment: any) => void): this;
+    once(event: 'error', listener: (err: Error) => void): this;
+    // connectivity events
+    once(event: 'end', listener: () => void): this;
+    once(event: 'close', listener: () => void): this;
+    once(event: 'disconnected', listener: (metrics: any) => void): this;
+    once(event: 'ready', listener: (info: any, metadata: any) => void): this;
+    once(event: 'exit', listener: () => void): this;
+    once(event: 'unsubscribe', listener: () => void): this;  // actually emitted with [] didn't see the need to add
+    once(event: 'connection.failure', listener: (error: Error, metrics: any) => void): this;
+    // event messages
+    once(event: 'event.error', listener: (error: Error) => void): this;
+    once(event: 'event.stats', listener: (eventData: any) => void): this;
+    once(event: 'event.log', listener: (eventData: any) => void): this;
+    once(event: 'event.event', listener: (eventData: any) => void): this;
+    once(event: 'event.throttle', listener: (eventData: any) => void): this;
 
-    // currently need to overload signature for different callback arities because of https://github.com/Microsoft/TypeScript/issues/15972
-    on<T extends keyof EventCallbackRepositoryArityOne, K extends EventCallbackRepositoryArityOne[T]>(val: T, listener: (arg: K) => void): this;
-    on<T extends keyof EventCallbackRepositoryArityTwo, K extends EventCallbackRepositoryArityTwo[T]>(val: T, listener: (arg0: K[0], arg1: K[1]) => void): this;
-    once<T extends keyof EventCallbackRepositoryArityOne, K extends EventCallbackRepositoryArityOne[T]>(val: T, listener: (arg: K) => void): this;
-    once<T extends keyof EventCallbackRepositoryArityTwo, K extends EventCallbackRepositoryArityTwo[T]>(val: T, listener: (arg0: K[0], arg1: K[1]) => void): this;
+    // delivery
+    once(event: 'delivery-report', listener: (error: Error, report: any) => void): this;
 }
 
 export type ErrorWrap<T> = boolean | T;
@@ -181,43 +218,18 @@ declare interface ConsumerStream extends Readable {
 }
 
 declare interface ConsumerStreamMessage {
-  value: Buffer,
-  size: number,
-  topic: string,
-  offset: number,
-  partition: number,
-  key?: string,
-  timestamp?: number
+    value: Buffer,
+    size: number,
+    topic: string,
+    offset: number,
+    partition: number,
+    key?: string,
+    timestamp?: number
 }
 
 export function createReadStream(conf: any, topicConf: any, streamOptions: any): ConsumerStream;
 
 export function createWriteStream(conf: any, topicConf: any, streamOptions: any): ProducerStream;
-
-declare interface EventCallbackRepositoryArityOne {
-  // domain events
-  'data': ConsumerStreamMessage,
-  'rebalance': any,
-  'error': any,
-
-  // connectity events
-  'end': any,
-  'close': any,
-  'disconnected': any,
-  'ready': any,
-  'exit': any,
-  'unsubscribed': any,'connection.failure': any,
-
-  // event messages
-  'event.error': any,
-  'event.log': any,
-  'event.throttle': any,
-  'event.event': any,
-}
-
-declare interface EventCallbackRepositoryArityTwo {
-  'delivery-report': [any, any]
-}
 
 declare interface NewTopic {
     topic: string;
