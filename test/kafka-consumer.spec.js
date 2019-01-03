@@ -10,6 +10,7 @@
 var KafkaConsumer = require('../lib/kafka-consumer');
 var Transform = require('stream').Transform;
 var t = require('assert');
+var Sinon = require('sinon')
 
 var client;
 var defaultConfig = {
@@ -45,16 +46,44 @@ module.exports = {
       t.deepStrictEqual(client.topicConfig, {});
       t.notEqual(topicConfig, client.topicConfig);
     },
-    'can return a toppar stream': function() {
-      const stream1 = client.stream({ topic: 'test', partition: 0 });
-      const stream2 = client.stream({ topic: 'test', partition: 1 });
-      const stream3 = client.stream({ topic: 'test', partition: 0 });
-      
-      t.ok(stream1 instanceof Transform);
-      t.equal(stream1.topic, 'test', 'toppar stream has a topic attribute');
-      t.equal(stream1.partition, 0, 'toppar stream has a partition attribute');
-      t.notEqual(stream1, stream2, 'returns a separate stream for each different toppar');
-      t.equal(stream1, stream3, 'returns the same toppar stream for the same toppar');
-    },
+
+    '#stream()': {
+      'beforeEach': function() {
+        Sinon.stub(client, 'isConnected').returns(true);
+        Sinon.stub(client, '_consumeNum').callsFake((timeout, size, cb) => {
+          t.ok(typeof timeout === 'number' && size >= 0, 'consumer._consumeNum must be called with a timeout');
+          t.ok(typeof size === 'number' && size > 0, 'consumer._consumeNum must be called with a size');
+          t.equal(typeof cb, 'function', 'consumer._consumeNum must be called with a callback function');
+          
+          setImmediate(function() {
+            cb(null, [{
+              value: Buffer.from('test'),
+              key: 'testKey',
+              topic: 'test',
+              partition: 0,
+              offset: 1
+            }])
+          })
+        });
+        client._isConnecting = false;
+        client._isConnected = true;
+      },
+      'afterEach': function() {
+        client.isConnected.returns(false);
+        client._isConnecting = false;
+        client._isConnected = false; 
+      },
+      'can return a toppar stream': function() {
+        const stream1 = client.stream({ topic: 'test', partition: 0 });
+        const stream2 = client.stream({ topic: 'test', partition: 1 });
+        const stream3 = client.stream({ topic: 'test', partition: 0 });
+        
+        t.ok(stream1 instanceof Transform);
+        t.equal(stream1.topic, 'test', 'toppar stream has a topic attribute');
+        t.equal(stream1.partition, 0, 'toppar stream has a partition attribute');
+        t.notEqual(stream1, stream2, 'returns a separate stream for each different toppar');
+        t.equal(stream1, stream3, 'returns the same toppar stream for the same toppar');
+      },
+    }
   },
 };

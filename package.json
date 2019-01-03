@@ -34,6 +34,7 @@
     "jshint": "^2.9.7",
     "mocha": "^5.2.0",
     "node-gyp": "3.x",
+    "sinon": "^7.2.2",
     "toolkit-jsdoc": "^1.0.0"
   },
   "dependencies": {
