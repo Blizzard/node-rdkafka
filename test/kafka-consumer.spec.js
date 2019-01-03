@@ -8,7 +8,7 @@
  */
 
 var KafkaConsumer = require('../lib/kafka-consumer');
-var Readable = require('stream').Readable;
+var Transform = require('stream').Transform;
 var t = require('assert');
 
 var client;
@@ -50,7 +50,9 @@ module.exports = {
       const stream2 = client.stream({ topic: 'test', partition: 1 });
       const stream3 = client.stream({ topic: 'test', partition: 0 });
       
-      t.ok(stream1 instanceof Readable);
+      t.ok(stream1 instanceof Transform);
+      t.equal(stream1.topic, 'test', 'toppar stream has a topic attribute');
+      t.equal(stream1.partition, 0, 'toppar stream has a partition attribute');
       t.notEqual(stream1, stream2, 'returns a separate stream for each different toppar');
       t.equal(stream1, stream3, 'returns the same toppar stream for the same toppar');
     },
