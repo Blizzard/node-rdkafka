@@ -8,6 +8,7 @@
  */
 
 var KafkaConsumer = require('../lib/kafka-consumer');
+var Readable = require('stream').Readable;
 var t = require('assert');
 
 var client;
@@ -43,6 +44,15 @@ module.exports = {
       t.deepStrictEqual(topicConfig, {});
       t.deepStrictEqual(client.topicConfig, {});
       t.notEqual(topicConfig, client.topicConfig);
+    },
+    'can return a toppar stream': function() {
+      const stream1 = client.stream({ topic: 'test', partition: 0 });
+      const stream2 = client.stream({ topic: 'test', partition: 1 });
+      const stream3 = client.stream({ topic: 'test', partition: 0 });
+      
+      t.ok(stream1 instanceof Readable);
+      t.notEqual(stream1, stream2, 'returns a separate stream for each different toppar');
+      t.equal(stream1, stream3, 'returns the same toppar stream for the same toppar');
     },
   },
 };
