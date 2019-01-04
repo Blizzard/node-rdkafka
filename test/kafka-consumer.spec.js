@@ -10,7 +10,8 @@
 var KafkaConsumer = require('../lib/kafka-consumer');
 var Transform = require('stream').Transform;
 var t = require('assert');
-var Sinon = require('sinon')
+var Sinon = require('sinon');
+var H = require('highland');
 
 var client;
 var defaultConfig = {
@@ -19,6 +20,15 @@ var defaultConfig = {
   'metadata.broker.list': 'localhost:9092'
 };
 var topicConfig = {};
+
+const generateTestMessage = (message = {}) => ({
+  topic: 'test',
+  partition: 0,
+  key: 'testKey',
+  offset: 1,
+  ...message,
+  value: Buffer.isBuffer(message.value) ? message.value : Buffer.from(message.value || 'test')
+})
 
 module.exports = {
   'KafkaConsumer client': {
@@ -50,19 +60,17 @@ module.exports = {
     'stream()': {
       'beforeEach': function() {
         Sinon.stub(client, 'isConnected').returns(true);
+        client.__exampleMessages = [];
         Sinon.stub(client, '_consumeNum').callsFake((timeout, size, cb) => {
           t.ok(typeof timeout === 'number' && size >= 0, 'consumer._consumeNum must be called with a timeout');
           t.ok(typeof size === 'number' && size > 0, 'consumer._consumeNum must be called with a size');
           t.equal(typeof cb, 'function', 'consumer._consumeNum must be called with a callback function');
           
           setImmediate(function() {
-            cb(null, [{
-              value: Buffer.from('test'),
-              key: 'testKey',
-              topic: 'test',
-              partition: 0,
-              offset: 1
-            }])
+            const messages = client.__exampleMessages.slice(0, size);
+            client.__exampleMessages = client.__exampleMessages.slice(size);
+
+            cb(null, messages)
           })
         });
         Sinon.stub(client, 'disconnect').callsFake((cb) => {
@@ -131,6 +139,30 @@ module.exports = {
           done()
         })
       },
+
+      'feeds streams with messages of matching toppar continuously': async function() {
+        const testMessages = [
+          generateTestMessage({ topic: 'test', partition: 0 }),
+          generateTestMessage({ topic: 'test', partition: 1 }),
+          generateTestMessage({ topic: 'test', partition: 1 }),
+          generateTestMessage({ topic: 'test', partition: 0 })
+        ];
+        const stream1 = client.stream({ topic: 'test', partition: 0 });
+        const stream2 = client.stream({ topic: 'test', partition: 1 });
+
+        const streaming = [stream1, stream2].map((stream) => {
+          const verify = (message) => {
+            t.equal(typeof message, 'object');
+            t.equal(message.topic, stream.topic);
+            t.equal(message.partition, stream.partition);
+          }
+          return H(stream).take(2).tap(verify).collect().toPromise(Promise);
+        });
+
+        client.__exampleMessages = testMessages;
+
+        await streaming;
+      }
     }
   },
 };

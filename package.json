@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "bindings": "^1.3.1",
+    "highland": "^2.13.0",
     "nan": "^2.11.1"
   },
   "engines": {
