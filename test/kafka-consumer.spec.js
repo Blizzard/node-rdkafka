@@ -59,6 +59,7 @@ module.exports = {
 
     'stream()': {
       'beforeEach': function() {
+        const pausedToppars = new Set();
         Sinon.stub(client, 'isConnected').returns(true);
         client.__exampleMessages = [];
         Sinon.stub(client, '_consumeNum').callsFake((timeout, size, cb) => {
@@ -67,10 +68,12 @@ module.exports = {
           t.equal(typeof cb, 'function', 'consumer._consumeNum must be called with a callback function');
           
           setImmediate(function() {
-            const messages = client.__exampleMessages.slice(0, size);
-            client.__exampleMessages = client.__exampleMessages.slice(size);
+            const isResumed = ({ topic, partition }) => !pausedToppars.has(`${topic}::${partition}`)
+            const messages = client.__exampleMessages.filter(isResumed).slice(0, size);
+            client.__exampleMessages = client.__exampleMessages
+              .filter((message) => !messages.includes(message))
 
-            cb(null, messages)
+            cb(null, messages);
           })
         });
         Sinon.stub(client, 'disconnect').callsFake((cb) => {
@@ -99,6 +102,24 @@ module.exports = {
             }
           }, 5);
         });
+        Sinon.stub(client, 'pause').callsFake((toppars) => {
+          if (!this.isConnected()) {
+            throw new Error ('Client is disconnected');
+          }
+
+          toppars.forEach(({ topic, partition}) => {
+            pausedToppars.add(`${topic}::${partition}`);
+          })
+        }),
+        Sinon.stub(client, 'resume').callsFake((toppars) => {
+          if (!this.isConnected()) {
+            throw new Error ('Client is disconnected');
+          }
+
+          toppars.forEach(({ topic, partition }) => {
+            pausedToppars.delete(`${topic}::${partition}`);
+          })
+        })
       },
       'afterEach': function(done) {
         client.isConnected.returns(false);
