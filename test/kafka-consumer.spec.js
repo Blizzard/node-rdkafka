@@ -47,7 +47,7 @@ module.exports = {
       t.notEqual(topicConfig, client.topicConfig);
     },
 
-    '#stream()': {
+    'stream()': {
       'beforeEach': function() {
         Sinon.stub(client, 'isConnected').returns(true);
         Sinon.stub(client, '_consumeNum').callsFake((timeout, size, cb) => {
@@ -65,15 +65,39 @@ module.exports = {
             }])
           })
         });
-        client._isConnecting = false;
-        client._isConnected = true;
+        Sinon.stub(client, 'disconnect').callsFake((cb) => {
+          client.isConnected.returns(false);
+          client._isConnecting = false;
+          client._isConnected = false;
+          client.emit('disconnected');
+          if (cb) {
+            t.equal(typeof cb, 'function');
+            setImmediate(cb);
+          }
+        });
+        Sinon.stub(client, 'connect').callsFake((options, cb) => {
+          client.isConnected.returns(false);
+          client._isConnecting = true;
+          client._isConnected = false;
+          
+          setTimeout(() => {
+            client.isConnected.returns(true);
+            client._isConnecting = false;
+            client._isConnected = true;
+            client.emit('ready', { name: 'stubbedBroker' });
+            if (cb) {
+              t.equal(typeof cb, 'function');
+              setImmediate(cb);
+            }
+          }, 5);
+        });
       },
       'afterEach': function(done) {
         client.isConnected.returns(false);
         client._isConnecting = false;
         client._isConnected = false;
         client.once('finished', done);
-        client.emit('disconnected');
+        client.disconnect();
       },
       'can return a toppar stream': function() {
         const stream1 = client.stream({ topic: 'test', partition: 0 });
@@ -88,6 +112,24 @@ module.exports = {
 
         stream1.destroy()
         stream2.destroy()
+      },
+
+
+      'will wait with consuming messages until connected': function(done) {
+        client.disconnect();
+
+        const stream1 = client.stream({ topic: 'test', partition: 0 });
+        const stream2 = client.stream({ topic: 'test', partition: 1 });
+
+        t.ok(!client._consumeNum.called, 'does not attempt to consume messages while disconnected');        
+
+        client.connect({}, () => {
+          t.ok(client._consumeNum.calledOnce, 'resumes consuming messages for stream upon client connecting');
+
+          stream1.destroy();
+          stream2.destroy();
+          done()
+        })
       },
     }
   },
