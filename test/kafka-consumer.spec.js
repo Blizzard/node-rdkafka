@@ -68,10 +68,12 @@ module.exports = {
         client._isConnecting = false;
         client._isConnected = true;
       },
-      'afterEach': function() {
+      'afterEach': function(done) {
         client.isConnected.returns(false);
         client._isConnecting = false;
-        client._isConnected = false; 
+        client._isConnected = false;
+        client.once('finished', done);
+        client.emit('disconnected');
       },
       'can return a toppar stream': function() {
         const stream1 = client.stream({ topic: 'test', partition: 0 });
@@ -83,6 +85,9 @@ module.exports = {
         t.equal(stream1.partition, 0, 'toppar stream has a partition attribute');
         t.notEqual(stream1, stream2, 'returns a separate stream for each different toppar');
         t.equal(stream1, stream3, 'returns the same toppar stream for the same toppar');
+
+        stream1.destroy()
+        stream2.destroy()
       },
     }
   },
