@@ -162,7 +162,39 @@ module.exports = {
         client.__exampleMessages = testMessages;
 
         await streaming;
-      }
+      },
+
+      "each stream has it's own individual back-pressure and can consume in parallel": async function() {
+        const fastStream = client.stream({ topic: 'fast', partition: 0 });
+        const slowStream = client.stream({ topic: 'slow', partition: 0 });
+
+        const testMessages = [
+          { topic: 'slow' },
+          { topic: 'slow' },
+          { topic: 'slow' },
+          { topic: 'slow' },
+          { topic: 'fast' },
+          { topic: 'fast' }
+        ].map(generateTestMessage)
+
+        client.__exampleMessages = testMessages
+
+        const consumedMessages = await H([
+            { stream: slowStream, timeout: 200 },
+            { stream: fastStream, timeout: 1 }
+          ])
+          .map(({ stream, timeout }) => {
+            return H(stream).ratelimit(1, timeout)
+          })
+          .merge()
+          .take(testMessages.length)
+          .collect()
+          .toPromise(Promise);
+
+        const consumedTopics = consumedMessages.map((m) => m.topic);
+
+        t.deepEqual(consumedTopics, ['slow', 'fast', 'fast', 'slow', 'slow', 'slow']);
+      },
     }
   },
 };
