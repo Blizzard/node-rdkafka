@@ -28,7 +28,9 @@ const generateTestMessage = (message = {}) => ({
   offset: 1,
   ...message,
   value: Buffer.isBuffer(message.value) ? message.value : Buffer.from(message.value || 'test')
-})
+});
+
+const repeat = (value, size) => [...Array(size).keys()].map(() => value);
 
 module.exports = {
   'KafkaConsumer client': {
@@ -103,7 +105,7 @@ module.exports = {
           }, 5);
         });
         Sinon.stub(client, 'pause').callsFake((toppars) => {
-          if (!this.isConnected()) {
+          if (!client.isConnected()) {
             throw new Error ('Client is disconnected');
           }
 
@@ -112,7 +114,7 @@ module.exports = {
           })
         }),
         Sinon.stub(client, 'resume').callsFake((toppars) => {
-          if (!this.isConnected()) {
+          if (!client.isConnected()) {
             throw new Error ('Client is disconnected');
           }
 
@@ -216,6 +218,33 @@ module.exports = {
 
         t.deepEqual(consumedTopics, ['slow', 'fast', 'fast', 'slow', 'slow', 'slow']);
       },
+
+      "pauses toppar for streams that fill up their internal buffer": async function() {
+        const fastStream = client.stream({ topic: 'fast', partition: 0 });
+        const slowStream = client.stream({ topic: 'slow', partition: 0 });
+
+        const testMessages = [
+          ...repeat({ topic: 'slow' }, 24),
+          ...repeat({ topic: 'fast' }, 24)
+        ].map(generateTestMessage);
+
+        client.__exampleMessages = testMessages;
+
+        const consumedMessages = await H([
+            { stream: slowStream, timeout: 20 },
+            { stream: fastStream, timeout: 1 }
+          ])
+          .map(({ stream, timeout }) => {
+            return H(stream).ratelimit(1, timeout)
+          })
+          .merge()
+          .take(testMessages.length)
+          .collect()
+          .toPromise(Promise);
+
+        t.ok(client.pause.calledWith(Sinon.match.every(Sinon.match.has('topic', 'slow'))));
+        t.ok(client.resume.calledWith(Sinon.match.every(Sinon.match.has('topic', 'slow'))));
+      }
     }
   },
 };
