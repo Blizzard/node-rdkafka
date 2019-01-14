@@ -358,7 +358,7 @@ var consumer = new Kafka.KafkaConsumer({
 })
 ```
 
-`this` is bound to the `KafkaConsumer` you have created. By specifying an `offset_commit_cb` you can also listen to the `offset.commit` event as an emitted event. It also has an error parameter and a list of topic partitions. This is not emitted unless opted in.
+`this` is bound to the `KafkaConsumer` you have created. By specifying an `offset_commit_cb` you can also listen to the `offset.commit` event as an emitted event. It receives the list of topic partitions as argument. This is not emitted unless opted in.
 
 ### Message Structure
 
