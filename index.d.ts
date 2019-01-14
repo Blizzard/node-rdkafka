@@ -41,6 +41,10 @@ export class Client extends NodeJS.EventEmitter {
     on(event: 'event.throttle', listener: (eventData: any) => void): this;
     // delivery
     on(event: 'delivery-report', listener: (error: Error, report: any) => void): this;
+
+    // offsets
+    on(event: 'offset.commit', listener: (topicPartitions: any[]) => void): this;
+
 // ONCE
     // domain events
     once(event: 'data', listener: (arg: ConsumerStreamMessage) => void): this;
@@ -63,6 +67,9 @@ export class Client extends NodeJS.EventEmitter {
 
     // delivery
     once(event: 'delivery-report', listener: (error: Error, report: any) => void): this;
+
+    // offsets
+    once(event: 'offset.commit', listener: (topicPartitions: any[]) => void): this;
 }
 
 export type ErrorWrap<T> = boolean | T;
