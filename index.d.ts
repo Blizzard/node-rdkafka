@@ -252,5 +252,5 @@ declare interface InternalAdminClient {
 }
 
 export class AdminClient {
-    create(conf: object): InternalAdminClient;
+    static create(conf: object): InternalAdminClient;
 }
