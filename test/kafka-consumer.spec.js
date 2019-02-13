@@ -247,6 +247,68 @@ module.exports = {
 
         t.ok(client.pause.calledWith(Sinon.match.every(Sinon.match.has('topic', 'slow'))));
         t.ok(client.resume.calledWith(Sinon.match.every(Sinon.match.has('topic', 'slow'))));
+      },
+
+      "feeds messages to streams at reduced rate as their buffers fill up": async function () {
+        const maxFetchSize = client._maxFetchSize;
+        // configure streams to buffer few enough messages, so a single fetch size is too big
+        const streams = [
+          client.stream({ topic: 'slow', partition: 0 }, { highWaterMark: Math.ceil(maxFetchSize / 2) }),
+          client.stream({ topic: 'slow', partition: 1 }, { highWaterMark: Math.ceil(maxFetchSize / 2) }),
+        ]
+
+
+        // generate exactly enough messages that 2 max fetches consumes them
+        const testMessages = [
+          ...repeat({ topic: 'slow', partition: 0 }, maxFetchSize),
+          ...repeat({ topic: 'slow', partition: 1 }, maxFetchSize)
+        ].map(generateTestMessage);
+
+        client.__exampleMessages = testMessages;
+
+        const consumedMessages = await H(streams)
+          .map((stream) => {
+            // slow down consumption to make sure we're in a state of buffered messages
+            return H(stream).ratelimit(1, 10)
+          })
+          .merge()
+          .take(testMessages.length)
+          .collect()
+          .toPromise(Promise);
+
+        const fetchSizes = client._consumeNum.getCalls().map((call) => call.args[1])
+        t.ok(fetchSizes.every((size) => size < maxFetchSize))
+      },
+
+      "does not throttle reading of streams when there is space left in buffers": async function () {
+        const maxFetchSize = client._maxFetchSize;
+        // configure streams with buffers big enough to fit all the test messages
+        const streams = [
+          client.stream({ topic: 'fast', partition: 0 }, { highWaterMark: Math.ceil(maxFetchSize * 4) }),
+          client.stream({ topic: 'fast', partition: 1 }, { highWaterMark: Math.ceil(maxFetchSize * 4) }),
+        ]
+
+
+        // generate exactly enough messages that 2 max fetches consumes them
+        const testMessages = [
+          ...repeat({ topic: 'fast', partition: 0 }, maxFetchSize),
+          ...repeat({ topic: 'fast', partition: 1 }, maxFetchSize)
+        ].map(generateTestMessage);
+
+        client.__exampleMessages = testMessages;
+
+        const consumedMessages = await H(streams)
+          .map((stream) => {
+            // slow down consumption to make sure we hvae to
+            return H(stream).ratelimit(1, 10)
+          })
+          .merge()
+          .take(testMessages.length)
+          .collect()
+          .toPromise(Promise);
+
+        const fetchSizes = client._consumeNum.getCalls().map((call) => call.args[1])
+        t.ok(fetchSizes.every((size) => size === maxFetchSize))
       }
     }
   },
