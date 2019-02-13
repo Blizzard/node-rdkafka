@@ -134,15 +134,18 @@ module.exports = {
         const stream1 = client.stream({ topic: 'test', partition: 0 });
         const stream2 = client.stream({ topic: 'test', partition: 1 });
         const stream3 = client.stream({ topic: 'test', partition: 0 });
+        const stream4 = client.stream({ topic: 'test', partition: 2 }, { highWaterMark: 3 })
         
         t.ok(stream1 instanceof Transform);
         t.equal(stream1.topic, 'test', 'toppar stream has a topic attribute');
         t.equal(stream1.partition, 0, 'toppar stream has a partition attribute');
         t.notEqual(stream1, stream2, 'returns a separate stream for each different toppar');
         t.equal(stream1, stream3, 'returns the same toppar stream for the same toppar');
+        t.equal(stream4._readableState.highWaterMark, 3, 'forward stream options to the toppar stream');
 
-        stream1.destroy()
-        stream2.destroy()
+        stream1.destroy();
+        stream2.destroy();
+        stream4.destroy();
       },
 
 
