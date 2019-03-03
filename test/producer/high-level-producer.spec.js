@@ -7,7 +7,7 @@
  * of the MIT license.  See the LICENSE.txt file for details.
  */
 
-var HighLevelProducer = require('../../lib/producer/higher-level-producer');
+var HighLevelProducer = require('../../lib/producer/high-level-producer');
 var t = require('assert');
 var Promise = require('bluebird');
 // var Mock = require('./mock');

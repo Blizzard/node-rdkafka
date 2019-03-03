@@ -48,6 +48,11 @@ matrix:
         tags: true
   - os: osx
     osx_image: xcode10
+    env:
+    - CPPFLAGS=-I/usr/local/opt/openssl/include
+    - LDFLAGS=-L/usr/local/opt/openssl/lib
+    before_install:
+    - brew install openssl
     nodejs:
     - 4
     - 6
