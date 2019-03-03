@@ -13,6 +13,7 @@
 #include <nan.h>
 
 #include <vector>
+#include <deque>
 
 #include "rdkafkacpp.h"
 #include "src/common.h"
@@ -129,10 +130,10 @@ class DeliveryReportDispatcher : public Dispatcher {
   DeliveryReportDispatcher();
   ~DeliveryReportDispatcher();
   void Flush();
-  void Add(const DeliveryReport &);
+  size_t Add(const DeliveryReport &);
   void AddCallback(v8::Local<v8::Function>);
  protected:
-  std::vector<DeliveryReport> events;
+  std::deque<DeliveryReport> events;
 };
 
 class Delivery : public RdKafka::DeliveryReportCb {
