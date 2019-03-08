@@ -397,10 +397,12 @@ namespace Message {
 
 // Overload for all use cases except delivery reports
 v8::Local<v8::Object> ToV8Object(RdKafka::Message *message) {
-  return ToV8Object(message, true);
+  return ToV8Object(message, true, true);
 }
 
-v8::Local<v8::Object> ToV8Object(RdKafka::Message *message, bool include_payload) {  // NOLINT
+v8::Local<v8::Object> ToV8Object(RdKafka::Message *message,
+                                bool include_payload,
+                                bool include_headers) {
   if (message->err() == RdKafka::ERR_NO_ERROR) {
     v8::Local<v8::Object> pack = Nan::New<v8::Object>();
 
@@ -415,6 +417,24 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Message *message, bool include_payload
     } else {
       Nan::Set(pack, Nan::New<v8::String>("value").ToLocalChecked(),
         Nan::Null());
+    }
+
+    RdKafka::Headers* headers;
+    if (((headers = message->headers()) != 0) && include_headers) {
+      v8::Local<v8::Array> v8headers = Nan::New<v8::Array>();
+      int index = 0;
+      std::vector<RdKafka::Headers::Header> all = headers->get_all();
+      for (std::vector<RdKafka::Headers::Header>::iterator it = all.begin();
+                                                     it != all.end(); it++) {
+        v8::Local<v8::Object> v8header = Nan::New<v8::Object>();
+        Nan::Set(v8header, Nan::New<v8::String>(it->key()).ToLocalChecked(),
+          Nan::Encode(it->value_string(),
+            it->value_size(), Nan::Encoding::BUFFER));
+        v8headers->Set(index, v8header);
+        index++;
+      }
+      Nan::Set(pack,
+        Nan::New<v8::String>("headers").ToLocalChecked(), v8headers);
     }
 
     Nan::Set(pack, Nan::New<v8::String>("size").ToLocalChecked(),

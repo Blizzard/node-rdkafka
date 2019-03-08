@@ -32,7 +32,7 @@
   "devDependencies": {
     "bluebird": "^3.5.3",
     "jsdoc": "^3.4.0",
-    "jshint": "^2.9.7",
+    "jshint": "^2.10.1",
     "mocha": "^5.2.0",
     "node-gyp": "3.x",
     "toolkit-jsdoc": "^1.0.0"

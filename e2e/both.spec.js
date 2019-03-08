@@ -240,6 +240,72 @@ describe('Consumer/Producer', function() {
     });
   });
 
+  it('should be able to produce and consume messages with one header value as string: consumeLoop', function(done) {
+    var headers = [
+      { key: "value" }
+    ];
+    this.timeout(5000);
+    run_headers_test(done, headers);
+  });
+
+  it('should be able to produce and consume messages with one header value as buffer: consumeLoop', function(done) {
+    var headers = [
+      { key: Buffer.from('value') }
+    ];
+    this.timeout(5000);
+    run_headers_test(done, headers);
+  });
+
+  it('should be able to produce and consume messages with one header value as int: consumeLoop', function(done) {
+    var headers = [
+      { key: 10 }
+    ];
+    this.timeout(5000);
+    run_headers_test(done, headers);
+  });
+
+  it('should be able to produce and consume messages with one header value as float: consumeLoop', function(done) {
+    var headers = [
+      { key: 1.11 }
+    ];
+    this.timeout(5000);
+    run_headers_test(done, headers);
+  });
+
+  it('should be able to produce and consume messages with multiple headers value as buffer: consumeLoop', function(done) {
+    var headers = [
+      { key1: Buffer.from('value1') },
+      { key2: Buffer.from('value2') },
+      { key3: Buffer.from('value3') },
+      { key4: Buffer.from('value4') },
+    ];
+    this.timeout(5000);
+    run_headers_test(done, headers);
+  });
+  
+  it('should be able to produce and consume messages with multiple headers value as string: consumeLoop', function(done) {
+    var headers = [
+      { key1: 'value1' },
+      { key2: 'value2' },
+      { key3: 'value3' },
+      { key4: 'value4' },
+    ];
+    this.timeout(5000);
+    run_headers_test(done, headers);
+  });
+
+  it('should be able to produce and consume messages with multiple headers with mixed values: consumeLoop', function(done) {
+    var headers = [
+      { key1: 'value1' },
+      { key2: Buffer.from('value2') },
+      { key3: 100 },
+      { key4: 10.1 },
+    ];
+    this.timeout(5000);
+    run_headers_test(done, headers);
+  });
+
+
   it('should be able to produce and consume messages: empty key and empty value', function(done) {
     this.timeout(20000);
     var key = '';
@@ -407,5 +473,55 @@ describe('Consumer/Producer', function() {
       });
     });
   });
+
+  function assert_headers_match(expectedHeaders, messageHeaders) {
+    t.equal(expectedHeaders.length, messageHeaders.length, 'Headers length does not match expected length');
+    for (var i = 0; i < expectedHeaders.length; i++) {
+      var expectedKey = Object.keys(expectedHeaders[i])[0];
+      var messageKey = Object.keys(messageHeaders[i]);
+      t.equal(messageKey.length, 1, 'Expected only one Header key');
+      t.equal(expectedKey, messageKey[0], 'Expected key does not match message key');
+      var expectedValue = Buffer.isBuffer(expectedHeaders[i][expectedKey]) ?
+                          expectedHeaders[i][expectedKey].toString() :
+                          expectedHeaders[i][expectedKey];
+      var actualValue = messageHeaders[i][expectedKey].toString();
+      t.equal(expectedValue, actualValue, 'invalid message header');
+    }
+  }
+
+  function run_headers_test(done, headers) {
+    var key = 'key';
+
+    crypto.randomBytes(4096, function(ex, buffer) {
+
+      producer.setPollInterval(10);
+
+      producer.once('delivery-report', function(err, report) {
+        if (!err) {
+          t.equal(topic, report.topic, 'invalid delivery-report topic');
+          t.equal(key, report.key, 'invalid delivery-report key');
+          t.ok(report.offset >= 0, 'invalid delivery-report offset');
+        }
+      });
+
+      consumer.on('data', function(message) {
+        t.equal(buffer.toString(), message.value.toString(), 'invalid message value');
+        t.equal(key, message.key, 'invalid message key');
+        t.equal(topic, message.topic, 'invalid message topic');
+        t.ok(message.offset >= 0, 'invalid message offset');
+        assert_headers_match(headers, message.headers);
+        done();
+      });
+
+      consumer.subscribe([topic]);
+      consumer.consume();
+
+      setTimeout(function() {
+        var timestamp = new Date().getTime();
+        producer.produce(topic, null, buffer, key, timestamp, "", headers);
+      }, 2000);
+
+    });
+  }
 
 });
