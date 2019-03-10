@@ -60,6 +60,21 @@ matrix:
     - make lint
     - make test
     - make check
+  - os: windows
+    before_install:
+    - choco install openssl.light
+    nodejs
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    script:
+    - make lint
+    - make test
+    - make check
 language: node_js
 cache:
   directories:
