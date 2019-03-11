@@ -64,6 +64,7 @@ matrix:
     before_install:
     - choco install openssl.light
     - npm install --global --production windows-build-tools@3.1.0
+    - choco install python
     - choco install pip
     - pip install --upgrade certifi
     node_js:
