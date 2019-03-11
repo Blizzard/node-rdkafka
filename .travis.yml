@@ -63,6 +63,7 @@ matrix:
   - os: windows
     before_install:
     - choco install openssl.light
+    - npm install --global --production windows-build-tools
     node_js:
       - "4"
       - "5"
