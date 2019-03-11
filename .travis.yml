@@ -62,11 +62,11 @@ matrix:
     - make check
   - os: windows
     before_install:
+    - choco install python2
+    - pip install --upgrade certifi
     - choco install openssl.light
     - npm install --global --production windows-build-tools@3.1.0
-    - choco install python
-    - choco install pip
-    - pip install --upgrade certifi
+
     node_js:
       - "6"
     script:
