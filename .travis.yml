@@ -3,9 +3,9 @@ matrix:
   - os: linux
     dist: trusty
     sudo: required
-    nodejs:
-    - 4
-    - 6
+    node_js:
+      - "4"
+      - "6"
     services:
     - docker
     before_install:
@@ -17,7 +17,7 @@ matrix:
   - os: linux
     dist: trusty
     sudo: required
-    nodejs: 8
+    node_js: "8"
     before_deploy:
     - openssl aes-256-cbc -K $encrypted_a2e08d5c220e_key -iv $encrypted_a2e08d5c220e_iv
       -in deploy.enc -out /tmp/deploy -d
@@ -53,9 +53,9 @@ matrix:
     - LDFLAGS=-L/usr/local/opt/openssl/lib
     before_install:
     - brew install openssl
-    nodejs:
-    - 4
-    - 6
+    node_js:
+    - "4"
+    - "6"
     script:
     - make lint
     - make test
@@ -63,14 +63,14 @@ matrix:
   - os: windows
     before_install:
     - choco install openssl.light
-    nodejs
-    - 4
-    - 5
-    - 6
-    - 7
-    - 8
-    - 9
-    - 10
+    node_js:
+      - "4"
+      - "5"
+      - "6"
+      - "7"
+      - "8"
+      - "9"
+      - "10"
     script:
     - make lint
     - make test
