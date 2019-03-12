@@ -63,6 +63,7 @@ matrix:
   - os: windows
     before_install:
     - choco install python2
+    - refreshenv
     - pip install --upgrade certifi
     - choco install openssl.light
     - npm install --global --production windows-build-tools@3.1.0
