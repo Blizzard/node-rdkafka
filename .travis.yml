@@ -33,11 +33,6 @@ matrix:
     - make test
     - make e2e
     deploy:
-    - provider: script
-      script: "./make_docs.sh"
-      on:
-        branch: master
-        tags: true
     - provider: npm
       skip_cleanup: false
       email: webmakersteve@gmail.com
