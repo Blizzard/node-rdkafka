@@ -134,6 +134,16 @@ export class Producer extends Client {
 
 }
 
+export class HighLevelProducer extends Producer {
+  createSerializer(serializer: Function): ({
+    apply: Function | Error;
+    async: boolean
+  });
+
+  setKeySerializer(serializer: Function): void;
+  setValueSerializer(serializer: Function): void;
+}
+
 export const CODES: {
     ERRORS: {
         ERR_BROKER_NOT_AVAILABLE: number;
