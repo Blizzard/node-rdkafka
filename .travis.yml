@@ -3,42 +3,51 @@ matrix:
   - os: linux
     dist: trusty
     sudo: required
-    node_js:
-      - "4"
-      - "6"
-    services:
-    - docker
-    before_install:
-    - "./run_docker.sh"
-    script:
+  - os: osx
+    osx_image: xcode10
+    env:
+    - CPPFLAGS=-I/usr/local/opt/openssl/include LDFLAGS=-L/usr/local/opt/openssl/lib
+
+  - os: windows
+
+services:
+  - docker
+language: node_js
+node_js:
+  - "4"
+  - "5"
+  - "6"
+  - "7"
+  - "8"
+  - "9"
+  - "10"
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./run_docker.sh          ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install openssl; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then ./win_install.bat; fi
+script:
     - make lint
     - make test
-    - make e2e
-  - os: linux
-    dist: trusty
-    sudo: required
-    node_js: "8"
-    before_deploy:
-    - openssl aes-256-cbc -K $encrypted_a2e08d5c220e_key -iv $encrypted_a2e08d5c220e_iv
-      -in deploy.enc -out /tmp/deploy -d
-    - eval "$(ssh-agent -s)"
-    - chmod 600 /tmp/deploy
-    - ssh-add /tmp/deploy
-    services:
-    - docker
-    before_install:
-    - "./run_docker.sh"
-    script:
-    - make lint
-    - make test
-    - make e2e
-    deploy:
-    - provider: script
-      script: "./make_docs.sh"
+    - make check
+cache:
+  directories:
+  - node_modules
+
+jobs:
+  include:
+    - stage: create_doc
+      provider: script
+      script: 
+        - openssl aes-256-cbc -K $encrypted_a2e08d5c220e_key -iv $encrypted_a2e08d5c220e_iv -in deploy.enc -out /tmp/deploy -d
+        - eval "$(ssh-agent -s)"
+        - chmod 600 /tmp/deploy
+        - ssh-add /tmp/deploy
+        - "./make_docs.sh"
       on:
         branch: master
         tags: true
-    - provider: npm
+    - stage: publish_npm
+      provider: npm
       skip_cleanup: false
       email: webmakersteve@gmail.com
       api_key:
@@ -46,38 +55,3 @@ matrix:
       on:
         branch: master
         tags: true
-  - os: osx
-    osx_image: xcode10
-    env:
-    - CPPFLAGS=-I/usr/local/opt/openssl/include
-    - LDFLAGS=-L/usr/local/opt/openssl/lib
-    before_install:
-    - brew install openssl
-    node_js:
-    - "4"
-    - "6"
-    script:
-    - make lint
-    - make test
-    - make check
-  - os: windows
-    env:
-    - PYTHONHTTPSVERIFY=0
-    before_install:
-#    - choco install python2
-#    - set PATH=C:\Python27;%PATH%
-#    - pip install --upgrade certifi
-    - choco install openssl.light
-    - npm install --global --production windows-build-tools@3.1.0
-    - choco install make
-
-    node_js:
-      - "6"
-    script:
-    - make lint
-    - make test
-    - make check
-language: node_js
-cache:
-  directories:
-  - node_modules
