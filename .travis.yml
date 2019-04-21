@@ -3,6 +3,13 @@ language: node_js
 cache:
   directories:
   - node_modules
+node_js:
+  - "4"
+  - "6"
+  - "8"
+  - "10"
+install:
+  - if [[ "$TRAVIS_BUILD_STAGE_NAME" == "test" ]]; then npm install; fi
 
 jobs:
   include:
@@ -20,11 +27,7 @@ jobs:
             env: CPPFLAGS=-I/usr/local/opt/openssl/include LDFLAGS=-L/usr/local/opt/openssl/lib
           - name: "build on windows"
             os: windows
-      node_js:
-        - "4"
-        - "6"
-        - "8"
-        - "10"
+      
       before_install:
         - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_BUILD_STAGE_NAME" == "test" ]]; then ./run_docker.sh; fi
         - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install openssl; fi
