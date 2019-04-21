@@ -1,13 +1,16 @@
 matrix:
   include:
-    - os: linux
+    - name: "build on linux"
+      os: linux
       dist: trusty
       sudo: required
       services: docker
-    - os: osx
+    - name: "build on mac"
+      os: osx
       osx_image: xcode10
       env: CPPFLAGS=-I/usr/local/opt/openssl/include LDFLAGS=-L/usr/local/opt/openssl/lib
-    - os: windows
+    - name: "build on windows"
+      os: windows
 
 language: node_js
 node_js:
@@ -19,7 +22,7 @@ node_js:
   - "9"
   - "10"
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_BUILD_STAGE_NAME" == "test" ]]; then ./run_docker.sh          ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_BUILD_STAGE_NAME" == "test" ]]; then ./run_docker.sh; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install openssl; fi
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then ./win_install.bat; fi
 
@@ -36,11 +39,12 @@ jobs:
         - make check
     - stage: create_doc
       provider: script
-      script: 
+      before_deploy:
         - openssl aes-256-cbc -K $encrypted_a2e08d5c220e_key -iv $encrypted_a2e08d5c220e_iv -in deploy.enc -out /tmp/deploy -d
         - eval "$(ssh-agent -s)"
         - chmod 600 /tmp/deploy
         - ssh-add /tmp/deploy
+      script:
         - "./make_docs.sh"
       on:
         branch: master
