@@ -64,11 +64,12 @@ matrix:
     env:
     - PYTHONHTTPSVERIFY=0
     before_install:
-    - choco install python2
+#    - choco install python2
 #    - set PATH=C:\Python27;%PATH%
 #    - pip install --upgrade certifi
     - choco install openssl.light
     - npm install --global --production windows-build-tools@3.1.0
+    - choco install make
 
     node_js:
       - "6"
