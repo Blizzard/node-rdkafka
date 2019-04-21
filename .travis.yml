@@ -20,21 +20,18 @@ node_js:
   - "6"
   - "8"
   - "10"
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_BUILD_STAGE_NAME" == "Test" ]]; then ./run_docker.sh; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install openssl; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then ./win_install.bat; fi
 install:
-  - if [[ "$TRAVIS_BUILD_STAGE_NAME" == "test" ]]; then npm install; fi
+  - if [[ "$TRAVIS_BUILD_STAGE_NAME" == "Test" ]]; then npm install; fi
+
+script:
+  - if [[ "$TRAVIS_BUILD_STAGE_NAME" == "Test" ]]; then make lint;make test;make check; fi
 
 jobs:
   include:
-    - stage: test
-      name: "test"
-      before_install:
-        - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_BUILD_STAGE_NAME" == "test" ]]; then ./run_docker.sh; fi
-        - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install openssl; fi
-        - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then ./win_install.bat; fi
-      script:
-        - make lint
-        - make test
-        - make check
     - stage: create_doc
       provider: script
       before_deploy:
