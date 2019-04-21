@@ -1,17 +1,14 @@
 matrix:
   include:
-  - os: linux
-    dist: trusty
-    sudo: required
-  - os: osx
-    osx_image: xcode10
-    env:
-    - CPPFLAGS=-I/usr/local/opt/openssl/include LDFLAGS=-L/usr/local/opt/openssl/lib
+    - os: linux
+      dist: trusty
+      sudo: required
+      services: docker
+    - os: osx
+      osx_image: xcode10
+      env: CPPFLAGS=-I/usr/local/opt/openssl/include LDFLAGS=-L/usr/local/opt/openssl/lib
+    - os: windows
 
-  - os: windows
-
-services:
-  - docker
 language: node_js
 node_js:
   - "4"
@@ -22,19 +19,21 @@ node_js:
   - "9"
   - "10"
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./run_docker.sh          ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_BUILD_STAGE_NAME" == "test" ]]; then ./run_docker.sh          ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install openssl; fi
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then ./win_install.bat; fi
-script:
-    - make lint
-    - make test
-    - make check
+
 cache:
   directories:
   - node_modules
 
 jobs:
   include:
+    - stage: test
+      script:
+        - make lint
+        - make test
+        - make check
     - stage: create_doc
       provider: script
       script: 
