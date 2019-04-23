@@ -7,6 +7,8 @@
  * of the MIT license.  See the LICENSE.txt file for details.
  */
 
+#define NOMINMAX
+
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -272,7 +274,7 @@ void DeliveryReportDispatcher::Flush() {
   {
     scoped_mutex_lock lock(async_lock);
     outstanding_event_count = events.size();
-    const size_t flush_count = std::min(outstanding_event_count, 100UL);
+    const size_t flush_count = std::min(outstanding_event_count, (size_t) 100);
     events_list.reserve(flush_count);
     for (size_t i = 0; i < flush_count; i++) {
       events_list.emplace_back(std::move(events.front()));
