@@ -9,6 +9,7 @@
 
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #include "src/callbacks.h"
 #include "src/kafka-consumer.h"
@@ -249,9 +250,10 @@ void EventDispatcher::Flush() {
 DeliveryReportDispatcher::DeliveryReportDispatcher() {}
 DeliveryReportDispatcher::~DeliveryReportDispatcher() {}
 
-void DeliveryReportDispatcher::Add(const DeliveryReport &e) {
+size_t DeliveryReportDispatcher::Add(const DeliveryReport &e) {
   scoped_mutex_lock lock(async_lock);
   events.push_back(e);
+  return events.size();
 }
 
 void DeliveryReportDispatcher::AddCallback(v8::Local<v8::Function> func) {
@@ -262,21 +264,26 @@ void DeliveryReportDispatcher::AddCallback(v8::Local<v8::Function> func) {
 
 void DeliveryReportDispatcher::Flush() {
   Nan::HandleScope scope;
-  //
-  if (events.size() < 1) return;
 
   const unsigned int argc = 2;
 
+  size_t outstanding_event_count = 0;
   std::vector<DeliveryReport> events_list;
   {
     scoped_mutex_lock lock(async_lock);
-    events.swap(events_list);
+    outstanding_event_count = events.size();
+    const size_t flush_count = std::min(outstanding_event_count, 100UL);
+    events_list.reserve(flush_count);
+    for (size_t i = 0; i < flush_count; i++) {
+      events_list.emplace_back(std::move(events.front()));
+      events.pop_front();
+    }
   }
 
   for (size_t i = 0; i < events_list.size(); i++) {
     v8::Local<v8::Value> argv[argc] = {};
 
-    DeliveryReport event = events_list[i];
+    const DeliveryReport& event = events_list[i];
 
     if (event.is_error) {
         // If it is an error we need the first argument to be set
@@ -342,6 +349,9 @@ void DeliveryReportDispatcher::Flush() {
     argv[1] = jsobj;
 
     Dispatch(argc, argv);
+  }
+  if (outstanding_event_count > events_list.size()) {
+    Execute();
   }
 }
 
@@ -422,8 +432,9 @@ void Delivery::dr_cb(RdKafka::Message &message) {
   }
 
   DeliveryReport msg(message, m_dr_msg_cb);
-  dispatcher.Add(msg);
-  dispatcher.Execute();
+  if (dispatcher.Add(msg) == 1) {
+    dispatcher.Execute();
+  }
 }
 
 // Rebalance CB
