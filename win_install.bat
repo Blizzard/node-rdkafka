@@ -1,6 +1,5 @@
 @echo off
 choco install openssl.light
-REM choco uninstall python -y
 REM if /i %TRAVIS_NODE_VERSION% gtr 6 (
 REM     npm install --global --production windows-build-tools
 REM ) else (
