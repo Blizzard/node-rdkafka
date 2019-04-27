@@ -1,17 +1,17 @@
 language: node_js
-matrix:
-  include:
-    - name: "build on linux"
-      os: linux
-      dist: trusty
-      sudo: required
-      services: docker
-    - name: "build on mac"
-      os: osx
-      osx_image: xcode10
-      env: CPPFLAGS=-I/usr/local/opt/openssl/include LDFLAGS=-L/usr/local/opt/openssl/lib
-    - name: "build on windows"
-      os: windows
+# matrix:
+#   include:
+#     - name: "build on linux"
+#       os: linux
+#       dist: trusty
+#       sudo: required
+#       services: docker
+#     - name: "build on mac"
+#       os: osx
+#       osx_image: xcode10
+#       env: CPPFLAGS=-I/usr/local/opt/openssl/include LDFLAGS=-L/usr/local/opt/openssl/lib
+#     - name: "build on windows"
+#       os: windows
 cache:
   directories:
   - node_modules
@@ -32,6 +32,32 @@ script:
 
 jobs:
   include:
+    - stage: test
+      os: linux
+      dist: trusty
+      sudo: required
+      services: docker
+      node_js:
+        - "4"
+        - "6"
+        - "8"
+        - "10"
+    - stage: test_on_mac
+      os: osx
+      osx_image: xcode10
+      env: CPPFLAGS=-I/usr/local/opt/openssl/include LDFLAGS=-L/usr/local/opt/openssl/lib
+      node_js:
+        - "4"
+        - "6"
+        - "8"
+        - "10"
+    - stage: test_on_win
+      os: windows
+      node_js:
+        - "4"
+        - "6"
+        - "8"
+        - "10"
     - stage: create_doc
       provider: script
       before_deploy:
