@@ -87,9 +87,11 @@ void Producer::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(tpl, "flush", NodeFlush);
 
     // connect. disconnect. resume. pause. get meta data
-  constructor.Reset(tpl->GetFunction());
+  constructor.Reset((tpl->GetFunction(Nan::GetCurrentContext()))
+    .ToLocalChecked());
 
-  exports->Set(Nan::New("Producer").ToLocalChecked(), tpl->GetFunction());
+  exports->Set(Nan::New("Producer").ToLocalChecked(),
+    (tpl->GetFunction(Nan::GetCurrentContext())).ToLocalChecked());
 }
 
 void Producer::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
@@ -112,14 +114,16 @@ void Producer::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
   std::string errstr;
 
   Conf* gconfig =
-    Conf::create(RdKafka::Conf::CONF_GLOBAL, info[0]->ToObject(), errstr);
+    Conf::create(RdKafka::Conf::CONF_GLOBAL,
+      (info[0]->ToObject(Nan::GetCurrentContext())).ToLocalChecked(), errstr);
 
   if (!gconfig) {
     return Nan::ThrowError(errstr.c_str());
   }
 
   Conf* tconfig =
-    Conf::create(RdKafka::Conf::CONF_TOPIC, info[1]->ToObject(), errstr);
+    Conf::create(RdKafka::Conf::CONF_TOPIC,
+      (info[1]->ToObject(Nan::GetCurrentContext())).ToLocalChecked(), errstr);
 
   if (!tconfig) {
     // No longer need this since we aren't instantiating anything
@@ -370,7 +374,8 @@ NAN_METHOD(Producer::NodeProduce) {
   } else if (!node::Buffer::HasInstance(info[2])) {
     return Nan::ThrowError("Message must be a buffer or null");
   } else {
-    v8::Local<v8::Object> message_buffer_object = info[2]->ToObject();
+    v8::Local<v8::Object> message_buffer_object =
+      (info[2]->ToObject(Nan::GetCurrentContext())).ToLocalChecked();
 
     // v8 handles the garbage collection here so we need to make a copy of
     // the buffer or assign the buffer to a persistent handle.
@@ -393,7 +398,8 @@ NAN_METHOD(Producer::NodeProduce) {
     key_buffer_length = 0;
     key_buffer_data = NULL;
   } else if (node::Buffer::HasInstance(info[3])) {
-    v8::Local<v8::Object> key_buffer_object = info[3]->ToObject();
+    v8::Local<v8::Object> key_buffer_object =
+      (info[3]->ToObject(Nan::GetCurrentContext())).ToLocalChecked();
 
     // v8 handles the garbage collection here so we need to make a copy of
     // the buffer or assign the buffer to a persistent handle.
@@ -407,7 +413,7 @@ NAN_METHOD(Producer::NodeProduce) {
     key_buffer_data = node::Buffer::Data(key_buffer_object);
   } else {
     // If it was a string just use the utf8 value.
-    v8::Local<v8::String> val = info[3]->ToString();
+    v8::Local<v8::String> val = Nan::To<v8::String>(info[3]).ToLocalChecked();
     // Get string pointer for this thing
     Nan::Utf8String keyUTF8(val);
     key = new std::string(*keyUTF8);
@@ -444,7 +450,7 @@ NAN_METHOD(Producer::NodeProduce) {
 
   if (info[0]->IsString()) {
     // Get string pointer for this thing
-    Nan::Utf8String topicUTF8(info[0]->ToString());
+    Nan::Utf8String topicUTF8(Nan::To<v8::String>(info[0]).ToLocalChecked());
     std::string topic_name(*topicUTF8);
 
     Baton b = producer->Produce(message_buffer_data, message_buffer_length,

@@ -88,8 +88,10 @@ void AdminClient::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(tpl, "connect", NodeConnect);
   Nan::SetPrototypeMethod(tpl, "disconnect", NodeDisconnect);
 
-  constructor.Reset(tpl->GetFunction());
-  exports->Set(Nan::New("AdminClient").ToLocalChecked(), tpl->GetFunction());
+  constructor.Reset(
+    (tpl->GetFunction(Nan::GetCurrentContext())).ToLocalChecked());
+  exports->Set(Nan::New("AdminClient").ToLocalChecked(),
+    (tpl->GetFunction(Nan::GetCurrentContext())).ToLocalChecked());
 }
 
 void AdminClient::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
@@ -108,7 +110,8 @@ void AdminClient::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
   std::string errstr;
 
   Conf* gconfig =
-    Conf::create(RdKafka::Conf::CONF_GLOBAL, info[0]->ToObject(), errstr);
+    Conf::create(RdKafka::Conf::CONF_GLOBAL,
+      (info[0]->ToObject(Nan::GetCurrentContext())).ToLocalChecked(), errstr);
 
   if (!gconfig) {
     return Nan::ThrowError(errstr.c_str());
@@ -501,7 +504,8 @@ NAN_METHOD(AdminClient::NodeDeleteTopic) {
   AdminClient* client = ObjectWrap::Unwrap<AdminClient>(info.This());
 
   // Get the topic name from the string
-  std::string topic_name = Util::FromV8String(info[0]->ToString());
+  std::string topic_name = Util::FromV8String(
+    Nan::To<v8::String>(info[0]).ToLocalChecked());
 
   // Get the timeout
   int timeout = Nan::To<int32_t>(info[2]).FromJust();
@@ -550,7 +554,8 @@ NAN_METHOD(AdminClient::NodeCreatePartitions) {
   int partition_total_count = Nan::To<int32_t>(info[1]).FromJust();
 
   // Get the topic name from the string
-  std::string topic_name = Util::FromV8String(info[0]->ToString());
+  std::string topic_name = Util::FromV8String(
+    Nan::To<v8::String>(info[0]).ToLocalChecked());
 
   // Create an error buffer we can throw
   char* errbuf = reinterpret_cast<char*>(malloc(100));

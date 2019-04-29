@@ -91,7 +91,8 @@ std::string GetParameter<std::string>(v8::Local<v8::Object> object,
       // Nan::To<v8::String>();
 
     if (!parameter->IsUndefined() && !parameter->IsNull()) {
-      v8::Local<v8::String> val = parameter->ToString();
+      v8::Local<v8::String> val = Nan::To<v8::String>(parameter)
+        .ToLocalChecked();
 
       if (!val->IsUndefined() && !val->IsNull()) {
         Nan::Utf8String parameterValue(val);
