@@ -12,6 +12,8 @@ export class Client extends NodeJS.EventEmitter {
     getLastError(): any;
 
     disconnect(cb?: (err: any, data: any) => any): this;
+    disconnect(timeout: number, cb?: (err: any, data: any) => any): this;
+
     isConnected(): boolean;
 
     getMetadata(metadataOptions: any, cb?: (err: any, data: any) => any): any;
@@ -120,7 +122,7 @@ export class KafkaConsumer extends Client {
 }
 
 export class Producer extends Client {
-    constructor(conf: any, topicConf: any);
+    constructor(conf: any, topicConf?: any);
 
     flush(timeout: any, callback: any): any;
 
