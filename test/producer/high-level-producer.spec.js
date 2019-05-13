@@ -26,8 +26,10 @@ module.exports = {
   'High Level Producer client': {
     'beforeEach': function() {
       client = new HighLevelProducer(defaultConfig, topicConfig);
+      client._isConnected = true;
     },
     'afterEach': function() {
+      client.disconnect();
       client = null;
     },
     'is an object': function() {
