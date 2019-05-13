@@ -87,6 +87,25 @@ module.exports = {
         });
       },
 
+      'forwards connectOptions to client options when provided': function(cb) {
+        var testClientOptions = { timeout: 3000 };
+
+        fakeClient._isConnected = false;
+        fakeClient.isConnected = function() {
+          return false;
+        };
+        var fakeConnect = fakeClient.connect;
+        fakeClient.connect = function(opts, callback) {
+          t.deepEqual(opts, testClientOptions);
+          cb();
+        };
+
+        var stream = new ProducerStream(fakeClient, {
+          topic: 'topic',
+          connectOptions: testClientOptions
+        });
+      },
+
       'automatically disconnects when autoclose is not provided': function(cb) {
         fakeClient.once('disconnected', cb);
 
@@ -129,7 +148,7 @@ module.exports = {
           t.fail(err);
         });
 
-        stream.write(new Buffer('Awesome'));
+        stream.write(Buffer.from('Awesome'));
       },
 
       'passes a topic string if options are not provided': function(done) {
@@ -149,7 +168,7 @@ module.exports = {
           t.fail(err);
         });
 
-        stream.write(new Buffer('Awesome'));
+        stream.write(Buffer.from('Awesome'));
       },
 
       'properly handles queue errors': function(done) {
@@ -178,7 +197,7 @@ module.exports = {
           t.fail(err);
         });
 
-        stream.write(new Buffer('Awesome'));
+        stream.write(Buffer.from('Awesome'));
       },
 
       'errors out when a non-queue related error occurs': function(done) {
@@ -200,7 +219,7 @@ module.exports = {
           // This is good
         });
 
-        stream.write(new Buffer('Awesome'));
+        stream.write(Buffer.from('Awesome'));
       },
 
       'errors out when a non-queue related error occurs but does not disconnect if autoclose is false': function(done) {
@@ -223,7 +242,7 @@ module.exports = {
           // This is good
         });
 
-        stream.write(new Buffer('Awesome'));
+        stream.write(Buffer.from('Awesome'));
 
         setTimeout(done, 10);
       },
@@ -250,8 +269,8 @@ module.exports = {
           t.fail(err);
         });
 
-        stream.write(new Buffer('Awesome1'));
-        stream.write(new Buffer('Awesome2'));
+        stream.write(Buffer.from('Awesome1'));
+        stream.write(Buffer.from('Awesome2'));
       },
 
       'can be piped into a readable': function(done) {
@@ -319,9 +338,9 @@ module.exports = {
           return false;
         };
 
-        stream.write(new Buffer('Awesome1'));
-        stream.write(new Buffer('Awesome2'));
-        stream.write(new Buffer('Awesome3'));
+        stream.write(Buffer.from('Awesome1'));
+        stream.write(Buffer.from('Awesome2'));
+        stream.write(Buffer.from('Awesome3'));
 
         fakeClient._isConnected = true;
         fakeClient._isConnecting = false;
@@ -365,7 +384,7 @@ module.exports = {
 
         stream.write({
           topic: 'topic',
-          value: new Buffer('Awesome'),
+          value: Buffer.from('Awesome'),
           partition: 10,
           key: 'key',
           timestamp: _timestamp,
@@ -403,7 +422,7 @@ module.exports = {
 
         stream.write({
           topic: 'topic',
-          value: new Buffer('Awesome'),
+          value: Buffer.from('Awesome'),
           partition: 10,
           key: 'key'
         });
@@ -428,7 +447,7 @@ module.exports = {
           // This is good
         });
 
-        stream.write(new Buffer('Awesome'));
+        stream.write(Buffer.from('Awesome'));
       },
 
       'errors out when a non-queue related error occurs but does not disconnect if autoclose is false': function(done) {
@@ -452,7 +471,7 @@ module.exports = {
         });
 
         stream.write({
-          value: new Buffer('Awesome'),
+          value: Buffer.from('Awesome'),
           topic: 'topic'
         });
 
@@ -482,11 +501,11 @@ module.exports = {
         });
 
         stream.write({
-          value: new Buffer('Awesome1'),
+          value: Buffer.from('Awesome1'),
           topic: 'topic'
         });
         stream.write({
-          value: new Buffer('Awesome2'),
+          value: Buffer.from('Awesome2'),
           topic: 'topic'
         });
       },
@@ -506,11 +525,11 @@ module.exports = {
             } else {
               this.push({
                 topic: 'topic',
-                value: new Buffer('Awesome1')
+                value: Buffer.from('Awesome1')
               });
               this.push({
                 topic: 'topic',
-                value: new Buffer('Awesome2')
+                value: Buffer.from('Awesome2')
               });
             }
           }
@@ -565,15 +584,15 @@ module.exports = {
         };
 
         stream.write({
-          value: new Buffer('Awesome1'),
+          value: Buffer.from('Awesome1'),
           topic: 'topic'
         });
         stream.write({
-          value: new Buffer('Awesome2'),
+          value: Buffer.from('Awesome2'),
           topic: 'topic'
         });
         stream.write({
-          value: new Buffer('Awesome3'),
+          value: Buffer.from('Awesome3'),
           topic: 'topic'
         });
 
@@ -584,6 +603,115 @@ module.exports = {
         };
         fakeClient.connect();
       },
+
+      'properly handles queue errors while draining': function(done) {
+        var message;
+        var currentMessage = 0;
+
+        fakeClient.produce = function(topic, partition, message, key) {
+          currentMessage++;
+          if (currentMessage === 3) {
+            var err = new Error('Queue full');
+            err.code = -184;
+            throw err;
+          } else if (currentMessage === 4) {
+            done();
+          }
+        };
+
+        var stream = new ProducerStream(fakeClient, {
+          objectMode: true
+        });
+        stream.on('error', function(err) {
+          t.fail(err);
+        });
+
+        fakeClient._isConnected = false;
+        fakeClient._isConnecting = true;
+        fakeClient.isConnected = function() {
+          return false;
+        };
+
+        stream.write({
+          value: Buffer.from('Awesome1'),
+          topic: 'topic'
+        });
+        stream.write({
+          value: Buffer.from('Awesome2'),
+          topic: 'topic'
+        });
+        stream.write({
+          value: Buffer.from('Awesome3'),
+          topic: 'topic'
+        });
+        stream.write({
+          value: Buffer.from('Awesome4'),
+          topic: 'topic'
+        });
+
+        fakeClient._isConnected = true;
+        fakeClient._isConnecting = false;
+        fakeClient.isConnected = function() {
+          return true;
+        };
+        fakeClient.connect();
+      },
+
+      'errors out for non-queue related errors while draining': function (done) {
+        var currentMessage = 0;
+
+        fakeClient.produce = function(topic, partition, message, key) {
+          currentMessage++;
+          if (currentMessage === 3) {
+            var err = new Error('ERR_MSG_SIZE_TOO_LARGE ');
+            err.code = 10;
+            throw err;
+          }
+        };
+
+        fakeClient.on('disconnected', function() {
+          done();
+        });
+
+        var stream = new ProducerStream(fakeClient, {
+          objectMode: true
+        });
+        stream.on('error', function(err) {
+          t.equal(err.code, 10, 'Error was unexpected');
+          // This is good
+        });
+
+        fakeClient._isConnected = false;
+        fakeClient._isConnecting = true;
+        fakeClient.isConnected = function() {
+          return false;
+        };
+
+        stream.write({
+          value: Buffer.from('Awesome1'),
+          topic: 'topic'
+        });
+        stream.write({
+          value: Buffer.from('Awesome2'),
+          topic: 'topic'
+        });
+        stream.write({
+          value: Buffer.from('Awesome3'),
+          topic: 'topic'
+        });
+        stream.write({
+          value: Buffer.from('Awesome4'),
+          topic: 'topic'
+        });
+
+        fakeClient._isConnected = true;
+        fakeClient._isConnecting = false;
+        fakeClient.isConnected = function() {
+          return true;
+        };
+        fakeClient.connect();
+      },
+
     }
 
   }

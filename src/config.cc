@@ -54,8 +54,24 @@ Conf * Conf::create(RdKafka::Conf::ConfType type, v8::Local<v8::Object> object, 
     }
 
     if (!value->IsFunction()) {
+#if NODE_MAJOR_VERSION > 6
+      if (value->IsInt32()) {
+        string_value = std::to_string(
+          value->Int32Value(Nan::GetCurrentContext()).ToChecked());
+      } else if (value->IsUint32()) {
+        string_value = std::to_string(
+          value->Uint32Value(Nan::GetCurrentContext()).ToChecked());
+      } else if (value->IsBoolean()) {
+        string_value = value->BooleanValue(
+          Nan::GetCurrentContext()).ToChecked() ? "true" : "false";
+      } else {
+        Nan::Utf8String utf8_value(value.As<v8::String>());
+        string_value = std::string(*utf8_value);
+      }
+#else
       Nan::Utf8String utf8_value(value.As<v8::String>());
       string_value = std::string(*utf8_value);
+#endif
       if (rdconf->set(string_key, string_value, errstr)
         != Conf::CONF_OK) {
           delete rdconf;

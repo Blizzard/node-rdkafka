@@ -25,6 +25,60 @@ using NodeKafka::Connection;
 namespace NodeKafka {
 namespace Workers {
 
+namespace Handle {
+/**
+ * @brief Handle: get offsets for times.
+ *
+ * This callback will take a topic partition list with timestamps and
+ * for each topic partition, will fill in the offsets. It is done async
+ * because it has a timeout and I don't want node to block
+ *
+ * @see RdKafka::KafkaConsumer::Committed
+ */
+
+OffsetsForTimes::OffsetsForTimes(Nan::Callback *callback,
+                                 Connection* handle,
+                                 std::vector<RdKafka::TopicPartition*> & t,
+                                 const int & timeout_ms) :
+  ErrorAwareWorker(callback),
+  m_handle(handle),
+  m_topic_partitions(t),
+  m_timeout_ms(timeout_ms) {}
+
+OffsetsForTimes::~OffsetsForTimes() {
+  // Delete the underlying topic partitions as they are ephemeral or cloned
+  RdKafka::TopicPartition::destroy(m_topic_partitions);
+}
+
+void OffsetsForTimes::Execute() {
+  Baton b = m_handle->OffsetsForTimes(m_topic_partitions, m_timeout_ms);
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    SetErrorBaton(b);
+  }
+}
+
+void OffsetsForTimes::HandleOKCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 2;
+  v8::Local<v8::Value> argv[argc];
+
+  argv[0] = Nan::Null();
+  argv[1] = Conversion::TopicPartition::ToV8Array(m_topic_partitions);
+
+  callback->Call(argc, argv);
+}
+
+void OffsetsForTimes::HandleErrorCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc] = { GetErrorObject() };
+
+  callback->Call(argc, argv);
+}
+}  // namespace Handle
+
 ConnectionMetadata::ConnectionMetadata(
   Nan::Callback *callback, Connection* connection,
   std::string topic, int timeout_ms, bool all_topics) :
@@ -447,7 +501,7 @@ void KafkaConsumerConsumeLoop::HandleErrorCallback() {
 /**
  * @brief KafkaConsumer get messages worker.
  *
- * This callback will get a number of message. Can be of use in streams or
+ * This callback will get a number of messages. Can be of use in streams or
  * places where you don't want an infinite loop managed in C++land and would
  * rather manage it in Node.
  *
@@ -469,12 +523,18 @@ KafkaConsumerConsumeNum::~KafkaConsumerConsumeNum() {}
 void KafkaConsumerConsumeNum::Execute() {
   std::size_t max = static_cast<std::size_t>(m_num_messages);
   bool looping = true;
+  int timeout_ms = m_timeout_ms;
+
   while (m_messages.size() < max && looping) {
     // Get a message
-    Baton b = m_consumer->Consume(m_timeout_ms);
+    Baton b = m_consumer->Consume(timeout_ms);
     switch (b.err()) {
       case RdKafka::ERR__PARTITION_EOF:
-        // If we reached the end of the partition, retry
+        // If partition EOF and have consumed messages, retry with timeout 1
+        // This allows getting ready messages, while not waiting for new ones
+        if (m_messages.size() > 0) {
+          timeout_ms = 1;
+        }
         break;
       case RdKafka::ERR__TIMED_OUT:
       case RdKafka::ERR__TIMED_OUT_QUEUE:
@@ -653,7 +713,7 @@ void KafkaConsumerCommitted::HandleErrorCallback() {
  *
  * @see RdKafka::KafkaConsumer::seek
  *
- * @remark Consumtion for the given partition must have started for the
+ * @remark Consumption for the given partition must have started for the
  *         seek to work. Use assign() to set the starting offset.
  */
 
@@ -699,6 +759,148 @@ void KafkaConsumerSeek::HandleOKCallback() {
 }
 
 void KafkaConsumerSeek::HandleErrorCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc] = { GetErrorObject() };
+
+  callback->Call(argc, argv);
+}
+
+/**
+ * @brief createTopic
+ *
+ * This callback will create a topic
+ *
+ */
+AdminClientCreateTopic::AdminClientCreateTopic(Nan::Callback *callback,
+                                               AdminClient* client,
+                                               rd_kafka_NewTopic_t* topic,
+                                               const int & timeout_ms) :
+  ErrorAwareWorker(callback),
+  m_client(client),
+  m_topic(topic),
+  m_timeout_ms(timeout_ms) {}
+
+AdminClientCreateTopic::~AdminClientCreateTopic() {
+  // Destroy the topic creation request when we are done
+  rd_kafka_NewTopic_destroy(m_topic);
+}
+
+void AdminClientCreateTopic::Execute() {
+  Baton b = m_client->CreateTopic(m_topic, m_timeout_ms);
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    SetErrorBaton(b);
+  }
+}
+
+void AdminClientCreateTopic::HandleOKCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc];
+
+  argv[0] = Nan::Null();
+
+  callback->Call(argc, argv);
+}
+
+void AdminClientCreateTopic::HandleErrorCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc] = { GetErrorObject() };
+
+  callback->Call(argc, argv);
+}
+
+/**
+ * @brief Delete a topic in an asynchronous worker.
+ *
+ * This callback will delete a topic
+ *
+ */
+AdminClientDeleteTopic::AdminClientDeleteTopic(Nan::Callback *callback,
+                                               AdminClient* client,
+                                               rd_kafka_DeleteTopic_t* topic,
+                                               const int & timeout_ms) :
+  ErrorAwareWorker(callback),
+  m_client(client),
+  m_topic(topic),
+  m_timeout_ms(timeout_ms) {}
+
+AdminClientDeleteTopic::~AdminClientDeleteTopic() {
+  // Destroy the topic creation request when we are done
+  rd_kafka_DeleteTopic_destroy(m_topic);
+}
+
+void AdminClientDeleteTopic::Execute() {
+  Baton b = m_client->DeleteTopic(m_topic, m_timeout_ms);
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    SetErrorBaton(b);
+  }
+}
+
+void AdminClientDeleteTopic::HandleOKCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc];
+
+  argv[0] = Nan::Null();
+
+  callback->Call(argc, argv);
+}
+
+void AdminClientDeleteTopic::HandleErrorCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc] = { GetErrorObject() };
+
+  callback->Call(argc, argv);
+}
+
+/**
+ * @brief Delete a topic in an asynchronous worker.
+ *
+ * This callback will delete a topic
+ *
+ */
+AdminClientCreatePartitions::AdminClientCreatePartitions(
+                                         Nan::Callback *callback,
+                                         AdminClient* client,
+                                         rd_kafka_NewPartitions_t* partitions,
+                                         const int & timeout_ms) :
+  ErrorAwareWorker(callback),
+  m_client(client),
+  m_partitions(partitions),
+  m_timeout_ms(timeout_ms) {}
+
+AdminClientCreatePartitions::~AdminClientCreatePartitions() {
+  // Destroy the topic creation request when we are done
+  rd_kafka_NewPartitions_destroy(m_partitions);
+}
+
+void AdminClientCreatePartitions::Execute() {
+  Baton b = m_client->CreatePartitions(m_partitions, m_timeout_ms);
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    SetErrorBaton(b);
+  }
+}
+
+void AdminClientCreatePartitions::HandleOKCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc];
+
+  argv[0] = Nan::Null();
+
+  callback->Call(argc, argv);
+}
+
+void AdminClientCreatePartitions::HandleErrorCallback() {
   Nan::HandleScope scope;
 
   const unsigned int argc = 1;

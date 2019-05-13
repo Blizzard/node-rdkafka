@@ -98,7 +98,7 @@ describe('Producer', function() {
         done();
       });
 
-      producer.produce('test', null, new Buffer('value'), 'key');
+      producer.produce('test', null, Buffer.from('value'), 'key');
     });
 
     it('should produce a message with a payload and key buffer', function(done) {
@@ -120,7 +120,7 @@ describe('Producer', function() {
         done();
       });
 
-      producer.produce('test', null, new Buffer('value'), new Buffer('key\0s'));
+      producer.produce('test', null, Buffer.from('value'), Buffer.from('key\0s'));
     });
 
     it('should produce a message with an opaque', function(done) {
@@ -141,7 +141,7 @@ describe('Producer', function() {
         done();
       });
 
-      producer.produce('test', null, new Buffer('value'), null, null, 'opaque');
+      producer.produce('test', null, Buffer.from('value'), null, null, 'opaque');
     });
 
 
@@ -172,7 +172,7 @@ describe('Producer', function() {
 
       // Produce
       for (total = 0; total <= max; total++) {
-        producer.produce('test', null, new Buffer('message ' + total), null);
+        producer.produce('test', null, Buffer.from('message ' + total), null);
       }
 
     });
@@ -220,7 +220,7 @@ describe('Producer', function() {
         done();
       });
 
-      producer.produce('test', null, new Buffer('hai'), 'key');
+      producer.produce('test', null, Buffer.from('hai'), 'key');
     });
 
     it('should produce a message with an empty payload and empty key (https://github.com/Blizzard/node-rdkafka/issues/117)', function(done) {
@@ -243,7 +243,7 @@ describe('Producer', function() {
         done();
       });
 
-      producer.produce('test', null, new Buffer(''), '');
+      producer.produce('test', null, Buffer.from(''), '');
     });
 
     it('should produce a message with a null payload and null key  (https://github.com/Blizzard/node-rdkafka/issues/117)', function(done) {

@@ -71,7 +71,7 @@ describe('Consumer group/Producer', function() {
     this.timeout(30000);
     var topic = 'test';
     var key = 'key';
-    var payload = new Buffer('value');
+    var payload = Buffer.from('value');
     var count = 0;
     var offsets = {
       'first': true

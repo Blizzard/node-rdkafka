@@ -358,7 +358,7 @@ Baton KafkaConsumer::Unsubscribe() {
 }
 
 Baton KafkaConsumer::Pause(std::vector<RdKafka::TopicPartition*> & toppars) {
-  if (IsConnected() && IsSubscribed()) {
+  if (IsConnected()) {
     RdKafka::KafkaConsumer* consumer =
       dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
     RdKafka::ErrorCode err = consumer->pause(toppars);
@@ -370,7 +370,7 @@ Baton KafkaConsumer::Pause(std::vector<RdKafka::TopicPartition*> & toppars) {
 }
 
 Baton KafkaConsumer::Resume(std::vector<RdKafka::TopicPartition*> & toppars) {
-  if (IsConnected() && IsSubscribed()) {
+  if (IsConnected()) {
     RdKafka::KafkaConsumer* consumer =
       dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
     RdKafka::ErrorCode err = consumer->resume(toppars);
@@ -494,6 +494,7 @@ void KafkaConsumer::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(tpl, "disconnect", NodeDisconnect);
   Nan::SetPrototypeMethod(tpl, "getMetadata", NodeGetMetadata);
   Nan::SetPrototypeMethod(tpl, "queryWatermarkOffsets", NodeQueryWatermarkOffsets);  // NOLINT
+  Nan::SetPrototypeMethod(tpl, "offsetsForTimes", NodeOffsetsForTimes);
   Nan::SetPrototypeMethod(tpl, "getWatermarkOffsets", NodeGetWatermarkOffsets);
 
   /*
@@ -727,8 +728,11 @@ NAN_METHOD(KafkaConsumer::NodeAssign) {
         part = Connection::GetPartition(topic, partition);
       }
 
-      int64_t offset = GetParameter<int64_t>(partition_obj, "offset", -1);
-      if (offset >= 0) {
+      // Set the default value to offset invalid. If provided, we will not set
+      // the offset.
+      int64_t offset = GetParameter<int64_t>(
+        partition_obj, "offset", RdKafka::Topic::OFFSET_INVALID);
+      if (offset != RdKafka::Topic::OFFSET_INVALID) {
         part->set_offset(offset);
       }
 

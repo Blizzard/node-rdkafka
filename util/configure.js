@@ -6,6 +6,7 @@ var fs = require('fs');
 var path = require('path');
 
 var baseDir = path.resolve(__dirname, '../');
+var releaseDir = path.join(baseDir, 'build', 'deps');
 
 var isWin = /^win/.test(process.platform);
 
@@ -18,7 +19,7 @@ if (isWin) {
 var childProcess = require('child_process');
 
 try {
-  childProcess.execSync('./configure', {
+  childProcess.execSync('./configure --prefix=' + releaseDir + ' --libdir=' + releaseDir, {
     cwd: baseDir,
     stdio: [0,1,2]
   });

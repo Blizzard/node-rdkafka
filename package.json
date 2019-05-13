@@ -1,13 +1,13 @@
 {
   "name": "node-rdkafka",
-  "version": "2.2.3",
+  "version": "2.6.1",
   "description": "Node.js bindings for librdkafka",
+  "librdkafka": "0.11.6",
   "main": "lib/index.js",
   "scripts": {
     "configure": "node-gyp configure",
     "build": "node-gyp build",
     "test": "make test",
-    "preinstall": "node util/configure",
     "install": "node-gyp rebuild"
   },
   "keywords": [
@@ -30,17 +30,18 @@
   ],
   "license": "MIT",
   "devDependencies": {
-    "jshint": "2.x",
+    "bluebird": "^3.5.3",
     "jsdoc": "^3.4.0",
-    "toolkit-jsdoc": "^1.0.0",
-    "mocha": "2.x",
-    "node-gyp": "3.x"
+    "jshint": "^2.9.7",
+    "mocha": "^5.2.0",
+    "node-gyp": "3.x",
+    "toolkit-jsdoc": "^1.0.0"
   },
   "dependencies": {
-    "bindings": "1.x",
-    "nan": "2.x"
+    "bindings": "^1.3.1",
+    "nan": "^2.11.1"
   },
   "engines": {
-    "npm": "^2.7.3"
+    "node": "<=10"
   }
 }

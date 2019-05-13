@@ -18,6 +18,8 @@
 #include "src/common.h"
 #include "src/producer.h"
 #include "src/kafka-consumer.h"
+#include "src/admin.h"
+#include "rdkafka.h"  // NOLINT
 
 namespace NodeKafka {
 namespace Workers {
@@ -149,6 +151,25 @@ class MessageWorker : public ErrorAwareWorker {
   std::vector<RdKafka::Message*> m_asyncdata;
 };
 
+namespace Handle {
+class OffsetsForTimes : public ErrorAwareWorker {
+ public:
+  OffsetsForTimes(Nan::Callback*, NodeKafka::Connection*,
+    std::vector<RdKafka::TopicPartition*> &,
+    const int &);
+  ~OffsetsForTimes();
+
+  void Execute();
+  void HandleOKCallback();
+  void HandleErrorCallback();
+
+ private:
+  NodeKafka::Connection * m_handle;
+  std::vector<RdKafka::TopicPartition*> m_topic_partitions;
+  const int m_timeout_ms;
+};
+}  // namespace Handle
+
 class ConnectionMetadata : public ErrorAwareWorker {
  public:
   ConnectionMetadata(Nan::Callback*, NodeKafka::Connection*,
@@ -166,8 +187,6 @@ class ConnectionMetadata : public ErrorAwareWorker {
   bool m_all_topics;
 
   RdKafka::Metadata* m_metadata;
-
-  // Now this is the data that will get translated in the OK callback
 };
 
 class ConnectionQueryWatermarkOffsets : public ErrorAwareWorker {
@@ -330,6 +349,60 @@ class KafkaConsumerConsumeNum : public ErrorAwareWorker {
   const uint32_t m_num_messages;
   const int m_timeout_ms;
   std::vector<RdKafka::Message*> m_messages;
+};
+
+/**
+ * @brief Create a kafka topic on a remote broker cluster
+ */
+class AdminClientCreateTopic : public ErrorAwareWorker {
+ public:
+  AdminClientCreateTopic(Nan::Callback*, NodeKafka::AdminClient*,
+    rd_kafka_NewTopic_t*, const int &);
+  ~AdminClientCreateTopic();
+
+  void Execute();
+  void HandleOKCallback();
+  void HandleErrorCallback();
+ private:
+  NodeKafka::AdminClient * m_client;
+  rd_kafka_NewTopic_t* m_topic;
+  const int m_timeout_ms;
+};
+
+/**
+ * @brief Delete a kafka topic on a remote broker cluster
+ */
+class AdminClientDeleteTopic : public ErrorAwareWorker {
+ public:
+  AdminClientDeleteTopic(Nan::Callback*, NodeKafka::AdminClient*,
+    rd_kafka_DeleteTopic_t*, const int &);
+  ~AdminClientDeleteTopic();
+
+  void Execute();
+  void HandleOKCallback();
+  void HandleErrorCallback();
+ private:
+  NodeKafka::AdminClient * m_client;
+  rd_kafka_DeleteTopic_t* m_topic;
+  const int m_timeout_ms;
+};
+
+/**
+ * @brief Delete a kafka topic on a remote broker cluster
+ */
+class AdminClientCreatePartitions : public ErrorAwareWorker {
+ public:
+  AdminClientCreatePartitions(Nan::Callback*, NodeKafka::AdminClient*,
+    rd_kafka_NewPartitions_t*, const int &);
+  ~AdminClientCreatePartitions();
+
+  void Execute();
+  void HandleOKCallback();
+  void HandleErrorCallback();
+ private:
+  NodeKafka::AdminClient * m_client;
+  rd_kafka_NewPartitions_t* m_partitions;
+  const int m_timeout_ms;
 };
 
 }  // namespace Workers

@@ -7,6 +7,8 @@ docs
 
 deps/*
 !deps/*.gyp
-!deps/win.cc
+!deps/windows-install.*
 
 .DS_Store
+
+package-lock.json

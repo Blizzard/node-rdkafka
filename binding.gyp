@@ -1,8 +1,8 @@
 {
   "variables": {
-      # may be redefined in command line on configuration stage
-      # "BUILD_LIBRDKAFKA%": "<!(echo ${BUILD_LIBRDKAFKA:-1})"
-      "BUILD_LIBRDKAFKA%": "<!(node ./util/get-env.js BUILD_LIBRDKAFKA 1)"
+    # may be redefined in command line on configuration stage
+    # "BUILD_LIBRDKAFKA%": "<!(echo ${BUILD_LIBRDKAFKA:-1})"
+    "BUILD_LIBRDKAFKA%": "<!(node ./util/get-env.js BUILD_LIBRDKAFKA 1)",
   },
   "targets": [
     {
@@ -17,7 +17,8 @@
         'src/kafka-consumer.cc',
         'src/producer.cc',
         'src/topic.cc',
-        'src/workers.cc'
+        'src/workers.cc',
+        'src/admin.cc'
       ],
       "include_dirs": [
         "<!(node -e \"require('nan')\")",
@@ -27,26 +28,50 @@
         [
           'OS=="win"',
           {
+            'actions': [
+              {
+                'action_name': 'nuget_librdkafka_download',
+                'inputs': [
+                  'deps/windows-install.py'
+                ],
+                'outputs': [
+                  'deps/precompiled/librdkafka.lib',
+                  'deps/precompiled/librdkafkacpp.lib'
+                ],
+                'message': 'Getting librdkafka from nuget',
+                'action': ['python', '<@(_inputs)']
+              }
+            ],
             'cflags_cc' : [
               '-std=c++11'
             ],
             'msvs_settings': {
+              'VCLinkerTool': {
+                'AdditionalDependencies': [
+                  'librdkafka.lib',
+                  'librdkafkacpp.lib'
+                ],
+                'AdditionalLibraryDirectories': [
+                  '../deps/precompiled/'
+                ]
+              },
               'VCCLCompilerTool': {
                 'AdditionalOptions': [
                   '/GR'
                 ],
                 'AdditionalUsingDirectories': [
-                  '<(module_root_dir)/deps/librdkafka/win32/outdir/v120/x64/Release/'
+                  'deps/precompiled/'
+                ],
+                'AdditionalIncludeDirectories': [
+                  'deps/librdkafka/src',
+                  'deps/librdkafka/src-cpp'
                 ]
               }
             },
-            'msvs_version': '2013',
-            'msbuild_toolset': 'v120',
-            "dependencies": [
-              "<(module_root_dir)/deps/librdkafka.gyp:librdkafkacpp"
-            ],
+            'msvs_version': '2015',
+            'msbuild_toolset': 'v140',
             'include_dirs': [
-              'deps/librdkafka/src-cpp'
+              'deps/include'
             ]
           },
           {
@@ -54,9 +79,33 @@
               [ "<(BUILD_LIBRDKAFKA)==1",
                 {
                   "dependencies": [
-                      "<(module_root_dir)/deps/librdkafka.gyp:librdkafkacpp"
+                    "deps/librdkafka.gyp:librdkafka"
                   ],
-                  "include_dirs": [ "deps/librdkafka/src-cpp" ],
+                  "include_dirs": [
+                    "deps/librdkafka/src",
+                    "deps/librdkafka/src-cpp"
+                  ],
+                  'conditions': [
+                    [
+                      'OS=="linux"',
+                      {
+                        "libraries": [
+                          "../build/deps/librdkafka.so",
+                          "../build/deps/librdkafka++.so",
+                          "-Wl,-rpath='$$ORIGIN/../deps'",
+                        ],
+                      }
+                    ],
+                    [
+                      'OS=="mac"',
+                      {
+                        "libraries": [
+                          "../build/deps/librdkafka.dylib",
+                          "../build/deps/librdkafka++.dylib",
+                        ],
+                      }
+                    ]
+                  ],
                 },
                 # Else link against globally installed rdkafka and use
                 # globally installed headers.  On Debian, you should
@@ -87,7 +136,11 @@
                   'xcode_settings': {
                     'MACOSX_DEPLOYMENT_TARGET': '10.11',
                     'GCC_ENABLE_CPP_RTTI': 'YES',
+                    'OTHER_LDFLAGS': [
+                      '-L/usr/local/opt/openssl/lib'
+                    ],
                     'OTHER_CPLUSPLUSFLAGS': [
+                      '-I/usr/local/opt/openssl/include',
                       '-std=c++11'
                     ],
                   },

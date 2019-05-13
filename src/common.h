@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "rdkafkacpp.h"
+#include "rdkafka.h"  // NOLINT
 
 #include "src/errors.h"
 
@@ -89,6 +90,13 @@ class scoped_shared_read_lock {
 
 namespace Conversion {
 
+namespace Admin {
+  // Topics from topic object, or topic object array
+  rd_kafka_NewTopic_t* FromV8TopicObject(
+    v8::Local<v8::Object>, std::string &errstr);  // NOLINT
+  rd_kafka_NewTopic_t** FromV8TopicObjectArray(v8::Local<v8::Array>);
+}
+
 namespace Topic {
   std::vector<std::string> ToStringVector(v8::Local<v8::Array>);
   v8::Local<v8::Array> ToV8Array(std::vector<std::string>);
@@ -116,6 +124,10 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Message*, bool);
 }
 
 }  // namespace Conversion
+
+namespace Util {
+  std::string FromV8String(v8::Local<v8::String>);
+}
 
 }  // namespace NodeKafka
 

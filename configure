@@ -5,8 +5,11 @@
 
 # This does not get run on windows which uses the build in solutions file
 
+# Get script directory
+scriptdir=$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
+
 pushd ./deps/librdkafka &> /dev/null
 
-./configure $*
+./configure --prefix="${scriptdir}/build/deps" --libdir="${scriptdir}/build/deps" $*
 
 popd &> /dev/null
