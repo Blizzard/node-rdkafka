@@ -54,6 +54,9 @@ shutil.copy2(dllPath + '/zlib.dll', buildReleaseDir)
 shutil.copy2(dllPath + '/msvcr120.dll', buildReleaseDir)
 shutil.copy2(dllPath + '/librdkafka.dll', buildReleaseDir)
 shutil.copy2(dllPath + '/librdkafkacpp.dll', buildReleaseDir)
+if not librdkafkaVersion.startswith('0.'):
+    shutil.copy2(dllPath + '/libzstd.dll', buildReleaseDir)
+    shutil.copy2(dllPath + '/msvcp120.dll', buildReleaseDir)
 
 # clean up
 os.remove(outputFile)
