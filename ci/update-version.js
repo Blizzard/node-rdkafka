@@ -11,7 +11,10 @@ function parseVersion(tag) {
   const { major, minor, prerelease, patch } = semver.parse(tag);
 
   // Describe will give is commits since last tag
-  const [ commitsSinceTag, hash ] = prerelease[0].split('-')
+  const [ commitsSinceTag, hash ] = prerelease[0] ? prerelease[0].split('-') : [
+    1,
+    process.env.TRAVIS_COMMIT || ''
+  ];
 
   return {
     major,
@@ -43,6 +46,12 @@ function getCommandOutput(command, args, cb) {
 }
 
 function getVersion(cb) {
+  // https://docs.travis-ci.com/user/environment-variables/
+  if (process.env.TRAVIS_TAG) {
+    setImmediate(() => cb(null, parseVersion(process.env.TRAVIS_TAG.trim())));
+    return;
+  }
+
   getCommandOutput('git', ['describe', '--tags'], (err, result) => {
     if (err) {
       cb(err);
