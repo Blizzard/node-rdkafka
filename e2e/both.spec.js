@@ -393,7 +393,8 @@ describe('Consumer/Producer', function() {
         lastOffset = message.offset;
 
         // disconnect in offset commit callback
-        consumer.on('offset.commit', function(offsets) {
+        consumer.on('offset.commit', function(err, offsets) {
+          t.ifError(err);
           t.equal(typeof offsets, 'object', 'offsets should be returned');
 
           consumer.disconnect(function() {
