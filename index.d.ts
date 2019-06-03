@@ -12,6 +12,8 @@ export class Client extends NodeJS.EventEmitter {
     getLastError(): any;
 
     disconnect(cb?: (err: any, data: any) => any): this;
+    disconnect(timeout: number, cb?: (err: any, data: any) => any): this;
+
     isConnected(): boolean;
 
     getMetadata(metadataOptions: any, cb?: (err: any, data: any) => any): any;
@@ -31,7 +33,8 @@ export class Client extends NodeJS.EventEmitter {
     on(event: 'disconnected', listener: (metrics: any) => void): this;
     on(event: 'ready', listener: (info: any, metadata: any) => void): this;
     on(event: 'exit', listener: () => void): this;
-    on(event: 'unsubscribe', listener: () => void): this;  // actually emitted with [] didn't see the need to add
+    on(event: 'unsubscribed', listener: () => void): this;  // actually emitted with [] didn't see the need to add
+    on(event: 'unsubscribe', listener: () => void): this;  // Backwards-compatibility, use 'unsubscribed'
     on(event: 'connection.failure', listener: (error: Error, metrics: any) => void): this;
     // event messages
     on(event: 'event.error', listener: (error: Error) => void): this;
@@ -56,7 +59,8 @@ export class Client extends NodeJS.EventEmitter {
     once(event: 'disconnected', listener: (metrics: any) => void): this;
     once(event: 'ready', listener: (info: any, metadata: any) => void): this;
     once(event: 'exit', listener: () => void): this;
-    once(event: 'unsubscribe', listener: () => void): this;  // actually emitted with [] didn't see the need to add
+    once(event: 'unsubscribed', listener: () => void): this;  // actually emitted with [] didn't see the need to add
+    once(event: 'unsubscribe', listener: () => void): this;  // Backwards-compatibility, use 'unsubscribed'
     once(event: 'connection.failure', listener: (error: Error, metrics: any) => void): this;
     // event messages
     once(event: 'event.error', listener: (error: Error) => void): this;
@@ -120,7 +124,7 @@ export class KafkaConsumer extends Client {
 }
 
 export class Producer extends Client {
-    constructor(conf: any, topicConf: any);
+    constructor(conf: any, topicConf?: any);
 
     flush(timeout: any, callback: any): any;
 
@@ -130,6 +134,16 @@ export class Producer extends Client {
 
     setPollInterval(interval: any): any;
 
+}
+
+export class HighLevelProducer extends Producer {
+  createSerializer(serializer: Function): ({
+    apply: Function | Error;
+    async: boolean
+  });
+
+  setKeySerializer(serializer: Function): void;
+  setValueSerializer(serializer: Function): void;
 }
 
 export const CODES: {

@@ -258,10 +258,11 @@ Baton Producer::Produce(void* message, size_t size, RdKafka::Topic* topic,
  * @return - A baton object with error code set if it failed.
  */
 Baton Producer::Produce(void* message, size_t size, std::string topic,
-  int32_t partition, std::string *key, int64_t timestamp, void* opaque) {
+  int32_t partition, std::string *key, int64_t timestamp, void* opaque,
+  RdKafka::Headers* headers) {
   return Produce(message, size, topic, partition,
     key ? key->data() : NULL, key ? key->size() : 0,
-    timestamp, opaque);
+    timestamp, opaque, headers);
 }
 
 /**
@@ -279,7 +280,7 @@ Baton Producer::Produce(void* message, size_t size, std::string topic,
  */
 Baton Producer::Produce(void* message, size_t size, std::string topic,
   int32_t partition, const void *key, size_t key_len,
-  int64_t timestamp, void* opaque) {
+  int64_t timestamp, void* opaque, RdKafka::Headers* headers) {
   RdKafka::ErrorCode response_code;
 
   if (IsConnected()) {
@@ -291,7 +292,7 @@ Baton Producer::Produce(void* message, size_t size, std::string topic,
             RdKafka::Producer::RK_MSG_COPY,
             message, size,
             key, key_len,
-            timestamp, opaque);
+            timestamp, headers, opaque);
     } else {
       response_code = RdKafka::ERR__STATE;
     }
@@ -437,6 +438,32 @@ NAN_METHOD(Producer::NodeProduce) {
     // v8::Local<v8::Object> object = Nan::New(persistent);
   }
 
+  std::vector<RdKafka::Headers::Header> headers;
+  if (info.Length() > 6 && !info[6]->IsUndefined()) {
+    v8::Local<v8::Array> v8Headers = v8::Local<v8::Array>::Cast(info[6]);
+
+    if (v8Headers->Length() >= 1) {
+      for (unsigned int i = 0; i < v8Headers->Length(); i++) {
+        v8::Local<v8::Object> header = v8Headers->Get(i)->ToObject();
+        if (header.IsEmpty()) {
+          continue;
+        }
+        v8::Local<v8::Array> props = header->GetOwnPropertyNames();
+        Nan::MaybeLocal<v8::String> v8Key = Nan::To<v8::String>(props->Get(0));
+        Nan::MaybeLocal<v8::String> v8Value =
+          Nan::To<v8::String>(header->Get(v8Key.ToLocalChecked()));
+
+        Nan::Utf8String uKey(v8Key.ToLocalChecked());
+        std::string key(*uKey);
+
+        Nan::Utf8String uValue(v8Value.ToLocalChecked());
+        std::string value(*uValue);
+        headers.push_back(
+          RdKafka::Headers::Header(key, value.c_str(), value.size()));
+      }
+    }
+}
+
   Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
 
   // Let the JS library throw if we need to so the error can be more rich
@@ -446,12 +473,16 @@ NAN_METHOD(Producer::NodeProduce) {
     // Get string pointer for this thing
     Nan::Utf8String topicUTF8(info[0]->ToString());
     std::string topic_name(*topicUTF8);
+    RdKafka::Headers *rd_headers = RdKafka::Headers::create(headers);
 
     Baton b = producer->Produce(message_buffer_data, message_buffer_length,
      topic_name, partition, key_buffer_data, key_buffer_length,
-     timestamp, opaque);
+     timestamp, opaque, rd_headers);
 
     error_code = static_cast<int>(b.err());
+    if (error_code != 0 && rd_headers) {
+      delete rd_headers;
+    }
   } else {
     // First parameter is a topic OBJECT
     Topic* topic = ObjectWrap::Unwrap<Topic>(info[0].As<v8::Object>());

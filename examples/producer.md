@@ -47,7 +47,10 @@ producer.on('ready', function(arg) {
     var key = "key-"+i;
     // if partition is set to -1, librdkafka will use the default partitioner
     var partition = -1;
-    producer.produce(topicName, partition, value, key);
+    var headers = [
+      { header: "header value" }
+    ]
+    producer.produce(topicName, partition, value, key, new Date(), "". headers);
   }
 
   //need to keep polling for a while to ensure the delivery reports are received

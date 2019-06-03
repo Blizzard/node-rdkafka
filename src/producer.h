@@ -66,12 +66,14 @@ class Producer : public Connection {
   Baton Produce(void* message, size_t message_size,
     std::string topic, int32_t partition,
     std::string* key,
-    int64_t timestamp, void* opaque);
+    int64_t timestamp, void* opaque,
+    RdKafka::Headers* headers);
 
   Baton Produce(void* message, size_t message_size,
     std::string topic, int32_t partition,
     const void* key, size_t key_len,
-    int64_t timestamp, void* opaque);
+    int64_t timestamp, void* opaque,
+    RdKafka::Headers* headers);
 
   std::string Name();
 
