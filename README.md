@@ -8,6 +8,10 @@ Copyright (c) 2016 Blizzard Entertainment.
 [![Build Status](https://travis-ci.org/Blizzard/node-rdkafka.svg?branch=master)](https://travis-ci.org/Blizzard/node-rdkafka)
 [![npm version](https://badge.fury.io/js/node-rdkafka.svg)](https://badge.fury.io/js/node-rdkafka)
 
+# Looking for Collaborators!
+
+I am looking for *your* help to make this project even better! If you're interested, check [this out](https://github.com/Blizzard/node-rdkafka/issues/628)
+
 # Overview
 
 The `node-rdkafka` library is a high-performance NodeJS client for [Apache Kafka](http://kafka.apache.org/) that wraps the native  [librdkafka](https://github.com/edenhill/librdkafka) library.  All the complexity of balancing writes across partitions and managing (possibly ever-changing) brokers should be encapsulated in the library.

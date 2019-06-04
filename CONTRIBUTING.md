@@ -140,6 +140,40 @@ In short:
 * Make good use of font variations like __bold__ and *italics*.
 * Use headers and tables of contents when they make sense.
 
+## Editor
+
+I began using Visual Studio code to develop on `node-rdkafka`. If you use it you can configure the C++ plugin to resolve the paths needed to inform your intellisense. This is the config file I am using on a mac to resolve the required paths:
+
+`c_cpp_properties.json`
+```
+{
+    "configurations": [
+        {
+            "name": "Mac",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}",
+                "${workspaceFolder}/src",
+                "${workspaceFolder}/node_modules/nan",
+                "${workspaceFolder}/deps/librdkafka/src",
+                "${workspaceFolder}/deps/librdkafka/src-cpp",
+                "/usr/local/include/node",
+                "/usr/local/include/node/uv"
+            ],
+            "defines": [],
+            "macFrameworkPath": [
+                "/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk/System/Library/Frameworks"
+            ],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "clang-x64"
+        }
+    ],
+    "version": 4
+}
+```
+
 ## Debugging
 
 ### Debugging C++
