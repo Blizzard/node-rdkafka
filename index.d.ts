@@ -46,7 +46,8 @@ export class Client extends NodeJS.EventEmitter {
     on(event: 'delivery-report', listener: (error: Error, report: any) => void): this;
 
     // offsets
-    on(event: 'offset.commit', listener: (error: Error, topicPartitions: any[]) => void): this;
+    on(event: 'offset.commit', listener: (topicPartitions: any[]) => void): this;
+    on(event: 'offsetCommit', listener: (error: Error, topicPartitions: any[]) => void): this;
 
 // ONCE
     // domain events

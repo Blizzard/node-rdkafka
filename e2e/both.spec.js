@@ -164,7 +164,7 @@ describe('Consumer/Producer', function() {
 
     });
   });
-  
+
   it('should return ready messages on partition EOF', function(done) {
     this.timeout(8000);
     crypto.randomBytes(4096, function(ex, buffer) {
@@ -282,7 +282,7 @@ describe('Consumer/Producer', function() {
     this.timeout(5000);
     run_headers_test(done, headers);
   });
-  
+
   it('should be able to produce and consume messages with multiple headers value as string: consumeLoop', function(done) {
     var headers = [
       { key1: 'value1' },
@@ -393,7 +393,7 @@ describe('Consumer/Producer', function() {
         lastOffset = message.offset;
 
         // disconnect in offset commit callback
-        consumer.on('offset.commit', function(err, offsets) {
+        consumer.on('offsetCommit', function(err, offsets) {
           t.ifError(err);
           t.equal(typeof offsets, 'object', 'offsets should be returned');
 
