@@ -18,8 +18,9 @@ libPath = outputDir + '/build/native/lib/win{}/x64/win{}-x64-Release/v120'.forma
 includePath = outputDir + '/build/native/include/librdkafka'
 
 # download librdkafka from nuget
-import urllib2
-filedata = urllib2.urlopen(librdkafkaNugetUrl)
+import urllib2, ssl
+
+filedata = urllib2.urlopen(librdkafkaNugetUrl, context=ssl._create_unverified_context())
 datatowrite = filedata.read()
 with open(outputFile, 'wb') as f:
     f.write(datatowrite)
