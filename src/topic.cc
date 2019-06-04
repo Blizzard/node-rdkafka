@@ -86,9 +86,11 @@ void Topic::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(tpl, "name", NodeGetName);
 
   // connect. disconnect. resume. pause. get meta data
-  constructor.Reset(tpl->GetFunction());
+  constructor.Reset((tpl->GetFunction(Nan::GetCurrentContext()))
+    .ToLocalChecked());
 
-  exports->Set(Nan::New("Topic").ToLocalChecked(), tpl->GetFunction());
+  exports->Set(Nan::New("Topic").ToLocalChecked(),
+    (tpl->GetFunction(Nan::GetCurrentContext())).ToLocalChecked());
 }
 
 void Topic::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
@@ -115,14 +117,14 @@ void Topic::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
       return Nan::ThrowError("Configuration data must be specified");
     }
 
-    config = Conf::create(RdKafka::Conf::CONF_TOPIC, info[1]->ToObject(), errstr);  // NOLINT
+    config = Conf::create(RdKafka::Conf::CONF_TOPIC, (info[1]->ToObject(Nan::GetCurrentContext())).ToLocalChecked(), errstr);  // NOLINT
 
     if (!config) {
       return Nan::ThrowError(errstr.c_str());
     }
   }
 
-  Nan::Utf8String parameterValue(info[0]->ToString());
+  Nan::Utf8String parameterValue(Nan::To<v8::String>(info[0]).ToLocalChecked());
   std::string topic_name(*parameterValue);
 
   Topic* topic = new Topic(topic_name, config);

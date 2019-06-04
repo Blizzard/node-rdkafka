@@ -307,7 +307,7 @@ NAN_METHOD(Connection::NodeQueryWatermarkOffsets) {
   }
 
   // Get string pointer for the topic name
-  Nan::Utf8String topicUTF8(info[0]->ToString());
+  Nan::Utf8String topicUTF8(Nan::To<v8::String>(info[0]).ToLocalChecked());
   // The first parameter is the topic
   std::string topic_name(*topicUTF8);
 
