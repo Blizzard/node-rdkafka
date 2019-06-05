@@ -533,8 +533,10 @@ void KafkaConsumer::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(tpl, "commitSync", NodeCommitSync);
   Nan::SetPrototypeMethod(tpl, "offsetsStore", NodeOffsetsStore);
 
-  constructor.Reset(tpl->GetFunction());
-  exports->Set(Nan::New("KafkaConsumer").ToLocalChecked(), tpl->GetFunction());
+  constructor.Reset((tpl->GetFunction(Nan::GetCurrentContext()))
+    .ToLocalChecked());
+  exports->Set(Nan::New("KafkaConsumer").ToLocalChecked(),
+    (tpl->GetFunction(Nan::GetCurrentContext())).ToLocalChecked());
 }
 
 void KafkaConsumer::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
@@ -557,14 +559,16 @@ void KafkaConsumer::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
   std::string errstr;
 
   Conf* gconfig =
-    Conf::create(RdKafka::Conf::CONF_GLOBAL, info[0]->ToObject(), errstr);
+    Conf::create(RdKafka::Conf::CONF_GLOBAL,
+      (info[0]->ToObject(Nan::GetCurrentContext())).ToLocalChecked(), errstr);
 
   if (!gconfig) {
     return Nan::ThrowError(errstr.c_str());
   }
 
   Conf* tconfig =
-    Conf::create(RdKafka::Conf::CONF_TOPIC, info[1]->ToObject(), errstr);
+    Conf::create(RdKafka::Conf::CONF_TOPIC,
+      (info[1]->ToObject(Nan::GetCurrentContext())).ToLocalChecked(), errstr);
 
   if (!tconfig) {
     delete gconfig;
@@ -1181,7 +1185,7 @@ NAN_METHOD(KafkaConsumer::NodeGetWatermarkOffsets) {
   }
 
   // Get string pointer for the topic name
-  Nan::Utf8String topicUTF8(info[0]->ToString());
+  Nan::Utf8String topicUTF8(Nan::To<v8::String>(info[0]).ToLocalChecked());
   // The first parameter is the topic
   std::string topic_name(*topicUTF8);
 

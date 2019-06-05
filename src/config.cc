@@ -37,7 +37,9 @@ void Conf::DumpConfig(std::list<std::string> *dump) {
 Conf * Conf::create(RdKafka::Conf::ConfType type, v8::Local<v8::Object> object, std::string &errstr) {  // NOLINT
   Conf* rdconf = static_cast<Conf*>(RdKafka::Conf::create(type));
 
-  v8::Local<v8::Array> property_names = object->GetOwnPropertyNames();
+  v8::MaybeLocal<v8::Array> _property_names = object->GetOwnPropertyNames(
+    Nan::GetCurrentContext());
+  v8::Local<v8::Array> property_names = _property_names.ToLocalChecked();
 
   for (unsigned int i = 0; i < property_names->Length(); ++i) {
     std::string string_value;
