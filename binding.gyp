@@ -113,7 +113,8 @@
                   "libraries": ["-lrdkafka", "-lrdkafka++"],
                   "include_dirs": [
                     "/usr/include/librdkafka",
-                    "/usr/local/include/librdkafka"
+                    "/usr/local/include/librdkafka",
+                    "/opt/include/librdkafka",
                   ],
                 },
               ],
