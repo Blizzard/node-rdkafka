@@ -200,12 +200,18 @@ Baton AdminClient::CreateTopic(rd_kafka_NewTopic_t* topic, int timeout_ms) {
 
     rd_kafka_CreateTopics(m_client->c_ptr(), &topic, 1, options, topic_rkqu);
 
+    // The number of tries is dependent on the timeout
+    // the user asked and the polling timeout.
+    // Timeout will be rounded down to the second.
+    const int pollingTimeout = 1000;
+    const int max_tries = timeout_ms / pollingTimeout;
+
     // Poll for an event by type in that queue
     rd_kafka_event_t * event_response = PollForEvent(
       topic_rkqu,
       RD_KAFKA_EVENT_CREATETOPICS_RESULT,
-      5,
-      1000);
+      max_tries,
+      pollingTimeout);
 
     // Destroy the queue since we are done with it.
     rd_kafka_queue_destroy(topic_rkqu);
@@ -280,12 +286,18 @@ Baton AdminClient::DeleteTopic(rd_kafka_DeleteTopic_t* topic, int timeout_ms) {
 
     rd_kafka_DeleteTopics(m_client->c_ptr(), &topic, 1, options, topic_rkqu);
 
+    // The number of tries is dependent on the timeout
+    // the user asked and the polling timeout.
+    // Timeout will be rounded down to the second.
+    const int pollingTimeout = 1000;
+    const int max_tries = timeout_ms / pollingTimeout;
+
     // Poll for an event by type in that queue
     rd_kafka_event_t * event_response = PollForEvent(
       topic_rkqu,
       RD_KAFKA_EVENT_DELETETOPICS_RESULT,
-      5,
-      1000);
+      max_tries,
+      pollingTimeout);
 
     // Destroy the queue since we are done with it.
     rd_kafka_queue_destroy(topic_rkqu);
@@ -356,12 +368,18 @@ Baton AdminClient::CreatePartitions(
     rd_kafka_CreatePartitions(m_client->c_ptr(),
       &partitions, 1, options, topic_rkqu);
 
+    // The number of tries is dependent on the timeout
+    // the user asked and the polling timeout.
+    // Timeout will be rounded down to the second.
+    const int pollingTimeout = 1000;
+    const int max_tries = timeout_ms / pollingTimeout;
+
     // Poll for an event by type in that queue
     rd_kafka_event_t * event_response = PollForEvent(
       topic_rkqu,
       RD_KAFKA_EVENT_CREATEPARTITIONS_RESULT,
-      5,
-      1000);
+      max_tries,
+      pollingTimeout);
 
     // Destroy the queue since we are done with it.
     rd_kafka_queue_destroy(topic_rkqu);
