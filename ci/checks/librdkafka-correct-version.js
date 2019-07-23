@@ -54,8 +54,8 @@ function versionAsString(version) {
     version.major,
     version.minor,
     version.patch,
-    version.rev
-  ].join('.');
+    version.rev === 255 ? null : version.rev,
+  ].filter(v => v != null).join('.');
 }
 
 const librdkafkaVersion = parseLibrdkafkaVersion(defines.RD_KAFKA_VERSION);
