@@ -1,5 +1,5 @@
 {
-  "name": "node-rdkafka",
+  "name": "@sixfold/node-rdkafka",
   "version": "v2.7.1",
   "description": "Node.js bindings for librdkafka",
   "librdkafka": "1.1.0",
