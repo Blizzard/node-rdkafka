@@ -1,6 +1,6 @@
 {
   "name": "@sixfold/node-rdkafka",
-  "version": "v2.7.1",
+  "version": "v2.7.1-beta.0",
   "description": "Node.js bindings for librdkafka",
   "librdkafka": "1.1.0",
   "main": "lib/index.js",
@@ -9,7 +9,7 @@
     "build": "node-gyp build",
     "test": "make test",
     "install": "node-gyp rebuild",
-    "prepack": "node ./ci/prepublish.js"
+    "_prepack": "node ./ci/prepublish.js"
   },
   "keywords": [
     "kafka",
