@@ -50,7 +50,7 @@ producer.on('ready', function(arg) {
     var headers = [
       { header: "header value" }
     ]
-    producer.produce(topicName, partition, value, key, new Date(), "". headers);
+    producer.produce(topicName, partition, value, key, Date.now(), "", headers);
   }
 
   //need to keep polling for a while to ensure the delivery reports are received

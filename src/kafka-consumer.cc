@@ -164,17 +164,16 @@ Baton KafkaConsumer::Assign(std::vector<RdKafka::TopicPartition*> partitions) {
 
   RdKafka::ErrorCode errcode = consumer->assign(partitions);
 
-  if (errcode != RdKafka::ERR_NO_ERROR) {
-    return Baton(errcode);
+  if (errcode == RdKafka::ERR_NO_ERROR) {
+    m_partition_cnt = partitions.size();
+    m_partitions.swap(partitions);
   }
 
-  m_partition_cnt = partitions.size();
-  m_partitions.swap(partitions);
-
-  // Destroy the old list of partitions since we are no longer using it
+  // Destroy the partitions: Either we're using them (and partitions is now our old vector), or
+  // we're not using it as there was an error.
   RdKafka::TopicPartition::destroy(partitions);
 
-  return Baton(RdKafka::ERR_NO_ERROR);
+  return Baton(errcode);
 }
 
 Baton KafkaConsumer::Unassign() {
@@ -746,10 +745,8 @@ NAN_METHOD(KafkaConsumer::NodeAssign) {
 
   KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
+  // Hand over the partitions to the consumer.
   Baton b = consumer->Assign(topic_partitions);
-
-  // i dont know who manages the memory at this point
-  // i have to assume it does because it is asking for pointers
 
   if (b.err() != RdKafka::ERR_NO_ERROR) {
     Nan::ThrowError(RdKafka::err2str(b.err()).c_str());

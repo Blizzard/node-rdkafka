@@ -222,7 +222,7 @@ describe('Consumer', function() {
       t.equal(0, consumer.assignments().length);
     });
 
-    it('should be able to unsusbcribe', function() {
+    it('should be able to unsubscribe', function() {
       consumer.subscribe([topic]);
       t.equal(1, consumer.subscription().length);
       consumer.unsubscribe();
