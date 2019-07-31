@@ -155,6 +155,7 @@ rd_kafka_event_t* PollForEvent(
   int timeout_ms) {
   // Establish what attempt we are on
   int attempt = 0;
+  int attempt_timeout_ms = max_tries > 0 ? timeout_ms / max_tries : timeout_ms;
 
   rd_kafka_event_t * event_response;
 
@@ -162,7 +163,7 @@ rd_kafka_event_t* PollForEvent(
   do {
     // Increment attempt counter
     attempt = attempt + 1;
-    event_response = rd_kafka_queue_poll(topic_rkqu, timeout_ms);
+    event_response = rd_kafka_queue_poll(topic_rkqu, attempt_timeout_ms);
   } while (
     rd_kafka_event_type(event_response) != event_type &&
     attempt < max_tries);
@@ -202,7 +203,7 @@ Baton AdminClient::CreateTopic(rd_kafka_NewTopic_t* topic, int timeout_ms) {
       topic_rkqu,
       RD_KAFKA_EVENT_CREATETOPICS_RESULT,
       5,
-      1000);
+      timeout_ms);
 
     // Destroy the queue since we are done with it.
     rd_kafka_queue_destroy(topic_rkqu);
@@ -277,7 +278,7 @@ Baton AdminClient::DeleteTopic(rd_kafka_DeleteTopic_t* topic, int timeout_ms) {
       topic_rkqu,
       RD_KAFKA_EVENT_DELETETOPICS_RESULT,
       5,
-      1000);
+      timeout_ms);
 
     // Destroy the queue since we are done with it.
     rd_kafka_queue_destroy(topic_rkqu);
@@ -350,7 +351,7 @@ Baton AdminClient::CreatePartitions(
       topic_rkqu,
       RD_KAFKA_EVENT_CREATEPARTITIONS_RESULT,
       5,
-      1000);
+      timeout_ms);
 
     // Destroy the queue since we are done with it.
     rd_kafka_queue_destroy(topic_rkqu);
