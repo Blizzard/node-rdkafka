@@ -169,8 +169,9 @@ Baton KafkaConsumer::Assign(std::vector<RdKafka::TopicPartition*> partitions) {
     m_partitions.swap(partitions);
   }
 
-  // Destroy the partitions: Either we're using them (and partitions is now our old vector), or
-  // we're not using it as there was an error.
+  // Destroy the partitions: Either we're using them (and partitions
+  // is now our old vector), or we're not using it as there was an
+  // error.
   RdKafka::TopicPartition::destroy(partitions);
 
   return Baton(errcode);
