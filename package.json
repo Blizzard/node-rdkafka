@@ -1,6 +1,6 @@
 {
   "name": "@sixfold/node-rdkafka",
-  "version": "v2.7.1-beta.0",
+  "version": "v2.7.1-beta.1",
   "description": "Node.js bindings for librdkafka",
   "librdkafka": "1.1.0",
   "main": "lib/index.js",
@@ -43,6 +43,6 @@
     "nan": "^2.14.0"
   },
   "engines": {
-    "node": ">=12.0.0"
+    "node": ">=10.0.0"
   }
 }
