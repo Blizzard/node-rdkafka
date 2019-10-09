@@ -113,7 +113,7 @@ export class KafkaConsumer extends Client {
 
     setDefaultConsumeTimeout(timeoutMs: any): void;
 
-    subscribe(topics: (string|Regex)[]): this;
+    subscribe(topics: (string|RegExp)[]): this;
 
     subscription(): ErrorWrap<any>;
 
