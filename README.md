@@ -16,7 +16,7 @@ I am looking for *your* help to make this project even better! If you're interes
 
 The `node-rdkafka` library is a high-performance NodeJS client for [Apache Kafka](http://kafka.apache.org/) that wraps the native  [librdkafka](https://github.com/edenhill/librdkafka) library.  All the complexity of balancing writes across partitions and managing (possibly ever-changing) brokers should be encapsulated in the library.
 
-__This library currently uses `librdkafka` version `1.2.0`.__
+__This library currently uses `librdkafka` version `1.2.1`.__
 
 ## Reference Docs
 
@@ -96,7 +96,7 @@ var Kafka = require('node-rdkafka');
 
 ## Configuration
 
-You can pass many configuration options to `librdkafka`.  A full list can be found in `librdkafka`'s [Configuration.md](https://github.com/edenhill/librdkafka/blob/v1.2.0/CONFIGURATION.md)
+You can pass many configuration options to `librdkafka`.  A full list can be found in `librdkafka`'s [Configuration.md](https://github.com/edenhill/librdkafka/blob/v1.2.1/CONFIGURATION.md)
 
 Configuration keys that have the suffix `_cb` are designated as callbacks. Some
 of these keys are informational and you can choose to opt-in (for example, `dr_cb`). Others are callbacks designed to
@@ -131,7 +131,7 @@ You can also get the version of `librdkafka`
 const Kafka = require('node-rdkafka');
 console.log(Kafka.librdkafkaVersion);
 
-// #=> 1.2.0
+// #=> 1.2.1
 ```
 
 ## Sending Messages
@@ -144,7 +144,7 @@ var producer = new Kafka.Producer({
 });
 ```
 
-A `Producer` requires only `metadata.broker.list` (the Kafka brokers) to be created.  The values in this list are separated by commas.  For other configuration options, see the [Configuration.md](https://github.com/edenhill/librdkafka/blob/1.2.0/CONFIGURATION.md) file described previously.
+A `Producer` requires only `metadata.broker.list` (the Kafka brokers) to be created.  The values in this list are separated by commas.  For other configuration options, see the [Configuration.md](https://github.com/edenhill/librdkafka/blob/1.2.1/CONFIGURATION.md) file described previously.
 
 The following example illustrates a list with several `librdkafka` options set.
 
