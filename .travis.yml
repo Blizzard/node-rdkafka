@@ -8,11 +8,12 @@ node_js:
   - "6"
   - "8"
   - "10"
+  - "12"
 sudo: required
 services: docker
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_BUILD_STAGE_NAME" =~ Test.* ]]; then ./run_docker.sh; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install openssl; fi
+  # - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install openssl; fi
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then ./win_install.bat; fi
 install:
   - if [[ "$TRAVIS_BUILD_STAGE_NAME" =~ Test.* ]]; then npm install; fi
@@ -27,7 +28,7 @@ jobs:
       osx_image: xcode10
       env: CPPFLAGS=-I/usr/local/opt/openssl/include LDFLAGS=-L/usr/local/opt/openssl/lib
       node_js:
-        - "8"
+        - "10"
     - stage: test_on_win
       os: windows
       node_js:
