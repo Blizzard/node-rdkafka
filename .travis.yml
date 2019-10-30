@@ -28,11 +28,11 @@ jobs:
       osx_image: xcode10
       env: CPPFLAGS=-I/usr/local/opt/openssl/include LDFLAGS=-L/usr/local/opt/openssl/lib
       node_js:
-        - "10"
+        - "12"
     - stage: test_on_win
       os: windows
       node_js:
-        - "10"
+        - "12"
     # - stage: create_doc
     #   provider: script
     #   before_deploy:
@@ -46,7 +46,7 @@ jobs:
     - stage: deploy
       os: linux
       node_js:
-        - "10"
+        - "12"
       script: skip
       if: (tag =~ ^v)
       before_deploy:
