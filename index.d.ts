@@ -130,7 +130,7 @@ export class Producer extends Client {
 
     poll(): any;
 
-    produce(topic: any, partition: any, message: any, key?: any, timestamp?: any, opaque?: any): any;
+    produce(topic: any, partition: any, message: any, key?: any, timestamp?: any, opaque?: any, headers?: any): any;
 
     setPollInterval(interval: any): any;
 

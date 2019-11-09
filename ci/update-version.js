@@ -63,7 +63,12 @@ function getVersion(cb) {
 }
 
 function getBranch(cb) {
-  if (process.env.TRAVIS_BRANCH) {
+  if (process.env.TRAVIS_TAG) {
+    // TRAVIS_BRANCH matches TRAVIS_TAG when TRAVIS_TAG is set
+    // "git branch --contains tags/TRAVIS_TAG" doesn't work on travis so we have to assume 'master'
+    setImmediate(() => cb(null, 'master'));
+    return;
+  } else if (process.env.TRAVIS_BRANCH) {
     setImmediate(() => cb(null, process.env.TRAVIS_BRANCH.trim()));
     return;
   }

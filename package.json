@@ -1,8 +1,8 @@
 {
   "name": "node-rdkafka",
-  "version": "v2.7.1",
+  "version": "v2.7.3",
   "description": "Node.js bindings for librdkafka",
-  "librdkafka": "1.1.0",
+  "librdkafka": "1.2.1",
   "main": "lib/index.js",
   "scripts": {
     "configure": "node-gyp configure",
@@ -43,6 +43,6 @@
     "nan": "^2.14.0"
   },
   "engines": {
-    "node": ">=12.0.0"
+    "node": ">=6.0.0"
   }
 }

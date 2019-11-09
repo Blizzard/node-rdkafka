@@ -8,11 +8,12 @@ node_js:
   - "6"
   - "8"
   - "10"
+  - "12"
 sudo: required
 services: docker
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_BUILD_STAGE_NAME" =~ Test.* ]]; then ./run_docker.sh; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install openssl; fi
+  # - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install openssl; fi
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then ./win_install.bat; fi
 install:
   - if [[ "$TRAVIS_BUILD_STAGE_NAME" =~ Test.* ]]; then npm install; fi
@@ -27,26 +28,36 @@ jobs:
       osx_image: xcode10
       env: CPPFLAGS=-I/usr/local/opt/openssl/include LDFLAGS=-L/usr/local/opt/openssl/lib
       node_js:
-        - "8"
+        - "10"
     - stage: test_on_win
       os: windows
       node_js:
         - "10"
-    - stage: create_doc
-      provider: script
+    # - stage: create_doc
+    #   provider: script
+    #   before_deploy:
+    #     - openssl aes-256-cbc -K $encrypted_a2e08d5c220e_key -iv $encrypted_a2e08d5c220e_iv -in deploy.enc -out /tmp/deploy -d
+    #     - eval "$(ssh-agent -s)"
+    #     - chmod 600 /tmp/deploy
+    #     - ssh-add /tmp/deploy
+    #   script:
+    #     - "./make_docs.sh"
+    #   if: (tag =~ ^v)
+    - stage: deploy
+      os: linux
+      node_js:
+        - "10"
+      script: skip
+      if: (tag =~ ^v)
       before_deploy:
-        - openssl aes-256-cbc -K $encrypted_a2e08d5c220e_key -iv $encrypted_a2e08d5c220e_iv -in deploy.enc -out /tmp/deploy -d
-        - eval "$(ssh-agent -s)"
-        - chmod 600 /tmp/deploy
-        - ssh-add /tmp/deploy
-      script:
-        - "./make_docs.sh"
-      if: (tag =~ ^v) AND (branch = master)
-    - stage: publish_npm
-      provider: npm
-      skip_cleanup: false
-      email: webmakersteve@gmail.com
-      api_key:
-        secure: dCHdwKmSLmVU51eAiH/n7OT1WzyD2DZccjVt8luu6w7U61K3dnl26ZNcNqrRjglkCWj2mHwysYrlImNu/7DKoqNn6fJea6EFjESH9EjAgTbIFEbFyl1Bu+u9w68LEk8WKmCLQ4ckdXp4wm5A0G5+tn29Jg3+VBCy9OdZTFEw5Otwp5f/ARqv4vcnOQNNzdhpZX1o6M2i2zyzcjsKyrjUhuJIdtyXbc1H8aMXT4exRcTSTknbbV2pD4YN2mz5XOlORDLTap8q3W7UG5cPPvyd4Wsn6iiXcSlDJ5DZkQkx5DqJdzxE94pkS1WjDodW0TQtA55jj7qVhqwDwiQLHdClxQM4VN7wRDLoMsy811E9ockMwhgHXRjnQSlpRMux/ueqJnYzG7/zpKYokfJc2HoUv5Wx1Ae5nF//viUlYhEWI4E7cJatrnJnulmfJZOwQReOoInwNy7uVuzTVi0K9Q5X73e27nx5sp+gCcG3HiGQ07TB0hyqV0HWioKcYOqBUHnvMHkdMskPWC5mhTpiXcwk6JVdaUqqcwtqks1+9LiboOEYVb6CFIkmOAh/+mbOTDymTYbcKcdDJYFDOVJ8cMiCqIZ3J4gd/5+zTf2wTowYkBI/7t7Jq9X52tlRDmUn6vr6Zs4Ph+7qhpXHc3ov3p3g55s+ug968vDxogAxJt1NCUU=
-      if: (tag =~ ^v) AND (branch = master)
-
+      - npm install --no-save semver
+      deploy:
+        provider: npm
+        skip_cleanup: true
+        email: webmakersteve@gmail.com
+        api_key:
+          secure: dCHdwKmSLmVU51eAiH/n7OT1WzyD2DZccjVt8luu6w7U61K3dnl26ZNcNqrRjglkCWj2mHwysYrlImNu/7DKoqNn6fJea6EFjESH9EjAgTbIFEbFyl1Bu+u9w68LEk8WKmCLQ4ckdXp4wm5A0G5+tn29Jg3+VBCy9OdZTFEw5Otwp5f/ARqv4vcnOQNNzdhpZX1o6M2i2zyzcjsKyrjUhuJIdtyXbc1H8aMXT4exRcTSTknbbV2pD4YN2mz5XOlORDLTap8q3W7UG5cPPvyd4Wsn6iiXcSlDJ5DZkQkx5DqJdzxE94pkS1WjDodW0TQtA55jj7qVhqwDwiQLHdClxQM4VN7wRDLoMsy811E9ockMwhgHXRjnQSlpRMux/ueqJnYzG7/zpKYokfJc2HoUv5Wx1Ae5nF//viUlYhEWI4E7cJatrnJnulmfJZOwQReOoInwNy7uVuzTVi0K9Q5X73e27nx5sp+gCcG3HiGQ07TB0hyqV0HWioKcYOqBUHnvMHkdMskPWC5mhTpiXcwk6JVdaUqqcwtqks1+9LiboOEYVb6CFIkmOAh/+mbOTDymTYbcKcdDJYFDOVJ8cMiCqIZ3J4gd/5+zTf2wTowYkBI/7t7Jq9X52tlRDmUn6vr6Zs4Ph+7qhpXHc3ov3p3g55s+ug968vDxogAxJt1NCUU=
+        on:
+          tags: true
+      after_deploy:
+        - cat package.json

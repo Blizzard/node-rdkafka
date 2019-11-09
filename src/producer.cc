@@ -450,11 +450,14 @@ NAN_METHOD(Producer::NodeProduce) {
 
     if (v8Headers->Length() >= 1) {
       for (unsigned int i = 0; i < v8Headers->Length(); i++) {
-        v8::Local<v8::Object> header = v8Headers->Get(i)->ToObject();
+        v8::Local<v8::Object> header = v8Headers->Get(i)->ToObject(
+          Nan::GetCurrentContext()).ToLocalChecked();
         if (header.IsEmpty()) {
           continue;
         }
-        v8::Local<v8::Array> props = header->GetOwnPropertyNames();
+
+        v8::Local<v8::Array> props = header->GetOwnPropertyNames(
+          Nan::GetCurrentContext()).ToLocalChecked();
         Nan::MaybeLocal<v8::String> v8Key = Nan::To<v8::String>(props->Get(0));
         Nan::MaybeLocal<v8::String> v8Value =
           Nan::To<v8::String>(header->Get(v8Key.ToLocalChecked()));
