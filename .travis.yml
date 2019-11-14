@@ -56,7 +56,7 @@ jobs:
         skip_cleanup: true
         email: webmakersteve@gmail.com
         api_key:
-          secure: dCHdwKmSLmVU51eAiH/n7OT1WzyD2DZccjVt8luu6w7U61K3dnl26ZNcNqrRjglkCWj2mHwysYrlImNu/7DKoqNn6fJea6EFjESH9EjAgTbIFEbFyl1Bu+u9w68LEk8WKmCLQ4ckdXp4wm5A0G5+tn29Jg3+VBCy9OdZTFEw5Otwp5f/ARqv4vcnOQNNzdhpZX1o6M2i2zyzcjsKyrjUhuJIdtyXbc1H8aMXT4exRcTSTknbbV2pD4YN2mz5XOlORDLTap8q3W7UG5cPPvyd4Wsn6iiXcSlDJ5DZkQkx5DqJdzxE94pkS1WjDodW0TQtA55jj7qVhqwDwiQLHdClxQM4VN7wRDLoMsy811E9ockMwhgHXRjnQSlpRMux/ueqJnYzG7/zpKYokfJc2HoUv5Wx1Ae5nF//viUlYhEWI4E7cJatrnJnulmfJZOwQReOoInwNy7uVuzTVi0K9Q5X73e27nx5sp+gCcG3HiGQ07TB0hyqV0HWioKcYOqBUHnvMHkdMskPWC5mhTpiXcwk6JVdaUqqcwtqks1+9LiboOEYVb6CFIkmOAh/+mbOTDymTYbcKcdDJYFDOVJ8cMiCqIZ3J4gd/5+zTf2wTowYkBI/7t7Jq9X52tlRDmUn6vr6Zs4Ph+7qhpXHc3ov3p3g55s+ug968vDxogAxJt1NCUU=
+          secure: "GUI9X1TnemXIMj5nZDqjrB3zBdMVxhAVKz18BN8TzsQBBne7BOrZ7L9yM3nOwxydm53NAPHFnEjYhYhvM+qhzLnik+XFQ7O3i9rS0hAvzQOBXfup5daib5A8VPMEdTRCXPS3hZ+p5n3ZBruSCQnyTu+HL1SGH//L+j52T5hiOZ3HauhCx9Q0myTBhB6CU5L8yscUUMg12qL7Uw4jsJLfgBRq6hAxphKXfvKt+NJMOWMSmQMbC1FxgfEgIkjFUtasWcUqCmfqx+983XdhhGhC64CYkusSZynNxnsTAosZGJiIZTPYXXL+imBgsEpsMCnW/id/qwaDzRueh2vWlBq2Lk9XSU3VOlKf8nMCJafc3CVjdOZvekyk+WU23gFd4Tpmwk0OtOOM2CKMoNxeMfNvA7ovQ96PP+LDdnRvdoFZV/oX3v3jaXR6DXFd8jnqRTpK4qj7qFO9eWgy1vXdfpwwS2gGVkFvSlWa3niBWzfLSL49Lm7UBwPKJYq0V5taO2dXz8nniTBAQJDcIEKaJkG6IYw5qnLpDLHB3jIw4NwYWw6f/cB5KZXCSeoGBOb9/61XD6Uq0QoQLIhj/vTKmOjNtZHlBzHUoKGYrP+SQRk9BgYh/Cr0azVhSpm2Zjz1fTJ1kYWKzHU8JPyWf6/isKQM4FLhFvWihy/kxkVTkZGR0b4="
         on:
           tags: true
       after_deploy:
