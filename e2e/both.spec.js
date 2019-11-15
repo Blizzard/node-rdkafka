@@ -49,6 +49,7 @@ describe('Consumer/Producer', function() {
       'fetch.wait.max.ms': 1000,
       'session.timeout.ms': 10000,
       'enable.auto.commit': true,
+      'enable.partition.eof': true,
       'debug': 'all'
       // paused: true,
     }, {

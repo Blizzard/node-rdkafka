@@ -142,6 +142,9 @@ export class HighLevelProducer extends Producer {
     async: boolean
   });
 
+  produce(topic: any, partition: any, message: any, key: any, timestamp: any, callback: (err: any, offset?: number) => void): any;
+  produce(topic: any, partition: any, message: any, key: any, timestamp: any, headers: any, callback: (err: any, offset?: number) => void): any;
+
   setKeySerializer(serializer: Function): void;
   setValueSerializer(serializer: Function): void;
 }

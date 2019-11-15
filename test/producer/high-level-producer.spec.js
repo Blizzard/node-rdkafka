@@ -63,6 +63,29 @@ module.exports = {
       t.notEqual(topicConfig, client.topicConfig);
     },
     'produce method': {
+      'headers support': function(next) {
+        var v = 'foo';
+        var k = 'key';
+        var h = [
+          { key1: "value1A" },
+          { key1: "value1B" },
+          { key2: "value2" },
+          { key1: "value1C" },
+        ];
+        var jsonH = JSON.stringify(h);
+
+        client._oldProduce = function(topic, partition, value, key, timestamp, opaque, headers) {
+          t.equal(value, 'foo');
+          t.equal(key, 'key');
+          t.equal(JSON.stringify(headers), jsonH);
+          next();
+        };
+
+        client.produce('tawpic', 0, v, k, null, h, function() {
+
+        });
+      },
+
       'can use a custom serializer': function(next) {
         var v = {
           disparaging: 'hyena',
