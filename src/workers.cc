@@ -525,9 +525,20 @@ void KafkaConsumerConsumeNum::Execute() {
   bool looping = true;
   int timeout_ms = m_timeout_ms;
 
+  // TODO: Implement proper elapsed time calculation for different OSes, this implementation is for Windows.
+  long int start = GetTickCount();
+
   while (m_messages.size() < max && looping) {
     // Get a message
-    Baton b = m_consumer->Consume(timeout_ms);
+    // TODO: Create a new property like setDefaultConsumeTimeout(), called setDefaultConsumeTotalTimeout()
+    // For now, we use the default consume timeout as total, and the actual consume timeout is total / 10
+    // Eg for a value of 1000ms, we consume every 100ms.
+    Baton b = m_consumer->Consume(timeout_ms/10);
+	long int end = GetTickCount();
+	long elapsed = (end - start);
+	if (elapsed >= timeout_ms) {
+	  looping = false;
+	}
     switch (b.err()) {
       case RdKafka::ERR__PARTITION_EOF:
         // If partition EOF and have consumed messages, retry with timeout 1
@@ -539,7 +550,8 @@ void KafkaConsumerConsumeNum::Execute() {
       case RdKafka::ERR__TIMED_OUT:
       case RdKafka::ERR__TIMED_OUT_QUEUE:
         // Break of the loop if we timed out
-        looping = false;
+        // No, rely on total timeout check above
+        // looping = false;
         break;
       case RdKafka::ERR_NO_ERROR:
         m_messages.push_back(b.data<RdKafka::Message*>());
