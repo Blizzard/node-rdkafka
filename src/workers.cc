@@ -498,17 +498,6 @@ void KafkaConsumerConsumeLoop::HandleErrorCallback() {
   callback->Call(argc, argv);
 }
 
-#ifndef _WIN32
-uint32_t getTick() {
-    struct timespec ts;
-    unsigned theTick = 0U;
-    clock_gettime( CLOCK_MONOTONIC, &ts );
-    theTick  = ts.tv_nsec / 1000000;
-    theTick += ts.tv_sec * 1000;
-    return theTick;
-}
-#endif
-
 /**
  * @brief KafkaConsumer get messages worker.
  *
@@ -530,6 +519,16 @@ KafkaConsumerConsumeNum::KafkaConsumerConsumeNum(Nan::Callback *callback,
   m_timeout_ms(timeout_ms) {}
 
 KafkaConsumerConsumeNum::~KafkaConsumerConsumeNum() {}
+#ifndef _WIN32
+uint32_t getTick() {
+    struct timespec ts;
+    unsigned theTick = 0U;
+    clock_gettime( CLOCK_MONOTONIC, &ts );
+    theTick  = ts.tv_nsec / 1000000;
+    theTick += ts.tv_sec * 1000;
+    return theTick;
+}
+#endif
 
 void KafkaConsumerConsumeNum::Execute() {
   std::size_t max = static_cast<std::size_t>(m_num_messages);
@@ -537,7 +536,11 @@ void KafkaConsumerConsumeNum::Execute() {
   int timeout_ms = m_timeout_ms;
 
   #ifndef _WIN32
-  uint32_t start = getTick();
+    struct timespec ts;
+    unsigned start = 0U;
+    clock_gettime( CLOCK_MONOTONIC, &ts );
+    start  = ts.tv_nsec / 1000000;
+    start += ts.tv_sec * 1000;
   #else
   long int start = GetTickCount();
   #endif
@@ -549,8 +552,11 @@ void KafkaConsumerConsumeNum::Execute() {
     // Eg for a value of 1000ms, we consume every 100ms.
     Baton b = m_consumer->Consume(timeout_ms/10);
     #ifndef _WIN32
-	uint32_t end = GetTick();
-	uint32_t elapsed = (end - start);
+    unsigned end = 0U;
+    clock_gettime( CLOCK_MONOTONIC, &ts );
+    end  = ts.tv_nsec / 1000000;
+    end += ts.tv_sec * 1000;
+	unsigned elapsed = (end - start);
 	if (elapsed >= timeout_ms) {
 	  looping = false;
 	}
