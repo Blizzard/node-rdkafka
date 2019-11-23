@@ -519,14 +519,31 @@ KafkaConsumerConsumeNum::KafkaConsumerConsumeNum(Nan::Callback *callback,
   m_timeout_ms(timeout_ms) {}
 
 KafkaConsumerConsumeNum::~KafkaConsumerConsumeNum() {}
+#ifndef _WIN32
+uint32_t getTick() {
+    struct timespec ts;
+    unsigned theTick = 0U;
+    clock_gettime( CLOCK_MONOTONIC, &ts );
+    theTick  = ts.tv_nsec / 1000000;
+    theTick += ts.tv_sec * 1000;
+    return theTick;
+}
+#endif
 
 void KafkaConsumerConsumeNum::Execute() {
   std::size_t max = static_cast<std::size_t>(m_num_messages);
   bool looping = true;
   int timeout_ms = m_timeout_ms;
 
-  // TODO: Implement proper elapsed time calculation for different OSes, this implementation is for Windows.
+  #ifndef _WIN32
+    struct timespec ts;
+    unsigned start = 0U;
+    clock_gettime( CLOCK_MONOTONIC, &ts );
+    start  = ts.tv_nsec / 1000000;
+    start += ts.tv_sec * 1000;
+  #else
   long int start = GetTickCount();
+  #endif
 
   while (m_messages.size() < max && looping) {
     // Get a message
@@ -534,11 +551,22 @@ void KafkaConsumerConsumeNum::Execute() {
     // For now, we use the default consume timeout as total, and the actual consume timeout is total / 10
     // Eg for a value of 1000ms, we consume every 100ms.
     Baton b = m_consumer->Consume(timeout_ms/10);
+    #ifndef _WIN32
+    unsigned end = 0U;
+    clock_gettime( CLOCK_MONOTONIC, &ts );
+    end  = ts.tv_nsec / 1000000;
+    end += ts.tv_sec * 1000;
+	unsigned elapsed = (end - start);
+	if (elapsed >= timeout_ms) {
+	  looping = false;
+	}
+    #else
 	long int end = GetTickCount();
 	long elapsed = (end - start);
 	if (elapsed >= timeout_ms) {
 	  looping = false;
 	}
+    #endif
     switch (b.err()) {
       case RdKafka::ERR__PARTITION_EOF:
         // If partition EOF and have consumed messages, retry with timeout 1
