@@ -338,7 +338,7 @@ class KafkaConsumerSeek : public ErrorAwareWorker {
 class KafkaConsumerConsumeNum : public ErrorAwareWorker {
  public:
   KafkaConsumerConsumeNum(Nan::Callback*, NodeKafka::KafkaConsumer*,
-    const uint32_t &, const int &);
+    const uint32_t &, const int &, const int &);
   ~KafkaConsumerConsumeNum();
 
   void Execute();
