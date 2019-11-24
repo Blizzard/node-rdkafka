@@ -517,7 +517,7 @@ KafkaConsumerConsumeNum::KafkaConsumerConsumeNum(Nan::Callback *callback,
   ErrorAwareWorker(callback),
   m_consumer(consumer),
   m_num_messages(num_messages),
-  m_timeout_ms(timeout_ms) {}
+  m_timeout_ms(timeout_ms),
   m_total_timeout_ms(total_timeout_ms) {}
 
 KafkaConsumerConsumeNum::~KafkaConsumerConsumeNum() {}
