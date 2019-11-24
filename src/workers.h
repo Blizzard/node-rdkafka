@@ -348,6 +348,7 @@ class KafkaConsumerConsumeNum : public ErrorAwareWorker {
   NodeKafka::KafkaConsumer * m_consumer;
   const uint32_t m_num_messages;
   const int m_timeout_ms;
+  const int m_total_timeout_ms;
   std::vector<RdKafka::Message*> m_messages;
 };
 

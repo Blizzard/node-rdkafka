@@ -512,11 +512,13 @@ void KafkaConsumerConsumeLoop::HandleErrorCallback() {
 KafkaConsumerConsumeNum::KafkaConsumerConsumeNum(Nan::Callback *callback,
                                      KafkaConsumer* consumer,
                                      const uint32_t & num_messages,
-                                     const int & timeout_ms) :
+                                     const int & timeout_ms,
+                                     const int & total_timeout_ms) :
   ErrorAwareWorker(callback),
   m_consumer(consumer),
   m_num_messages(num_messages),
   m_timeout_ms(timeout_ms) {}
+  m_total_timeout_ms(total_timeout_ms) {}
 
 KafkaConsumerConsumeNum::~KafkaConsumerConsumeNum() {}
 #ifndef _WIN32
@@ -534,6 +536,7 @@ void KafkaConsumerConsumeNum::Execute() {
   std::size_t max = static_cast<std::size_t>(m_num_messages);
   bool looping = true;
   int timeout_ms = m_timeout_ms;
+  int toal_timeout_ms = m_total_timeout_ms;
 
   #ifndef _WIN32
     struct timespec ts;
@@ -550,20 +553,20 @@ void KafkaConsumerConsumeNum::Execute() {
     // TODO: Create a new property like setDefaultConsumeTimeout(), called setDefaultConsumeTotalTimeout()
     // For now, we use the default consume timeout as total, and the actual consume timeout is total / 10
     // Eg for a value of 1000ms, we consume every 100ms.
-    Baton b = m_consumer->Consume(timeout_ms/10);
+    Baton b = m_consumer->Consume(timeout_ms);
     #ifndef _WIN32
     unsigned end = 0U;
     clock_gettime( CLOCK_MONOTONIC, &ts );
     end  = ts.tv_nsec / 1000000;
     end += ts.tv_sec * 1000;
 	unsigned elapsed = (end - start);
-	if (elapsed >= timeout_ms) {
+	if (elapsed >= toal_timeout_ms) {
 	  looping = false;
 	}
     #else
 	long int end = GetTickCount();
 	long elapsed = (end - start);
-	if (elapsed >= timeout_ms) {
+	if (elapsed >= toal_timeout_ms) {
 	  looping = false;
 	}
     #endif

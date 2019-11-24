@@ -1097,7 +1097,7 @@ NAN_METHOD(KafkaConsumer::NodeConsume) {
   }
 
   if (info[1]->IsNumber()) {
-    if (!info[2]->IsFunction()) {
+    if (!info[3]->IsFunction()) {
       return Nan::ThrowError("Need to specify a callback");
     }
 
@@ -1111,12 +1111,22 @@ NAN_METHOD(KafkaConsumer::NodeConsume) {
       numMessages = numMessagesMaybe.FromJust();
     }
 
+    int total_timeout_ms;
+    Nan::Maybe<uint32_t> maybeTotalTimeout =
+        Nan::To<uint32_t>(info[2].As<v8::Number>());
+
+    if (maybeTotalTimeout.IsNothing()) {
+        total_timeout_ms = 1000;
+    } else {
+        total_timeout_ms = static_cast<int>(maybeTotalTimeout.FromJust());
+    }
+
     KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
-    v8::Local<v8::Function> cb = info[2].As<v8::Function>();
+    v8::Local<v8::Function> cb = info[3].As<v8::Function>();
     Nan::Callback *callback = new Nan::Callback(cb);
     Nan::AsyncQueueWorker(
-      new Workers::KafkaConsumerConsumeNum(callback, consumer, numMessages, timeout_ms));  // NOLINT
+      new Workers::KafkaConsumerConsumeNum(callback, consumer, numMessages, timeout_ms, total_timeout_ms));  // NOLINT
 
   } else {
     if (!info[1]->IsFunction()) {
