@@ -134,6 +134,7 @@ export class Producer extends Client {
 
     setPollInterval(interval: any): any;
 
+    static createWriteStream(conf: any, topicConf: any, streamOptions: any): any;
 }
 
 export class HighLevelProducer extends Producer {
