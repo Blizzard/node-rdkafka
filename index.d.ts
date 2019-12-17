@@ -242,13 +242,15 @@ declare interface ConsumerStream extends Readable {
     close(cb?: Function): void;
 }
 
+export type Key = Buffer | string | null | undefined;
+
 declare interface ConsumerStreamMessage {
     value: Buffer,
     size: number,
     topic: string,
     offset: number,
     partition: number,
-    key?: string,
+    key?: Key,
     timestamp?: number
 }
 
