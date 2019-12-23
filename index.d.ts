@@ -248,6 +248,7 @@ declare interface ConsumerStreamMessage {
     topic: string,
     offset: number,
     partition: number,
+    headers?: { [key: string]: any }
     key?: string,
     timestamp?: number
 }
