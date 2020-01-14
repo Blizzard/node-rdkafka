@@ -242,7 +242,7 @@ declare interface ConsumerStream extends Readable {
     close(cb?: Function): void;
 }
 
-export type Key = Buffer | string | null | undefined;
+export type MessageKey = Buffer | string | null | undefined;
 
 declare interface ConsumerStreamMessage {
     value: Buffer,
@@ -250,7 +250,7 @@ declare interface ConsumerStreamMessage {
     topic: string,
     offset: number,
     partition: number,
-    key?: Key,
+    key?: MessageKey,
     timestamp?: number
 }
 
