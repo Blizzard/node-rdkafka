@@ -144,7 +144,7 @@ var producer = new Kafka.Producer({
 });
 ```
 
-A `Producer` requires only `metadata.broker.list` (the Kafka brokers) to be created.  The values in this list are separated by commas.  For other configuration options, see the [Configuration.md](https://github.com/edenhill/librdkafka/blob/1.2.2/CONFIGURATION.md) file described previously.
+A `Producer` requires only `metadata.broker.list` (the Kafka brokers) to be created.  The values in this list are separated by commas.  For other configuration options, see the [Configuration.md](https://github.com/edenhill/librdkafka/blob/v1.2.2/CONFIGURATION.md) file described previously.
 
 The following example illustrates a list with several `librdkafka` options set.
 
