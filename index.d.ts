@@ -100,6 +100,8 @@ export class KafkaConsumer extends Client {
     consume(number: number, cb?: any): void;
     consume(): void;
 
+    static createReadStream: (conf: any, topicConf: any, streamOptions: any) => ConsumerStream;
+
     getWatermarkOffsets(topic: any, partition: any): ErrorWrap<any>;
 
     offsetsStore(topicPartitions: any): ErrorWrap<any>;
