@@ -1,6 +1,7 @@
 import { Readable, Writable } from 'stream';
+import { EventEmitter } from 'events';
 
-export class Client extends NodeJS.EventEmitter {
+export class Client extends EventEmitter {
     constructor(globalConf: any, SubClientType: any, topicConf: any);
 
     connect(metadataOptions?: any, cb?: (err: any, data: any) => any): this;
@@ -121,6 +122,7 @@ export class KafkaConsumer extends Client {
 
     unsubscribe(): this;
 
+    createReadStream(conf: any, topicConfig: any, streamOptions: any): ConsumerStream;
 }
 
 export class Producer extends Client {
@@ -134,7 +136,7 @@ export class Producer extends Client {
 
     setPollInterval(interval: any): any;
 
-    static createWriteStream(conf: any, topicConf: any, streamOptions: any): any;
+    static createWriteStream(conf: any, topicConf: any, streamOptions: any): ProducerStream;
 }
 
 export class HighLevelProducer extends Producer {
