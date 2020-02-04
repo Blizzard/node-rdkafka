@@ -122,7 +122,7 @@ export class KafkaConsumer extends Client {
 
     unsubscribe(): this;
 
-    createReadStream(conf: any, topicConfig: any, streamOptions: any): ConsumerStream;
+    static createReadStream(conf: any, topicConfig: any, streamOptions: any): ConsumerStream;
 }
 
 export class Producer extends Client {
