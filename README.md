@@ -242,6 +242,12 @@ producer.on('event.error', function(err) {
   console.error('Error from producer');
   console.error(err);
 })
+
+// We must either call .poll() manually after sending messages
+// or set the producer to poll on an interval (.setPollInterval).
+// Without this, we do not get delivery events and the queue
+// will eventually fill up.
+producer.setPollInterval(100);
 ```
 
 To see the configuration options available to you, see the [Configuration](#configuration) section.
