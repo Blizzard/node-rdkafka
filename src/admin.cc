@@ -90,8 +90,8 @@ void AdminClient::Init(v8::Local<v8::Object> exports) {
 
   constructor.Reset(
     (tpl->GetFunction(Nan::GetCurrentContext())).ToLocalChecked());
-  exports->Set(Nan::New("AdminClient").ToLocalChecked(),
-    (tpl->GetFunction(Nan::GetCurrentContext())).ToLocalChecked());
+  Nan::Set(exports, Nan::New("AdminClient").ToLocalChecked(),
+    tpl->GetFunction(Nan::GetCurrentContext()).ToLocalChecked());
 }
 
 void AdminClient::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
@@ -546,9 +546,6 @@ NAN_METHOD(AdminClient::NodeCreatePartitions) {
   v8::Local<v8::Function> cb = info[3].As<v8::Function>();
   Nan::Callback *callback = new Nan::Callback(cb);
   AdminClient* client = ObjectWrap::Unwrap<AdminClient>(info.This());
-
-  // Get the timeout
-  int timeout = Nan::To<int32_t>(info[2]).FromJust();
 
   // Get the total number of desired partitions
   int partition_total_count = Nan::To<int32_t>(info[1]).FromJust();

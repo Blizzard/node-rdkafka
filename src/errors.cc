@@ -19,9 +19,9 @@ v8::Local<v8::Object> RdKafkaError(const RdKafka::ErrorCode &err, std::string er
 
   v8::Local<v8::Object> ret = Nan::New<v8::Object>();
 
-  ret->Set(Nan::New("message").ToLocalChecked(),
+  Nan::Set(ret, Nan::New("message").ToLocalChecked(),
     Nan::New<v8::String>(errstr).ToLocalChecked());
-  ret->Set(Nan::New("code").ToLocalChecked(),
+  Nan::Set(ret, Nan::New("code").ToLocalChecked(),
     Nan::New<v8::Number>(code));
 
   return ret;

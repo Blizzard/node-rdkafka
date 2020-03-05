@@ -569,7 +569,7 @@ void KafkaConsumerConsumeNum::HandleOKCallback() {
         it != m_messages.end(); ++it) {
       i++;
       RdKafka::Message* message = *it;
-      returnArray->Set(i, Conversion::Message::ToV8Object(message));
+      Nan::Set(returnArray, i, Conversion::Message::ToV8Object(message));
 
       delete message;
     }

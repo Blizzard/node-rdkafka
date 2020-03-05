@@ -42,7 +42,7 @@ v8::Local<v8::Array> TopicPartitionListToV8Array(
         Nan::New<v8::Number>(tp.offset));
     }
 
-    tp_array->Set(i, tp_obj);
+    Nan::Set(tp_array, i, tp_obj);
   }
 
   return tp_array;
