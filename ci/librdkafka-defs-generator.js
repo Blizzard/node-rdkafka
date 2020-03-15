@@ -12,6 +12,133 @@ function readLibRDKafkaFile(file) {
   return fs.readFileSync(path.resolve(LIBRDKAFKA_DIR, file)).toString();
 }
 
+function extractConfigItems(configStr) {
+  const [_header, config] = configStr.split(/-{5,}\|.*/);
+
+  const re = /(.*?)\|(.*?)\|(.*?)\|(.*?)\|(.*?)\|(.*)/g;
+
+  const configItems = [];
+
+  let m;
+  do {
+    m = re.exec(config);
+    if (m) {
+      const [
+        _fullString,
+        property,
+        consumerOrProducer,
+        range,
+        defaultValue,
+        importance,
+        descriptionWithType,
+      ] = m.map(el => (typeof el === 'string' ? el.trim() : el));
+
+      const splitDescriptionRe = /(.*?)\s*?<br>.*?:\s.*?(.*?)\*/;
+      const [_, description, rawType] = splitDescriptionRe.exec(descriptionWithType);
+
+      configItems.push({
+        property,
+        consumerOrProducer,
+        range,
+        defaultValue,
+        importance,
+        description,
+        rawType,
+      });
+    }
+  } while (m);
+
+  return configItems.map(processItem);
+}
+
+function processItem(configItem) {
+  // These items are overwritten by node-rdkafka
+  switch (configItem.property) {
+    case 'dr_msg_cb':
+      return { ...configItem, type: 'boolean' };
+    case 'dr_cb':
+      return { ...configItem, type: 'boolean | Function' };
+    case 'rebalance_cb':
+      return { ...configItem, type: 'boolean | Function' };
+    case 'offset_commit_cb':
+      return { ...configItem, type: 'boolean | Function' };
+  }
+
+  switch (configItem.rawType) {
+    case 'integer':
+      return { ...configItem, type: 'number' };
+    case 'boolean':
+      return { ...configItem, type: 'boolean' };
+    case 'string':
+    case 'CSV flags':
+      return { ...configItem, type: 'string' };
+    case 'enum value':
+      return {
+        ...configItem,
+        type: configItem.range
+          .split(',')
+          .map(str => `'${str.trim()}'`)
+          .join(' | '),
+      };
+    default:
+      return { ...configItem, type: 'any' };
+  }
+}
+
+function generateInterface(interfaceDef, configItems) {
+  const fields = configItems
+    .map(item =>
+      [
+        `/**`,
+        ` * ${item.description}`,
+        ...(item.defaultValue ? [` *`, ` * @default ${item.defaultValue}`] : []),
+        ` */`,
+        `"${item.property}"?: ${item.type};`,
+      ]
+        .map(row => `    ${row}`)
+        .join('\n')
+    )
+    .join('\n\n');
+
+  return `export interface ` + interfaceDef + ' {\n' + fields + '\n}';
+}
+
+function generateConfigDTS(file) {
+  const configuration = readLibRDKafkaFile(file);
+  const [globalStr, topicStr] = configuration.split('Topic configuration properties');
+
+  const [globalProps, topicProps] = [extractConfigItems(globalStr), extractConfigItems(topicStr)];
+
+  const [globalSharedProps, producerGlobalProps, consumerGlobalProps] = [
+    globalProps.filter(i => i.consumerOrProducer === '*'),
+    globalProps.filter(i => i.consumerOrProducer === 'P'),
+    globalProps.filter(i => i.consumerOrProducer === 'C'),
+  ];
+
+  const [topicSharedProps, producerTopicProps, consumerTopicProps] = [
+    topicProps.filter(i => i.consumerOrProducer === '*'),
+    topicProps.filter(i => i.consumerOrProducer === 'P'),
+    topicProps.filter(i => i.consumerOrProducer === 'C'),
+  ];
+
+  let output = `${getHeader(file)}
+// Code that generated this is a derivative work of the code from Nam Nguyen
+// https://gist.github.com/ntgn81/066c2c8ec5b4238f85d1e9168a04e3fb
+
+`;
+
+  output += [
+    generateInterface('GlobalConfig', globalSharedProps),
+    generateInterface('ProducerGlobalConfig extends GlobalConfig', producerGlobalProps),
+    generateInterface('ConsumerGlobalConfig extends GlobalConfig', consumerGlobalProps),
+    generateInterface('TopicConfig', topicSharedProps),
+    generateInterface('ProducerTopicConfig extends TopicConfig', producerTopicProps),
+    generateInterface('ConsumerTopicConfig extends TopicConfig', consumerTopicProps),
+  ].join('\n\n');
+
+  fs.writeFileSync(path.resolve(__dirname, '../config.d.ts'), output);
+}
+
 function updateErrorDefinitions(file) {
   const rdkafkacpp_h = readLibRDKafkaFile(file);
   const m = /enum ErrorCode {([^}]+)}/g.exec(rdkafkacpp_h);
@@ -46,5 +173,6 @@ function updateErrorDefinitions(file) {
 }
 
 (async function updateTypeDefs() {
+  generateConfigDTS('CONFIGURATION.md');
   updateErrorDefinitions('src-cpp/rdkafkacpp.h');
 })()
