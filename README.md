@@ -36,7 +36,7 @@ Play nice; Play fair.
 * Node.js >=4
 * Linux/Mac
 * Windows?! See below
-* openssl 1.0.2
+* OpenSSL
 
 ### Mac OS High Sierra / Mojave
 
