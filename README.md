@@ -33,7 +33,7 @@ Play nice; Play fair.
 ## Requirements
 
 * Apache Kafka >=0.9
-* Node.js >=4
+* Node.js >=10
 * Linux/Mac
 * Windows?! See below
 * OpenSSL
