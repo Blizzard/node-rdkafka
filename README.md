@@ -47,6 +47,8 @@ export CPPFLAGS=-I/usr/local/opt/openssl/include
 export LDFLAGS=-L/usr/local/opt/openssl/lib
 ```
 
+Also make sure that your path does not contain any whitespace character. For example, if your directory is called "my project", then rename it to something like "my-project".
+
 Then you can run `npm install` on your application to get it to build correctly.
 
 __NOTE:__ From the `librdkafka` docs
