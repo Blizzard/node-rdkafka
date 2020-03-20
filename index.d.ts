@@ -212,6 +212,7 @@ declare interface InternalAdminClient {
     createPartitions(topic: String, desiredPartitions: number, cb?: (err: any, data: any) => any): void;
     createPartitions(topic: String, desiredPartitions: number, timeout?: number, cb?: (err: any, data: any) => any): void;
 
+    connect(): void;
     disconnect(): void;
 }
 
