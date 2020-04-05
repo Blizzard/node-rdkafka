@@ -306,6 +306,28 @@ describe('Consumer/Producer', function() {
     run_headers_test(done, headers);
   });
 
+  it('should be able to produce and consume messages: empty buffer key and empty value', function(done) {
+    this.timeout(20000);
+    var emptyString = '';
+    var key = Buffer.from(emptyString);
+    var value = Buffer.from('');
+
+    producer.setPollInterval(10);
+
+    consumer.once('data', function(message) {
+      t.notEqual(message.value, null, 'message should not be null');
+      t.equal(value.toString(), message.value.toString(), 'invalid message value');
+      t.equal(emptyString, message.key, 'invalid message key');
+      done();
+    });
+
+    consumer.subscribe([topic]);
+    consumer.consume();
+
+    setTimeout(function() {
+      producer.produce(topic, null, value, key);
+    }, 2000);
+  });
 
   it('should be able to produce and consume messages: empty key and empty value', function(done) {
     this.timeout(20000);
