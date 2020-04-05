@@ -35,6 +35,7 @@ void Conf::DumpConfig(std::list<std::string> *dump) {
 }
 
 Conf * Conf::create(RdKafka::Conf::ConfType type, v8::Local<v8::Object> object, std::string &errstr) {  // NOLINT
+  v8::Local<v8::Context> context = Nan::GetCurrentContext();
   Conf* rdconf = static_cast<Conf*>(RdKafka::Conf::create(type));
 
   v8::MaybeLocal<v8::Array> _property_names = object->GetOwnPropertyNames(
@@ -45,8 +46,8 @@ Conf * Conf::create(RdKafka::Conf::ConfType type, v8::Local<v8::Object> object, 
     std::string string_value;
     std::string string_key;
 
-    v8::Local<v8::Value> key = property_names->Get(i);
-    v8::Local<v8::Value> value = object->Get(key);
+    v8::Local<v8::Value> key = Nan::Get(property_names, i).ToLocalChecked();
+    v8::Local<v8::Value> value = Nan::Get(object, key).ToLocalChecked();
 
     if (key->IsString()) {
       Nan::Utf8String utf8_key(key);
@@ -59,13 +60,13 @@ Conf * Conf::create(RdKafka::Conf::ConfType type, v8::Local<v8::Object> object, 
 #if NODE_MAJOR_VERSION > 6
       if (value->IsInt32()) {
         string_value = std::to_string(
-          value->Int32Value(Nan::GetCurrentContext()).ToChecked());
+          value->Int32Value(context).ToChecked());
       } else if (value->IsUint32()) {
         string_value = std::to_string(
-          value->Uint32Value(Nan::GetCurrentContext()).ToChecked());
+          value->Uint32Value(context).ToChecked());
       } else if (value->IsBoolean()) {
-        string_value = value->BooleanValue(
-          Nan::GetCurrentContext()).ToChecked() ? "true" : "false";
+        const bool v = Nan::To<bool>(value).ToChecked();
+        string_value = v ? "true" : "false";
       } else {
         Nan::Utf8String utf8_value(value.As<v8::String>());
         string_value = std::string(*utf8_value);

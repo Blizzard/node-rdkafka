@@ -535,7 +535,7 @@ void KafkaConsumer::Init(v8::Local<v8::Object> exports) {
 
   constructor.Reset((tpl->GetFunction(Nan::GetCurrentContext()))
     .ToLocalChecked());
-  exports->Set(Nan::New("KafkaConsumer").ToLocalChecked(),
+  Nan::Set(exports, Nan::New("KafkaConsumer").ToLocalChecked(),
     (tpl->GetFunction(Nan::GetCurrentContext())).ToLocalChecked());
 }
 
@@ -712,8 +712,10 @@ NAN_METHOD(KafkaConsumer::NodeAssign) {
   std::vector<RdKafka::TopicPartition*> topic_partitions;
 
   for (unsigned int i = 0; i < partitions->Length(); ++i) {
-    v8::Local<v8::Value> partition_obj_value = partitions->Get(i);
-    if (!partition_obj_value->IsObject()) {
+    v8::Local<v8::Value> partition_obj_value;
+    if (!(
+          Nan::Get(partitions, i).ToLocal(&partition_obj_value) &&
+          partition_obj_value->IsObject())) {
       Nan::ThrowError("Must pass topic-partition objects");
     }
 

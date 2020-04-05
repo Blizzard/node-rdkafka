@@ -89,8 +89,8 @@ void Topic::Init(v8::Local<v8::Object> exports) {
   constructor.Reset((tpl->GetFunction(Nan::GetCurrentContext()))
     .ToLocalChecked());
 
-  exports->Set(Nan::New("Topic").ToLocalChecked(),
-    (tpl->GetFunction(Nan::GetCurrentContext())).ToLocalChecked());
+  Nan::Set(exports, Nan::New("Topic").ToLocalChecked(),
+    tpl->GetFunction(Nan::GetCurrentContext()).ToLocalChecked());
 }
 
 void Topic::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {

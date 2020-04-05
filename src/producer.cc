@@ -90,8 +90,8 @@ void Producer::Init(v8::Local<v8::Object> exports) {
   constructor.Reset((tpl->GetFunction(Nan::GetCurrentContext()))
     .ToLocalChecked());
 
-  exports->Set(Nan::New("Producer").ToLocalChecked(),
-    (tpl->GetFunction(Nan::GetCurrentContext())).ToLocalChecked());
+  Nan::Set(exports, Nan::New("Producer").ToLocalChecked(),
+    tpl->GetFunction(Nan::GetCurrentContext()).ToLocalChecked());
 }
 
 void Producer::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
@@ -450,17 +450,18 @@ NAN_METHOD(Producer::NodeProduce) {
 
     if (v8Headers->Length() >= 1) {
       for (unsigned int i = 0; i < v8Headers->Length(); i++) {
-        v8::Local<v8::Object> header = v8Headers->Get(i)->ToObject(
-          Nan::GetCurrentContext()).ToLocalChecked();
+        v8::Local<v8::Object> header = Nan::Get(v8Headers, i).ToLocalChecked()
+          ->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
         if (header.IsEmpty()) {
           continue;
         }
 
         v8::Local<v8::Array> props = header->GetOwnPropertyNames(
           Nan::GetCurrentContext()).ToLocalChecked();
-        Nan::MaybeLocal<v8::String> v8Key = Nan::To<v8::String>(props->Get(0));
-        Nan::MaybeLocal<v8::String> v8Value =
-          Nan::To<v8::String>(header->Get(v8Key.ToLocalChecked()));
+        Nan::MaybeLocal<v8::String> v8Key = Nan::To<v8::String>(
+            Nan::Get(props, 0).ToLocalChecked());
+        Nan::MaybeLocal<v8::String> v8Value = Nan::To<v8::String>(
+            Nan::Get(header, v8Key.ToLocalChecked()).ToLocalChecked());
 
         Nan::Utf8String uKey(v8Key.ToLocalChecked());
         std::string key(*uKey);

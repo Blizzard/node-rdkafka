@@ -126,7 +126,11 @@ std::vector<std::string> v8ArrayToStringVector(v8::Local<v8::Array> parameter) {
 
   if (parameter->Length() >= 1) {
     for (unsigned int i = 0; i < parameter->Length(); i++) {
-      Nan::MaybeLocal<v8::String> p = Nan::To<v8::String>(parameter->Get(i));
+      v8::Local<v8::Value> v;
+      if (!Nan::Get(parameter, i).ToLocal(&v)) {
+        continue;
+      }
+      Nan::MaybeLocal<v8::String> p = Nan::To<v8::String>(v);
       if (p.IsEmpty()) {
         continue;
       }
@@ -146,7 +150,10 @@ std::vector<std::string> ToStringVector(v8::Local<v8::Array> parameter) {
 
   if (parameter->Length() >= 1) {
     for (unsigned int i = 0; i < parameter->Length(); i++) {
-      v8::Local<v8::Value> element = parameter->Get(i);
+      v8::Local<v8::Value> element;
+      if (!Nan::Get(parameter, i).ToLocal(&element)) {
+        continue;
+      }
 
       if (!element->IsRegExp()) {
         Nan::MaybeLocal<v8::String> p = Nan::To<v8::String>(element);
@@ -179,7 +186,7 @@ v8::Local<v8::Array> ToV8Array(std::vector<std::string> parameter) {
   for (size_t i = 0; i < parameter.size(); i++) {
     std::string topic = parameter[i];
 
-    newItem->Set(i, Nan::New<v8::String>(topic).ToLocalChecked());
+    Nan::Set(newItem, i, Nan::New<v8::String>(topic).ToLocalChecked());
   }
 
   return newItem;
@@ -203,7 +210,7 @@ v8::Local<v8::Array> ToV8Array(
       topic_partition_list[topic_partition_i];
 
     if (topic_partition->err() != RdKafka::ErrorCode::ERR_NO_ERROR) {
-      array->Set(topic_partition_i,
+      Nan::Set(array, topic_partition_i,
         Nan::Error(Nan::New(RdKafka::err2str(topic_partition->err()))
         .ToLocalChecked()));
     } else {
@@ -220,7 +227,7 @@ v8::Local<v8::Array> ToV8Array(
         Nan::New<v8::String>(topic_partition->topic().c_str())
         .ToLocalChecked());
 
-      array->Set(topic_partition_i, obj);
+      Nan::Set(array, topic_partition_i, obj);
     }
   }
 
@@ -243,8 +250,11 @@ std::vector<RdKafka::TopicPartition*> FromV8Array(
 
   for (size_t topic_partition_i = 0;
     topic_partition_i < topic_partition_list->Length(); topic_partition_i++) {
-    v8::Local<v8::Value> topic_partition_value =
-      topic_partition_list->Get(topic_partition_i);
+    v8::Local<v8::Value> topic_partition_value;
+    if (!Nan::Get(topic_partition_list, topic_partition_i)
+        .ToLocal(&topic_partition_value)) {
+      continue;
+    }
 
     if (topic_partition_value->IsObject()) {
       array.push_back(FromV8Object(
@@ -308,7 +318,7 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Metadata* metadata) {
     Nan::Set(current_broker, Nan::New("port").ToLocalChecked(),
       Nan::New<v8::Number>(x->port()));
 
-    broker_data->Set(broker_i, current_broker);
+    Nan::Set(broker_data, broker_i, current_broker);
   }
 
   unsigned int topic_i = 0;
@@ -357,13 +367,13 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Metadata* metadata) {
       v8::Local<v8::Array> current_replicas = Nan::New<v8::Array>();
 
       for (r_it = replicas->begin(); r_it != replicas->end(); ++r_it, r_i++) {
-        current_replicas->Set(r_i, Nan::New<v8::Int32>(*r_it));
+        Nan::Set(current_replicas, r_i, Nan::New<v8::Int32>(*r_it));
       }
 
       v8::Local<v8::Array> current_isrs = Nan::New<v8::Array>();
 
       for (i_it = isrs->begin(); i_it != isrs->end(); ++i_it, i_i++) {
-        current_isrs->Set(i_i, Nan::New<v8::Int32>(*i_it));
+        Nan::Set(current_isrs, i_i, Nan::New<v8::Int32>(*i_it));
       }
 
       Nan::Set(current_partition, Nan::New("replicas").ToLocalChecked(),
@@ -371,13 +381,13 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Metadata* metadata) {
       Nan::Set(current_partition, Nan::New("isrs").ToLocalChecked(),
         current_isrs);
 
-      current_topic_partitions->Set(partition_i, current_partition);
+      Nan::Set(current_topic_partitions, partition_i, current_partition);
     }  // iterate over partitions
 
     Nan::Set(current_topic, Nan::New("partitions").ToLocalChecked(),
       current_topic_partitions);
 
-    topic_data->Set(topic_i, current_topic);
+    Nan::Set(topic_data, topic_i, current_topic);
   }  // End iterating over topics
 
   Nan::Set(obj, Nan::New("orig_broker_id").ToLocalChecked(),
@@ -431,7 +441,7 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Message *message,
         Nan::Set(v8header, Nan::New<v8::String>(it->key()).ToLocalChecked(),
           Nan::Encode(it->value_string(),
             it->value_size(), Nan::Encoding::BUFFER));
-        v8headers->Set(index, v8header);
+        Nan::Set(v8headers, index, v8header);
         index++;
       }
       Nan::Set(pack,
@@ -519,7 +529,8 @@ rd_kafka_NewTopic_t* FromV8TopicObject(
     if (!config_keys.IsEmpty()) {
       v8::Local<v8::Array> field_array = config_keys.ToLocalChecked();
       for (size_t i = 0; i < field_array->Length(); i++) {
-        v8::Local<v8::String> config_key = field_array->Get(i).As<v8::String>();
+        v8::Local<v8::String> config_key = Nan::Get(field_array, i)
+          .ToLocalChecked().As<v8::String>();
         v8::Local<v8::Value> config_value = Nan::Get(config, config_key)
           .ToLocalChecked();
 
@@ -534,7 +545,7 @@ rd_kafka_NewTopic_t* FromV8TopicObject(
           err = rd_kafka_NewTopic_set_config(
             new_topic, pKeyString.c_str(), pValString.c_str());
 
-          if (err != RdKafka::ERR_NO_ERROR) {
+          if (err != RD_KAFKA_RESP_ERR_NO_ERROR) {
             errstr = rd_kafka_err2str(err);
             rd_kafka_NewTopic_destroy(new_topic);
             return NULL;
