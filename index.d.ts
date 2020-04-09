@@ -193,9 +193,9 @@ export abstract class Client<Events extends string> extends EventEmitter {
 export class KafkaConsumer extends Client<KafkaConsumerEvents> {
     constructor(conf: ConsumerGlobalConfig, topicConf: ConsumerTopicConfig);
 
-    assign(assignments: Assignment): this;
+    assign(assignments: Assignment[]): this;
 
-    assignments(): Assignment;
+    assignments(): Assignment[];
 
     commit(topicPartition: TopicPartitionOffset | TopicPartitionOffset[]): this;
     commit(): this;
