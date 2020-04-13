@@ -139,7 +139,7 @@ type KafkaClientEvents = 'disconnected' | 'ready' | 'connection.failure' | 'even
 type KafkaConsumerEvents = 'data' | 'rebalance' | 'unsubscribed' | 'unsubscribe' | 'offset.commit' | KafkaClientEvents;
 type KafkaProducerEvents = 'delivery-report' | KafkaClientEvents;
 
-type EventListener<K> = 
+type EventListener<K> =
 // ### Client
 // connectivity events
     'disconnected' extends K ? (metrics: ClientMetrics) => void :
@@ -307,7 +307,7 @@ export interface NewTopic {
     } | { [cfg: string]: string; };
 }
 
-interface InternalAdminClient {
+export interface IAdminClient {
     createTopic(topic: NewTopic, cb?: (err: LibrdKafkaError) => void): void;
     createTopic(topic: NewTopic, timeout?: number, cb?: (err: LibrdKafkaError) => void): void;
 
@@ -321,5 +321,5 @@ interface InternalAdminClient {
 }
 
 export abstract class AdminClient {
-    static create(conf: GlobalConfig): InternalAdminClient;
+    static create(conf: GlobalConfig): IAdminClient;
 }
