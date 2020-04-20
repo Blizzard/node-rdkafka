@@ -123,13 +123,13 @@ export interface WriteStreamOptions extends WritableOptions {
     connectOptions?: any;
 }
 
-interface ProducerStream extends Writable {
+export interface ProducerStream extends Writable {
     producer: Producer;
     connect(metadataOptions?: MetadataOptions): void;
     close(cb?: () => void): void;
 }
 
-interface ConsumerStream extends Readable {
+export interface ConsumerStream extends Readable {
     consumer: KafkaConsumer;
     connect(options: ConsumerGlobalConfig): void;
     close(cb?: () => void): void;
