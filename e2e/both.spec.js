@@ -105,12 +105,12 @@ describe('Consumer/Producer', function() {
       }
     }
 
-    consumer.disconnect(function() {
-      maybeDone();
+    consumer.disconnect(function(err) {
+      maybeDone(err);
     });
 
-    producer.disconnect(function() {
-      maybeDone();
+    producer.disconnect(function(err) {
+      maybeDone(err);
     });
   });
 
