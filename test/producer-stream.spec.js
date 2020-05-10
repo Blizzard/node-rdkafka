@@ -363,8 +363,11 @@ module.exports = {
         var _opaque = {
           foo: 'bar'
         };
+        var _headers = {
+          header: 'header value'
+        };
 
-        fakeClient.produce = function(topic, partition, message, key, timestamp, opaque) {
+        fakeClient.produce = function(topic, partition, message, key, timestamp, opaque, headers) {
           t.equal('topic', topic);
           t.equal(message.toString(), 'Awesome');
           t.equal(Buffer.isBuffer(message), true);
@@ -372,6 +375,7 @@ module.exports = {
           t.equal(key, 'key');
           t.deepEqual(_opaque, opaque);
           t.deepEqual(_timestamp, timestamp);
+          t.deepEqual(_headers, headers);
           done();
         };
 
@@ -388,7 +392,8 @@ module.exports = {
           partition: 10,
           key: 'key',
           timestamp: _timestamp,
-          opaque: _opaque
+          opaque: _opaque,
+          headers: _headers
         });
       },
 
