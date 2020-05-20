@@ -80,6 +80,8 @@ class Producer : public Connection {
   void ActivateDispatchers();
   void DeactivateDispatchers();
 
+  void ConfigureCallback(const std::string &string_key, const v8::Local<v8::Function> &cb, bool add) override;
+
  protected:
   static Nan::Persistent<v8::Function> constructor;
   static void New(const Nan::FunctionCallbackInfo<v8::Value>&);
@@ -89,7 +91,6 @@ class Producer : public Connection {
 
  private:
   static NAN_METHOD(NodeProduce);
-  static NAN_METHOD(NodeOnDelivery);
   static NAN_METHOD(NodeSetPartitioner);
   static NAN_METHOD(NodeConnect);
   static NAN_METHOD(NodeDisconnect);

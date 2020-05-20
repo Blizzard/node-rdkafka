@@ -57,7 +57,7 @@ void Producer::Init(v8::Local<v8::Object> exports) {
    * @sa NodeKafka::Connection
    */
 
-  Nan::SetPrototypeMethod(tpl, "onEvent", NodeOnEvent);
+  Nan::SetPrototypeMethod(tpl, "configureCallbacks", NodeConfigureCallbacks);
 
   /*
    * @brief Methods to do with establishing state
@@ -68,14 +68,6 @@ void Producer::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(tpl, "getMetadata", NodeGetMetadata);
   Nan::SetPrototypeMethod(tpl, "queryWatermarkOffsets", NodeQueryWatermarkOffsets);  // NOLINT
   Nan::SetPrototypeMethod(tpl, "poll", NodePoll);
-
-  /*
-   * Lifecycle events specifically designated for RdKafka::Producer
-   *
-   * @sa RdKafka::Producer
-   */
-
-  Nan::SetPrototypeMethod(tpl, "onDeliveryReport", NodeOnDelivery);
 
   /*
    * @brief Methods exposed to do with message production
@@ -324,6 +316,29 @@ void Producer::Poll() {
   m_client->poll(0);
 }
 
+void Producer::ConfigureCallback(const std::string &string_key, const v8::Local<v8::Function> &cb, bool add) {
+  if (string_key.compare("delivery_cb") == 0) {
+    if (add) {
+      bool dr_msg_cb = false;
+      v8::Local<v8::String> dr_msg_cb_key = Nan::New("dr_msg_cb").ToLocalChecked();
+      if (Nan::Has(cb, dr_msg_cb_key).FromMaybe(false)) {
+        v8::Local<v8::Value> v = Nan::Get(cb, dr_msg_cb_key).ToLocalChecked();
+        if (v->IsBoolean()) {
+          dr_msg_cb = Nan::To<bool>(v).ToChecked();
+        }
+      }
+      if (dr_msg_cb) {
+        this->m_dr_cb.SendMessageBuffer(true);
+      }
+      this->m_dr_cb.dispatcher.AddCallback(cb);
+    } else {
+      this->m_dr_cb.dispatcher.RemoveCallback(cb);
+    }
+  } else {
+    Connection::ConfigureCallback(string_key, cb, add);
+  }
+}
+
 /* Node exposed methods */
 
 /**
@@ -535,32 +550,6 @@ NAN_METHOD(Producer::NodeProduce) {
   }
 
   info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
-}
-
-NAN_METHOD(Producer::NodeOnDelivery) {
-  Nan::HandleScope scope;
-
-  if (info.Length() < 1 || !info[0]->IsFunction()) {
-    // Just throw an exception
-    return Nan::ThrowError("Need to specify a callback");
-  }
-
-  bool dr_msg_cb = false;
-
-  if (info.Length() >= 2) {
-    // We have to get the boolean
-    dr_msg_cb = Nan::To<bool>(info[1]).FromMaybe(false);
-  }
-
-  Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
-  v8::Local<v8::Function> cb = info[0].As<v8::Function>();
-
-  if (dr_msg_cb) {
-    producer->m_dr_cb.SendMessageBuffer(true);
-  }
-
-  producer->m_dr_cb.dispatcher.AddCallback(cb);
-  info.GetReturnValue().Set(Nan::True());
 }
 
 NAN_METHOD(Producer::NodeSetPartitioner) {

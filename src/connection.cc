@@ -215,6 +215,16 @@ Baton Connection::GetMetadata(
   }
 }
 
+void Connection::ConfigureCallback(const std::string &string_key, const v8::Local<v8::Function> &cb, bool add) {
+  if (string_key.compare("event_cb") == 0) {
+    if (add) {
+      this->m_event_cb.dispatcher.AddCallback(cb);
+    } else {
+      this->m_event_cb.dispatcher.RemoveCallback(cb);
+    }
+  }
+}
+
 // NAN METHODS
 
 NAN_METHOD(Connection::NodeGetMetadata) {
@@ -328,18 +338,84 @@ NAN_METHOD(Connection::NodeQueryWatermarkOffsets) {
 }
 
 // Node methods
-NAN_METHOD(Connection::NodeOnEvent) {
+NAN_METHOD(Connection::NodeConfigureCallbacks) {
   Nan::HandleScope scope;
 
-  if (info.Length() < 1 || !info[0]->IsFunction()) {
+  if (info.Length() < 2 ||
+    !info[0]->IsBoolean() ||
+    !info[1]->IsObject()) {
     // Just throw an exception
-    return Nan::ThrowError("Need to specify a callback");
+    return Nan::ThrowError("Need to specify a callbacks object");
   }
-
+  v8::Local<v8::Context> context = Nan::GetCurrentContext();
   Connection* obj = ObjectWrap::Unwrap<Connection>(info.This());
 
-  v8::Local<v8::Function> cb = info[0].As<v8::Function>();
-  obj->m_event_cb.dispatcher.AddCallback(cb);
+  const bool add = Nan::To<bool>(info[0]).ToChecked();
+  v8::Local<v8::Object> configs_object = info[1]->ToObject(context).ToLocalChecked();
+  v8::Local<v8::Array> configs_property_names = configs_object->GetOwnPropertyNames(context).ToLocalChecked();
+
+  for (unsigned int j = 0; j < configs_property_names->Length(); ++j) {
+    std::string configs_string_key;
+
+    v8::Local<v8::Value> configs_key = Nan::Get(configs_property_names, j).ToLocalChecked();
+    v8::Local<v8::Value> configs_value = Nan::Get(configs_object, configs_key).ToLocalChecked();
+
+    int config_type = 0;
+    if (configs_value->IsObject() && configs_key->IsString()) {
+      Nan::Utf8String configs_utf8_key(configs_key);
+      configs_string_key = std::string(*configs_utf8_key);
+      if (configs_string_key.compare("global") == 0) {
+          config_type = 1;
+      } else if (configs_string_key.compare("topic") == 0) {
+          config_type = 2;
+      } else if (configs_string_key.compare("event") == 0) {
+          config_type = 3;
+      } else {
+        continue;
+      }
+    } else {
+      continue;
+    }
+
+    v8::Local<v8::Object> object = configs_value->ToObject(context).ToLocalChecked();
+    v8::Local<v8::Array> property_names = object->GetOwnPropertyNames(context).ToLocalChecked();
+
+    for (unsigned int i = 0; i < property_names->Length(); ++i) {
+      std::string errstr;
+      std::string string_key;
+
+      v8::Local<v8::Value> key = Nan::Get(property_names, i).ToLocalChecked();
+      v8::Local<v8::Value> value = Nan::Get(object, key).ToLocalChecked();
+
+      if (key->IsString()) {
+        Nan::Utf8String utf8_key(key);
+        string_key = std::string(*utf8_key);
+      } else {
+        continue;
+      }
+
+      if (value->IsFunction()) {
+        v8::Local<v8::Function> cb = value.As<v8::Function>();
+        switch (config_type) {
+          case 1:
+            obj->m_gconfig->ConfigureCallback(string_key, cb, add, errstr);
+            if (!errstr.empty()) {
+              return Nan::ThrowError(errstr.c_str());
+            }
+            break;
+          case 2:
+            obj->m_tconfig->ConfigureCallback(string_key, cb, add, errstr);
+            if (!errstr.empty()) {
+              return Nan::ThrowError(errstr.c_str());
+            }
+            break;
+          case 3:
+            obj->ConfigureCallback(string_key, cb, add);
+            break;
+        }
+      }
+    }
+  }
 
   info.GetReturnValue().Set(Nan::True());
 }
