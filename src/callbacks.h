@@ -131,7 +131,6 @@ class DeliveryReportDispatcher : public Dispatcher {
   ~DeliveryReportDispatcher();
   void Flush();
   size_t Add(const DeliveryReport &);
-  void AddCallback(v8::Local<v8::Function>);
  protected:
   std::deque<DeliveryReport> events;
 };

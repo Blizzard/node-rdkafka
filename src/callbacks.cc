@@ -256,12 +256,6 @@ size_t DeliveryReportDispatcher::Add(const DeliveryReport &e) {
   return events.size();
 }
 
-void DeliveryReportDispatcher::AddCallback(v8::Local<v8::Function> func) {
-  Nan::Persistent<v8::Function,
-                  Nan::CopyablePersistentTraits<v8::Function> > value(func);
-  callbacks.push_back(value);
-}
-
 void DeliveryReportDispatcher::Flush() {
   Nan::HandleScope scope;
 
