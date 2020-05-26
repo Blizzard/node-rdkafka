@@ -104,11 +104,21 @@ void Dispatcher::Dispatch(const int _argc, Local<Value> _argv[]) {
   }
 }
 
-void Dispatcher::AddCallback(v8::Local<v8::Function> func) {
+void Dispatcher::AddCallback(const v8::Local<v8::Function> &cb) {
   Nan::Persistent<v8::Function,
-                  Nan::CopyablePersistentTraits<v8::Function> > value(func);
+                  Nan::CopyablePersistentTraits<v8::Function> > value(cb);
   // PersistentCopyableFunction value(func);
   callbacks.push_back(value);
+}
+
+void Dispatcher::RemoveCallback(const v8::Local<v8::Function> &cb) {
+  for (size_t i=0; i < callbacks.size(); i++) {
+    if (callbacks[i] == cb) {
+      callbacks[i].Reset();
+      callbacks.erase(callbacks.begin() + i);
+      break;
+    }
+  }
 }
 
 event_t::event_t(const RdKafka::Event &event) {
@@ -254,12 +264,6 @@ size_t DeliveryReportDispatcher::Add(const DeliveryReport &e) {
   scoped_mutex_lock lock(async_lock);
   events.push_back(e);
   return events.size();
-}
-
-void DeliveryReportDispatcher::AddCallback(v8::Local<v8::Function> func) {
-  Nan::Persistent<v8::Function,
-                  Nan::CopyablePersistentTraits<v8::Function> > value(func);
-  callbacks.push_back(value);
 }
 
 void DeliveryReportDispatcher::Flush() {
@@ -482,11 +486,6 @@ void RebalanceDispatcher::Flush() {
   }
 }
 
-Rebalance::Rebalance(v8::Local<v8::Function> &cb) {
-  dispatcher.AddCallback(cb);
-}
-Rebalance::~Rebalance() {}
-
 void Rebalance::rebalance_cb(RdKafka::KafkaConsumer *consumer,
     RdKafka::ErrorCode err, std::vector<RdKafka::TopicPartition*> &partitions) {
   dispatcher.Add(rebalance_event_t(err, partitions));
@@ -534,11 +533,6 @@ void OffsetCommitDispatcher::Flush() {
     Dispatch(argc, argv);
   }
 }
-
-OffsetCommit::OffsetCommit(v8::Local<v8::Function> &cb) {
-  dispatcher.AddCallback(cb);
-}
-OffsetCommit::~OffsetCommit() {}
 
 void OffsetCommit::offset_commit_cb(RdKafka::ErrorCode err,
     std::vector<RdKafka::TopicPartition*> &offsets) {

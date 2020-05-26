@@ -33,7 +33,8 @@ class Dispatcher {
   Dispatcher();
   ~Dispatcher();
   void Dispatch(const int, v8::Local<v8::Value> []);
-  void AddCallback(v8::Local<v8::Function>);
+  void AddCallback(const v8::Local<v8::Function>&);
+  void RemoveCallback(const v8::Local<v8::Function>&);
   bool HasCallbacks();
   virtual void Flush() = 0;
   void Execute();
@@ -131,7 +132,6 @@ class DeliveryReportDispatcher : public Dispatcher {
   ~DeliveryReportDispatcher();
   void Flush();
   size_t Add(const DeliveryReport &);
-  void AddCallback(v8::Local<v8::Function>);
  protected:
   std::deque<DeliveryReport> events;
 };
@@ -219,9 +219,6 @@ class RebalanceDispatcher : public Dispatcher {
 
 class Rebalance : public RdKafka::RebalanceCb {
  public:
-  explicit Rebalance(v8::Local<v8::Function>&);
-  ~Rebalance();
-
   void rebalance_cb(RdKafka::KafkaConsumer *, RdKafka::ErrorCode,
     std::vector<RdKafka::TopicPartition*> &);
 
@@ -242,9 +239,6 @@ class OffsetCommitDispatcher : public Dispatcher {
 
 class OffsetCommit : public RdKafka::OffsetCommitCb {
  public:
-  explicit OffsetCommit(v8::Local<v8::Function>&);
-  ~OffsetCommit();
-
   void offset_commit_cb(RdKafka::ErrorCode, std::vector<RdKafka::TopicPartition*> &);  // NOLINT
 
   OffsetCommitDispatcher dispatcher;

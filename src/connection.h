@@ -66,6 +66,8 @@ class Connection : public Nan::ObjectWrap {
   virtual void ActivateDispatchers() = 0;
   virtual void DeactivateDispatchers() = 0;
 
+  virtual void ConfigureCallback(const std::string &string_key, const v8::Local<v8::Function> &cb, bool add);
+
  protected:
   Connection(Conf*, Conf*);
   ~Connection();
@@ -84,7 +86,7 @@ class Connection : public Nan::ObjectWrap {
 
   RdKafka::Handle* m_client;
 
-  static NAN_METHOD(NodeOnEvent);
+  static NAN_METHOD(NodeConfigureCallbacks);
   static NAN_METHOD(NodeGetMetadata);
   static NAN_METHOD(NodeQueryWatermarkOffsets);
   static NAN_METHOD(NodeOffsetsForTimes);

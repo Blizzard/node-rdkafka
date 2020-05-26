@@ -484,7 +484,7 @@ void KafkaConsumer::Init(v8::Local<v8::Object> exports) {
    * @sa NodeKafka::Connection
    */
 
-  Nan::SetPrototypeMethod(tpl, "onEvent", NodeOnEvent);
+  Nan::SetPrototypeMethod(tpl, "configureCallbacks", NodeConfigureCallbacks);
 
   /*
    * @brief Methods to do with establishing state
@@ -496,12 +496,6 @@ void KafkaConsumer::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(tpl, "queryWatermarkOffsets", NodeQueryWatermarkOffsets);  // NOLINT
   Nan::SetPrototypeMethod(tpl, "offsetsForTimes", NodeOffsetsForTimes);
   Nan::SetPrototypeMethod(tpl, "getWatermarkOffsets", NodeGetWatermarkOffsets);
-
-  /*
-   * Lifecycle events specifically designated for RdKafka::KafkaConsumer
-   *
-   * @sa RdKafka::KafkaConsumer
-   */
 
   /*
    * @brief Methods exposed to do with message retrieval

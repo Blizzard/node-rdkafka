@@ -81,19 +81,49 @@ Conf * Conf::create(RdKafka::Conf::ConfType type, v8::Local<v8::Object> object, 
           return NULL;
       }
     } else {
-      if (string_key.compare("rebalance_cb") == 0) {
-        v8::Local<v8::Function> cb = value.As<v8::Function>();
-        rdconf->m_rebalance_cb = new NodeKafka::Callbacks::Rebalance(cb);
-        rdconf->set(string_key, rdconf->m_rebalance_cb, errstr);
-      } else if (string_key.compare("offset_commit_cb") == 0) {
-        v8::Local<v8::Function> cb = value.As<v8::Function>();
-        rdconf->m_offset_commit_cb = new NodeKafka::Callbacks::OffsetCommit(cb);
-        rdconf->set(string_key, rdconf->m_offset_commit_cb, errstr);
+      v8::Local<v8::Function> cb = value.As<v8::Function>();
+      rdconf->ConfigureCallback(string_key, cb, true, errstr);
+      if (!errstr.empty()) {
+        delete rdconf;
+        return NULL;
+      }
+      rdconf->ConfigureCallback(string_key, cb, false, errstr);
+      if (!errstr.empty()) {
+        delete rdconf;
+        return NULL;
       }
     }
   }
 
   return rdconf;
+}
+
+void Conf::ConfigureCallback(const std::string &string_key, const v8::Local<v8::Function> &cb, bool add, std::string &errstr) {
+  if (string_key.compare("rebalance_cb") == 0) {
+    if (add) {
+      if (this->m_rebalance_cb == NULL) {
+        this->m_rebalance_cb = new NodeKafka::Callbacks::Rebalance();
+      }
+      this->m_rebalance_cb->dispatcher.AddCallback(cb);
+      this->set(string_key, this->m_rebalance_cb, errstr);
+    } else {
+      if (this->m_rebalance_cb != NULL) {
+        this->m_rebalance_cb->dispatcher.RemoveCallback(cb);
+      }
+    }
+  } else if (string_key.compare("offset_commit_cb") == 0) {
+    if (add) {
+      if (this->m_offset_commit_cb == NULL) {
+        this->m_offset_commit_cb = new NodeKafka::Callbacks::OffsetCommit();
+      }
+      this->m_offset_commit_cb->dispatcher.AddCallback(cb);
+      this->set(string_key, this->m_offset_commit_cb, errstr);
+    } else {
+      if (this->m_offset_commit_cb != NULL) {
+        this->m_offset_commit_cb->dispatcher.RemoveCallback(cb);
+      }
+    }
+  }
 }
 
 void Conf::listen() {
