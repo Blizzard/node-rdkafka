@@ -136,7 +136,7 @@ export interface ConsumerStream extends Readable {
 }
 
 type KafkaClientEvents = 'disconnected' | 'ready' | 'connection.failure' | 'event.error' | 'event.stats' | 'event.log' | 'event.event' | 'event.throttle';
-type KafkaConsumerEvents = 'data' | 'rebalance' | 'unsubscribed' | 'unsubscribe' | 'offset.commit' | KafkaClientEvents;
+type KafkaConsumerEvents = 'data' | 'rebalance' | 'rebalance.error' | 'subscribed' | 'unsubscribed' | 'unsubscribe' | 'offset.commit' | KafkaClientEvents;
 type KafkaProducerEvents = 'delivery-report' | KafkaClientEvents;
 
 type EventListener<K> =
@@ -155,7 +155,9 @@ type EventListener<K> =
 // domain events
     'data' extends K ? (arg: Message) => void :
     'rebalance' extends K ? (err: LibrdKafkaError, assignments: TopicPartition[]) => void :
+    'rebalance.error' extends K ? (err: Error) => void :
 // connectivity events
+    'subscribed' extends K ? (topics: SubscribeTopicList) => void :
     'unsubscribe' extends K ? () => void :
     'unsubscribed' extends K ? () => void :
 // offsets
