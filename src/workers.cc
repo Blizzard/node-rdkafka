@@ -433,38 +433,47 @@ void KafkaConsumerConsumeLoop::Execute(const ExecutionMessageBus& bus) {
   bool looping = true;
   while (consumer->IsConnected() && looping) {
     Baton b = consumer->Consume(m_timeout_ms);
-    switch (b.err()) {
-      case RdKafka::ERR__PARTITION_EOF:
-        // EOF means there are no more messages to read.
-        // We should wait a little bit for more messages to come in
-        // when in consume loop mode
-        // Randomise the wait time to avoid contention on different
-        // slow topics
-        #ifndef _WIN32
-        usleep(static_cast<int>(rand_r(&m_rand_seed) * 1000 * 1000 / RAND_MAX));
-        #else
-        _sleep(1000);
-        #endif
-        break;
-      case RdKafka::ERR__TIMED_OUT:
-      case RdKafka::ERR__TIMED_OUT_QUEUE:
-        // If it is timed out this could just mean there were no
-        // new messages fetched quickly enough. This isn't really
-        // an error that should kill us.
-        #ifndef _WIN32
-        usleep(500*1000);
-        #else
-        _sleep(500);
-        #endif
-        break;
-      case RdKafka::ERR_NO_ERROR:
-        bus.Send(b.data<RdKafka::Message*>());
-        break;
-      default:
-        // Unknown error. We need to break out of this
-        SetErrorBaton(b);
-        looping = false;
-        break;
+    if (b.err() == RdKafka::ERR_NO_ERROR) {
+      RdKafka::Message *message = b.data<RdKafka::Message*>();
+      switch (message->err()) {
+        case RdKafka::ERR__PARTITION_EOF:
+          delete message;
+          // EOF means there are no more messages to read.
+          // We should wait a little bit for more messages to come in
+          // when in consume loop mode
+          // Randomise the wait time to avoid contention on different
+          // slow topics
+          #ifndef _WIN32
+          usleep(static_cast<int>(rand_r(&m_rand_seed) * 1000 * 1000 / RAND_MAX));
+          #else
+          _sleep(1000);
+          #endif
+          break;
+        case RdKafka::ERR__TIMED_OUT:
+        case RdKafka::ERR__TIMED_OUT_QUEUE:
+          delete message;
+          // If it is timed out this could just mean there were no
+          // new messages fetched quickly enough. This isn't really
+          // an error that should kill us.
+          #ifndef _WIN32
+          usleep(500*1000);
+          #else
+          _sleep(500);
+          #endif
+          break;
+        case RdKafka::ERR_NO_ERROR:
+          bus.Send(message);
+          break;
+        default:
+          // Unknown error. We need to break out of this
+          SetErrorBaton(b);
+          looping = false;
+          break;
+        }
+    } else {
+      // Unknown error. We need to break out of this
+      SetErrorBaton(b);
+      looping = false;
     }
   }
 }
@@ -511,10 +520,12 @@ void KafkaConsumerConsumeLoop::HandleErrorCallback() {
 
 KafkaConsumerConsumeNum::KafkaConsumerConsumeNum(Nan::Callback *callback,
                                      KafkaConsumer* consumer,
+                                     const bool & errors_as_messages,
                                      const uint32_t & num_messages,
                                      const int & timeout_ms) :
   ErrorAwareWorker(callback),
   m_consumer(consumer),
+  m_errors_as_messages(errors_as_messages),
   m_num_messages(num_messages),
   m_timeout_ms(timeout_ms) {}
 
@@ -528,29 +539,45 @@ void KafkaConsumerConsumeNum::Execute() {
   while (m_messages.size() < max && looping) {
     // Get a message
     Baton b = m_consumer->Consume(timeout_ms);
-    switch (b.err()) {
-      case RdKafka::ERR__PARTITION_EOF:
-        // If partition EOF and have consumed messages, retry with timeout 1
-        // This allows getting ready messages, while not waiting for new ones
-        if (m_messages.size() > 0) {
-          timeout_ms = 1;
-        }
-        break;
-      case RdKafka::ERR__TIMED_OUT:
-      case RdKafka::ERR__TIMED_OUT_QUEUE:
-        // Break of the loop if we timed out
-        looping = false;
-        break;
-      case RdKafka::ERR_NO_ERROR:
-        m_messages.push_back(b.data<RdKafka::Message*>());
-        break;
-      default:
-        // Set the error for any other errors and break
-        if (m_messages.size() == 0) {
-          SetErrorBaton(b);
-        }
-        looping = false;
-        break;
+    if (b.err() == RdKafka::ERR_NO_ERROR) {
+      RdKafka::Message *message = b.data<RdKafka::Message*>();
+      RdKafka::ErrorCode errorCode = message->err();
+      switch (errorCode) {
+        case RdKafka::ERR__PARTITION_EOF:
+          // If partition EOF and have consumed messages, retry with timeout 1
+          // This allows getting ready messages, while not waiting for new ones
+          if (m_messages.size() > 0) {
+            timeout_ms = 1;
+          }
+          if (m_errors_as_messages) {
+            m_messages.push_back(message); // TODO: Convert error accordingly
+          } else {
+            delete message;
+          }
+          break;
+        case RdKafka::ERR__TIMED_OUT:
+        case RdKafka::ERR__TIMED_OUT_QUEUE:
+          // Break of the loop if we timed out
+          delete message;
+          looping = false;
+          break;
+        case RdKafka::ERR_NO_ERROR:
+          m_messages.push_back(b.data<RdKafka::Message*>());
+          break;
+        default:
+          // Set the error for any other errors and break
+          delete message;
+          if (m_messages.size() == 0) {
+            SetErrorBaton(Baton(errorCode));
+          }
+          looping = false;
+          break;
+      }
+    } else {
+      if (m_messages.size() == 0) {
+        SetErrorBaton(b);
+      }
+      looping = false;
     }
   }
 }
@@ -620,13 +647,15 @@ KafkaConsumerConsume::~KafkaConsumerConsume() {}
 void KafkaConsumerConsume::Execute() {
   Baton b = consumer->Consume(m_timeout_ms);
   if (b.err() != RdKafka::ERR_NO_ERROR) {
-    if (b.err() != RdKafka::ERR__TIMED_OUT ||
-      b.err() != RdKafka::ERR__PARTITION_EOF ||
-      b.err() != RdKafka::ERR__TIMED_OUT_QUEUE) {
-      SetErrorBaton(b);
-    }
+    SetErrorBaton(b);
   } else {
-    m_message = b.data<RdKafka::Message*>();
+    RdKafka::Message *message = b.data<RdKafka::Message*>();
+    RdKafka::ErrorCode errorCode = message->err();
+    if (errorCode == RdKafka::ERR_NO_ERROR) {
+      m_message = message;
+    } else {
+      delete message;
+    }
   }
 }
 
