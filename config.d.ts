@@ -1,4 +1,4 @@
-// ====== Generated from librdkafka 1.3.0 file CONFIGURATION.md ======
+// ====== Generated from librdkafka 1.4.2 file CONFIGURATION.md ======
 // Code that generated this is a derivative work of the code from Nam Nguyen
 // https://gist.github.com/ntgn81/066c2c8ec5b4238f85d1e9168a04e3fb
 
@@ -6,7 +6,7 @@ export interface GlobalConfig {
     /**
      * Indicates the builtin features for this build of librdkafka. An application can either query this value or attempt to set it with its list of required features to check for library support.
      *
-     * @default gzip, snappy, ssl, sasl, regex, lz4, sasl_gssapi, sasl_plain, sasl_scram, plugins, zstd, sasl_oauthbearer
+     * @default gzip, snappy, ssl, sasl, regex, lz4, sasl_gssapi, sasl_plain, sasl_scram, plugins, sasl_oauthbearer
      */
     "builtin.features"?: string;
 
@@ -254,6 +254,13 @@ export interface GlobalConfig {
     "log.thread.name"?: boolean;
 
     /**
+     * If enabled librdkafka will initialize the POSIX PRNG with srand(current_time.milliseconds) on the first invocation of rd_kafka_new(). If disabled the application must call srand() prior to calling rd_kafka_new().
+     *
+     * @default true
+     */
+    "enable.random.seed"?: boolean;
+
+    /**
      * Log broker disconnects. It might be useful to turn this off when interacting with 0.9 brokers with an aggressive `connection.max.idle.ms` value.
      *
      * @default true
@@ -388,7 +395,7 @@ export interface GlobalConfig {
     "ssl_certificate"?: any;
 
     /**
-     * File or directory path to CA certificate(s) for verifying the broker's key.
+     * File or directory path to CA certificate(s) for verifying the broker's key. Defaults: On Windows the system's CA certificates are automatically looked up in the Windows Root certificate store. On Mac OSX it is recommended to install openssl using Homebrew, to provide CA certificates. On Linux install the distribution's ca-certificates package. If OpenSSL is statically linked or `ssl.ca.location` is set to `probe` a list of standard paths will be probed and the first one found will be used as the default CA certificate location path. If OpenSSL is dynamically linked the OpenSSL library's default path will be used (see `OPENSSLDIR` in `openssl version -a`).
      */
     "ssl.ca.location"?: string;
 
@@ -489,7 +496,7 @@ export interface GlobalConfig {
     "sasl.password"?: string;
 
     /**
-     * SASL/OAUTHBEARER configuration. The format is implementation-dependent and must be parsed accordingly. The default unsecured token implementation (see https://tools.ietf.org/html/rfc7515#appendix-A.5) recognizes space-separated name=value pairs with valid names including principalClaimName, principal, scopeClaimName, scope, and lifeSeconds. The default value for principalClaimName is "sub", the default value for scopeClaimName is "scope", and the default value for lifeSeconds is 3600. The scope value is CSV format with the default value being no/empty scope. For example: `principalClaimName=azp principal=admin scopeClaimName=roles scope=role1,role2 lifeSeconds=600`. In addition, SASL extensions can be communicated to the broker via `extension_<extensionname>=value`. For example: `principal=admin extension_traceId=123`
+     * SASL/OAUTHBEARER configuration. The format is implementation-dependent and must be parsed accordingly. The default unsecured token implementation (see https://tools.ietf.org/html/rfc7515#appendix-A.5) recognizes space-separated name=value pairs with valid names including principalClaimName, principal, scopeClaimName, scope, and lifeSeconds. The default value for principalClaimName is "sub", the default value for scopeClaimName is "scope", and the default value for lifeSeconds is 3600. The scope value is CSV format with the default value being no/empty scope. For example: `principalClaimName=azp principal=admin scopeClaimName=roles scope=role1,role2 lifeSeconds=600`. In addition, SASL extensions can be communicated to the broker via `extension_NAME=value`. For example: `principal=admin extension_traceId=123`
      */
     "sasl.oauthbearer.config"?: string;
 
@@ -522,6 +529,18 @@ export interface GlobalConfig {
 }
 
 export interface ProducerGlobalConfig extends GlobalConfig {
+    /**
+     * Enables the transactional producer. The transactional.id is used to identify the same transactional producer instance across process restarts. It allows the producer to guarantee that transactions corresponding to earlier instances of the same producer have been finalized prior to starting any new transactions, and that any zombie instances are fenced off. If no transactional.id is provided, then the producer is limited to idempotent delivery (if enable.idempotence is set). Requires broker version >= 0.11.0.
+     */
+    "transactional.id"?: string;
+
+    /**
+     * The maximum amount of time in milliseconds that the transaction coordinator will wait for a transaction status update from the producer before proactively aborting the ongoing transaction. If this value is larger than the `transaction.max.timeout.ms` setting in the broker, the init_transactions() call will fail with ERR_INVALID_TRANSACTION_TIMEOUT. The transaction timeout automatically adjusts `message.timeout.ms` and `socket.timeout.ms`, unless explicitly configured in which case they must not exceed the transaction timeout (`socket.timeout.ms` must be at least 100ms lower than `transaction.timeout.ms`). This is also the default timeout value if no timeout (-1) is supplied to the transactional API methods.
+     *
+     * @default 60000
+     */
+    "transaction.timeout.ms"?: number;
+
     /**
      * When set to `true`, the producer will ensure that messages are successfully produced exactly once and in the original produce order. The following configuration properties are adjusted automatically (if not modified by the user) when idempotence is enabled: `max.in.flight.requests.per.connection=5` (must be less than or equal to 5), `retries=INT32_MAX` (must be greater than 0), `acks=all`, `queuing.strategy=fifo`. Producer instantation will fail if user-supplied configuration is incompatible.
      *
@@ -597,14 +616,14 @@ export interface ProducerGlobalConfig extends GlobalConfig {
      *
      * @default none
      */
-    "compression.codec"?: 'none' | 'gzip' | 'snappy' | 'lz4' | 'zstd';
+    "compression.codec"?: 'none' | 'gzip' | 'snappy' | 'lz4';
 
     /**
      * Alias for `compression.codec`: compression codec to use for compressing message sets. This is the default value for all topics, may be overridden by the topic configuration property `compression.codec`.
      *
      * @default none
      */
-    "compression.type"?: 'none' | 'gzip' | 'snappy' | 'lz4' | 'zstd';
+    "compression.type"?: 'none' | 'gzip' | 'snappy' | 'lz4';
 
     /**
      * Maximum number of messages batched in one MessageSet. The total MessageSet size is also limited by message.max.bytes.
@@ -636,6 +655,11 @@ export interface ConsumerGlobalConfig extends GlobalConfig {
      * Client group id string. All clients sharing the same group.id belong to the same group.
      */
     "group.id"?: string;
+
+    /**
+     * Enable static group membership. Static group members are able to leave and rejoin a group within the configured `session.timeout.ms` without prompting a group rebalance. This should be used in combination with a larger `session.timeout.ms` to avoid group rebalances caused by transient unavailability (e.g. process restarts). Requires broker version >= 2.3.0.
+     */
+    "group.instance.id"?: string;
 
     /**
      * Name of partition assignment strategy to use when elected group leader assigns partitions to group members.
@@ -830,14 +854,14 @@ export interface ProducerTopicConfig extends TopicConfig {
     "request.timeout.ms"?: number;
 
     /**
-     * Local message timeout. This value is only enforced locally and limits the time a produced message waits for successful delivery. A time of 0 is infinite. This is the maximum time librdkafka may use to deliver a message (including retries). Delivery error occurs when either the retry count or the message timeout are exceeded.
+     * Local message timeout. This value is only enforced locally and limits the time a produced message waits for successful delivery. A time of 0 is infinite. This is the maximum time librdkafka may use to deliver a message (including retries). Delivery error occurs when either the retry count or the message timeout are exceeded. The message timeout is automatically adjusted to `transaction.timeout.ms` if `transactional.id` is configured.
      *
      * @default 300000
      */
     "message.timeout.ms"?: number;
 
     /**
-     * Alias for `message.timeout.ms`: Local message timeout. This value is only enforced locally and limits the time a produced message waits for successful delivery. A time of 0 is infinite. This is the maximum time librdkafka may use to deliver a message (including retries). Delivery error occurs when either the retry count or the message timeout are exceeded.
+     * Alias for `message.timeout.ms`: Local message timeout. This value is only enforced locally and limits the time a produced message waits for successful delivery. A time of 0 is infinite. This is the maximum time librdkafka may use to deliver a message (including retries). Delivery error occurs when either the retry count or the message timeout are exceeded. The message timeout is automatically adjusted to `transaction.timeout.ms` if `transactional.id` is configured.
      *
      * @default 300000
      */
@@ -858,7 +882,7 @@ export interface ProducerTopicConfig extends TopicConfig {
     "produce.offset.report"?: boolean;
 
     /**
-     * Partitioner: `random` - random distribution, `consistent` - CRC32 hash of key (Empty and NULL keys are mapped to single partition), `consistent_random` - CRC32 hash of key (Empty and NULL keys are randomly partitioned), `murmur2` - Java Producer compatible Murmur2 hash of key (NULL keys are mapped to single partition), `murmur2_random` - Java Producer compatible Murmur2 hash of key (NULL keys are randomly partitioned. This is functionally equivalent to the default partitioner in the Java Producer.).
+     * Partitioner: `random` - random distribution, `consistent` - CRC32 hash of key (Empty and NULL keys are mapped to single partition), `consistent_random` - CRC32 hash of key (Empty and NULL keys are randomly partitioned), `murmur2` - Java Producer compatible Murmur2 hash of key (NULL keys are mapped to single partition), `murmur2_random` - Java Producer compatible Murmur2 hash of key (NULL keys are randomly partitioned. This is functionally equivalent to the default partitioner in the Java Producer.), `fnv1a` - FNV-1a hash of key (NULL keys are mapped to single partition), `fnv1a_random` - FNV-1a hash of key (NULL keys are randomly partitioned).
      *
      * @default consistent_random
      */
@@ -879,14 +903,14 @@ export interface ProducerTopicConfig extends TopicConfig {
      *
      * @default inherit
      */
-    "compression.codec"?: 'none' | 'gzip' | 'snappy' | 'lz4' | 'zstd' | 'inherit';
+    "compression.codec"?: 'none' | 'gzip' | 'snappy' | 'lz4' | 'inherit';
 
     /**
      * Alias for `compression.codec`: compression codec to use for compressing message sets. This is the default value for all topics, may be overridden by the topic configuration property `compression.codec`.
      *
      * @default none
      */
-    "compression.type"?: 'none' | 'gzip' | 'snappy' | 'lz4' | 'zstd';
+    "compression.type"?: 'none' | 'gzip' | 'snappy' | 'lz4';
 
     /**
      * Compression level parameter for algorithm selected by configuration property `compression.codec`. Higher values will result in better compression at the cost of more CPU usage. Usable range is algorithm-dependent: [0-9] for gzip; [0-12] for lz4; only 0 for snappy; -1 = codec-dependent default compression level.

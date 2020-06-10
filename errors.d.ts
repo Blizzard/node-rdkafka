@@ -1,4 +1,4 @@
-// ====== Generated from librdkafka 1.3.0 file src-cpp/rdkafkacpp.h ======
+// ====== Generated from librdkafka 1.4.2 file src-cpp/rdkafkacpp.h ======
 export const CODES: { ERRORS: {
   /* Internal errors to rdkafka: */
   /** Begin internal error codes (**-200**) */
@@ -20,9 +20,9 @@ export const CODES: { ERRORS: {
   /** Produced message timed out (**-192**) */
   ERR__MSG_TIMED_OUT: number,
   /** Reached the end of the topic+partition queue on
-   * the broker. Not really an error. 
-   * This event is disabled by default,
-   * see the `enable.partition.eof` configuration property (**-191**) */
+   *  the broker. Not really an error.
+   *  This event is disabled by default,
+   *  see the `enable.partition.eof` configuration property (**-191**) */
   ERR__PARTITION_EOF: number,
   /** Permanent: Partition does not exist in cluster (**-190**) */
   ERR__UNKNOWN_PARTITION: number,
@@ -114,6 +114,12 @@ export const CODES: { ERRORS: {
   ERR__MAX_POLL_EXCEEDED: number,
   /** Unknown broker (**-146**) */
   ERR__UNKNOWN_BROKER: number,
+  /** Functionality not configured (**-145**) */
+  ERR__NOT_CONFIGURED: number,
+  /** Instance has been fenced (**-144**) */
+  ERR__FENCED: number,
+  /** Application generated error (**-143**) */
+  ERR__APPLICATION: number,
   /** End internal error codes (**-100**) */
   ERR__END: number,
   /* Kafka broker errors: */
@@ -294,4 +300,7 @@ export const CODES: { ERRORS: {
   ERR_PREFERRED_LEADER_NOT_AVAILABLE: number,
   /** Consumer group has reached maximum size (**81**) */
   ERR_GROUP_MAX_SIZE_REACHED: number,
+  /** Static consumer fenced by other consumer with same
+  * group.instance.id (**82**) */
+  ERR_FENCED_INSTANCE_ID: number,
 }}
