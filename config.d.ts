@@ -6,7 +6,7 @@ export interface GlobalConfig {
     /**
      * Indicates the builtin features for this build of librdkafka. An application can either query this value or attempt to set it with its list of required features to check for library support.
      *
-     * @default gzip, snappy, ssl, sasl, regex, lz4, sasl_gssapi, sasl_plain, sasl_scram, plugins, sasl_oauthbearer
+     * @default gzip, snappy, ssl, sasl, regex, lz4, sasl_gssapi, sasl_plain, sasl_scram, plugins, zstd, sasl_oauthbearer
      */
     "builtin.features"?: string;
 
@@ -616,14 +616,14 @@ export interface ProducerGlobalConfig extends GlobalConfig {
      *
      * @default none
      */
-    "compression.codec"?: 'none' | 'gzip' | 'snappy' | 'lz4';
+    "compression.codec"?: 'none' | 'gzip' | 'snappy' | 'lz4' | 'zstd';
 
     /**
      * Alias for `compression.codec`: compression codec to use for compressing message sets. This is the default value for all topics, may be overridden by the topic configuration property `compression.codec`.
      *
      * @default none
      */
-    "compression.type"?: 'none' | 'gzip' | 'snappy' | 'lz4';
+    "compression.type"?: 'none' | 'gzip' | 'snappy' | 'lz4' | 'zstd';
 
     /**
      * Maximum number of messages batched in one MessageSet. The total MessageSet size is also limited by message.max.bytes.
@@ -903,14 +903,14 @@ export interface ProducerTopicConfig extends TopicConfig {
      *
      * @default inherit
      */
-    "compression.codec"?: 'none' | 'gzip' | 'snappy' | 'lz4' | 'inherit';
+    "compression.codec"?: 'none' | 'gzip' | 'snappy' | 'lz4' | 'zstd' | 'inherit';
 
     /**
      * Alias for `compression.codec`: compression codec to use for compressing message sets. This is the default value for all topics, may be overridden by the topic configuration property `compression.codec`.
      *
      * @default none
      */
-    "compression.type"?: 'none' | 'gzip' | 'snappy' | 'lz4';
+    "compression.type"?: 'none' | 'gzip' | 'snappy' | 'lz4' | 'zstd';
 
     /**
      * Compression level parameter for algorithm selected by configuration property `compression.codec`. Higher values will result in better compression at the cost of more CPU usage. Usable range is algorithm-dependent: [0-9] for gzip; [0-12] for lz4; only 0 for snappy; -1 = codec-dependent default compression level.
