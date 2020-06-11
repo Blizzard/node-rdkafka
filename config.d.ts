@@ -526,6 +526,13 @@ export interface GlobalConfig {
      * A rack identifier for this client. This can be any string value which indicates where this client is physically located. It corresponds with the broker config `broker.rack`.
      */
     "client.rack"?: string;
+
+    /**
+     * Enables or disables `event.*` emitting.
+     *
+     * @default true
+     */
+    "event_cb"?: boolean;
 }
 
 export interface ProducerGlobalConfig extends GlobalConfig {

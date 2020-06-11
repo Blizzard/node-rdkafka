@@ -103,11 +103,26 @@ function generateInterface(interfaceDef, configItems) {
   return `export interface ` + interfaceDef + ' {\n' + fields + '\n}';
 }
 
+function addSpecialGlobalProps(globalProps) {
+  globalProps.push({
+    "property": "event_cb",
+    "consumerOrProducer": "*",
+    "range": "",
+    "defaultValue": "true",
+    "importance": "low",
+    "description": "Enables or disables `event.*` emitting.",
+    "rawType": "boolean",
+    "type": "boolean"
+  });
+}
+
 function generateConfigDTS(file) {
   const configuration = readLibRDKafkaFile(file);
   const [globalStr, topicStr] = configuration.split('Topic configuration properties');
 
   const [globalProps, topicProps] = [extractConfigItems(globalStr), extractConfigItems(topicStr)];
+
+  addSpecialGlobalProps(globalProps);
 
   const [globalSharedProps, producerGlobalProps, consumerGlobalProps] = [
     globalProps.filter(i => i.consumerOrProducer === '*'),
