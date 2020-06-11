@@ -161,7 +161,7 @@ type EventListener<K> =
     'unsubscribe' extends K ? () => void :
     'unsubscribed' extends K ? () => void :
 // offsets
-    'offset.commit' extends K ? (error: Error, topicPartitions: TopicPartitionOffset[]) => void :
+    'offset.commit' extends K ? (error: LibrdKafkaError, topicPartitions: TopicPartitionOffset[]) => void :
 // ### Producer only
 // delivery
     'delivery-report' extends K ? (error: LibrdKafkaError, report: DeliveryReport) => void :
