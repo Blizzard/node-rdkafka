@@ -74,7 +74,7 @@ void ConstantsInit(v8::Local<v8::Object> exports) {
 }
 
 void Init(v8::Local<v8::Object> exports, v8::Local<v8::Value> m_, void* v_) {
-#if NODE_MAJOR_VERSION <= 8
+#if NODE_MAJOR_VERSION <= 9
   AtExit(RdKafkaCleanup);
 #else
   v8::Local<v8::Context> context = Nan::GetCurrentContext();
