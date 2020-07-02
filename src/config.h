@@ -32,6 +32,7 @@ class Conf : public RdKafka::Conf {
   void listen();
   void stop();
 
+  // NOLINTNEXTLINE(runtime/references)
   void ConfigureCallback(const std::string &string_key, const v8::Local<v8::Function> &cb, bool add, std::string &errstr);
  protected:
   NodeKafka::Callbacks::Rebalance * m_rebalance_cb = NULL;
