@@ -62,7 +62,8 @@ Using Alpine Linux? Check out the [docs](https://github.com/Blizzard/node-rdkafk
 Windows build **is not** compiled from `librdkafka` source but it is rather linked against appropriate version of static binary that gets downloaded from [librdkafka.redist NuGet package](https://www.nuget.org/packages/librdkafka.redist/) during installation.
 
 Requirements:
- * [node-gyp for Windows](https://github.com/nodejs/node-gyp#on-windows)  (the easies way to get it: `npm install --global --production windows-build-tools`, if your node version is 6.x or below, pleasse use `npm install --global --production windows-build-tools@3.1.0`)
+ * [node-gyp for Windows](https://github.com/nodejs/node-gyp#on-windows)  (the easies way to get it: `npm install --global --production windows-build-tools`.
+ * The setting of environment variable of `DOWNLOAD_BASE_URL_LIB_RDKAFKA` is optional. If you set it, the builder will download the library of `librdkafka` from `${DOWNLOAD_BASE_URL_LIB_RDKAFKA}librdkafka.redist.${librdkafka-version-from-package.json}.nupkg`.
 
 **Note:** I _still_ do not recommend using `node-rdkafka` in production on Windows. This feature was in high demand and is provided to help develop, but we do not test against Windows, and windows support may lag behind Linux/Mac support because those platforms are the ones used to develop this library. Contributors are welcome if any Windows issues are found :)
 
