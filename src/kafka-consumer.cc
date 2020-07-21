@@ -1066,14 +1066,23 @@ NAN_METHOD(KafkaConsumer::NodeConsumeLoop) {
   } else {
     timeout_ms = static_cast<int>(maybeTimeout.FromJust());
   }
+  int retry_read_ms;
+  Nan::Maybe<uint32_t> maybeSleep =
+    Nan::To<uint32_t>(info[1].As<v8::Number>());
+
+  if (maybeSleep.IsNothing()) {
+    retry_read_ms = 500;
+  } else {
+    retry_read_ms = static_cast<int>(maybeSleep.FromJust());
+  }
 
   KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
-  v8::Local<v8::Function> cb = info[1].As<v8::Function>();
+  v8::Local<v8::Function> cb = info[2].As<v8::Function>();
 
   Nan::Callback *callback = new Nan::Callback(cb);
   Nan::AsyncQueueWorker(
-    new Workers::KafkaConsumerConsumeLoop(callback, consumer, timeout_ms));
+    new Workers::KafkaConsumerConsumeLoop(callback, consumer, timeout_ms, retry_read_ms));
 
   info.GetReturnValue().Set(Nan::Null());
 }
