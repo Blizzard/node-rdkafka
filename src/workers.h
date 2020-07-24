@@ -288,7 +288,7 @@ class KafkaConsumerConsumeLoop : public MessageWorker {
   NodeKafka::KafkaConsumer * consumer;
   const int m_timeout_ms;
   unsigned int m_rand_seed;
-  const int m_retry_read_ms;
+  const int m_timeout_sleep_delay_ms;
 };
 
 class KafkaConsumerConsume : public ErrorAwareWorker {

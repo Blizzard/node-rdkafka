@@ -1044,16 +1044,16 @@ NAN_METHOD(KafkaConsumer::NodeResume) {
 NAN_METHOD(KafkaConsumer::NodeConsumeLoop) {
   Nan::HandleScope scope;
 
-  if (info.Length() < 2) {
+  if (info.Length() < 3) {
     // Just throw an exception
     return Nan::ThrowError("Invalid number of parameters");
   }
 
-  if (!info[0]->IsNumber()) {
-    return Nan::ThrowError("Need to specify a timeout");
+  if (!info[1]->IsNumber()) {
+    return Nan::ThrowError("Need to specify a sleep delay");
   }
 
-  if (!info[1]->IsFunction()) {
+  if (!info[2]->IsFunction()) {
     return Nan::ThrowError("Need to specify a callback");
   }
 
