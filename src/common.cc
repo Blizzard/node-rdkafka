@@ -476,6 +476,8 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Message *message,
   } else if (message->err() == RdKafka::ERR__PARTITION_EOF) {
     v8::Local<v8::Object> pack = Nan::New<v8::Object>();
 
+    Nan::Set(pack, Nan::New("event").ToLocalChecked(),
+      Nan::New<v8::String>("partition.eof").ToLocalChecked());
     Nan::Set(pack, Nan::New("message").ToLocalChecked(),
       Nan::New<v8::String>(RdKafka::err2str(message->err())).ToLocalChecked());
     Nan::Set(pack, Nan::New("code").ToLocalChecked(),
