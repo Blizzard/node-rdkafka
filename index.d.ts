@@ -229,6 +229,8 @@ export class KafkaConsumer extends Client<KafkaConsumerEvents> {
 
     setDefaultConsumeTimeout(timeoutMs: number): void;
 
+    setDefaultConsumeLoopTimeoutDelay(timeoutMs: number): void;
+
     subscribe(topics: SubscribeTopicList): this;
 
     subscription(): string[];

@@ -420,10 +420,12 @@ void KafkaConsumerDisconnect::HandleErrorCallback() {
 
 KafkaConsumerConsumeLoop::KafkaConsumerConsumeLoop(Nan::Callback *callback,
                                      KafkaConsumer* consumer,
-                                     const int & timeout_ms) :
+                                     const int & timeout_ms,
+                                     const int & timeout_sleep_delay_ms) :
   MessageWorker(callback),
   consumer(consumer),
   m_timeout_ms(timeout_ms),
+  m_timeout_sleep_delay_ms(timeout_sleep_delay_ms),
   m_rand_seed(time(NULL)) {}
 
 KafkaConsumerConsumeLoop::~KafkaConsumerConsumeLoop() {}
@@ -456,9 +458,9 @@ void KafkaConsumerConsumeLoop::Execute(const ExecutionMessageBus& bus) {
           // new messages fetched quickly enough. This isn't really
           // an error that should kill us.
           #ifndef _WIN32
-          usleep(500*1000);
+          usleep(m_timeout_sleep_delay_ms*1000);
           #else
-          _sleep(500);
+          _sleep(m_timeout_sleep_delay_ms);
           #endif
           break;
         case RdKafka::ERR_NO_ERROR:
