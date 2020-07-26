@@ -522,12 +522,10 @@ void KafkaConsumerConsumeLoop::HandleErrorCallback() {
 
 KafkaConsumerConsumeNum::KafkaConsumerConsumeNum(Nan::Callback *callback,
                                      KafkaConsumer* consumer,
-                                     const bool & errors_as_messages,
                                      const uint32_t & num_messages,
                                      const int & timeout_ms) :
   ErrorAwareWorker(callback),
   m_consumer(consumer),
-  m_errors_as_messages(errors_as_messages),
   m_num_messages(num_messages),
   m_timeout_ms(timeout_ms) {}
 
@@ -551,11 +549,9 @@ void KafkaConsumerConsumeNum::Execute() {
           if (m_messages.size() > 0) {
             timeout_ms = 1;
           }
-          if (m_errors_as_messages) {
-            m_messages.push_back(message); // TODO: Convert error accordingly
-          } else {
-            delete message;
-          }
+          // We will only go into this code path when `enable.partition.eof` is set to true
+          // In this case, consumer is also interested in EOF messages, so we return an EOF message
+          m_messages.push_back(message);
           break;
         case RdKafka::ERR__TIMED_OUT:
         case RdKafka::ERR__TIMED_OUT_QUEUE:

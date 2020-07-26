@@ -1110,27 +1110,12 @@ NAN_METHOD(KafkaConsumer::NodeConsume) {
     timeout_ms = static_cast<int>(maybeTimeout.FromJust());
   }
 
-  if (info[1]->IsBoolean()) {
-    if (info.Length() < 4)  {
-      return Nan::ThrowError("Invalid number of parameters");
-    }
-    if (!info[2]->IsNumber()) {
-      return Nan::ThrowError("Need to specify flag if errors should be read as messages");
-    }
-    if (!info[3]->IsFunction()) {
+  if (info[1]->IsNumber()) {
+    if (!info[2]->IsFunction()) {
       return Nan::ThrowError("Need to specify a callback");
     }
 
-    v8::Local<v8::Boolean> errorsAsMessagesBoolean = info[1].As<v8::Boolean>();
-    Nan::Maybe<bool> errorsAsMessagesMaybe = Nan::To<bool>(errorsAsMessagesBoolean);
-    bool errorsAsMessages;
-    if (errorsAsMessagesMaybe.IsNothing()) {
-      return Nan::ThrowError("Paramter must a boolean");
-    } else {
-      errorsAsMessages = errorsAsMessagesMaybe.FromJust();
-    }
-
-    v8::Local<v8::Number> numMessagesNumber = info[2].As<v8::Number>();
+    v8::Local<v8::Number> numMessagesNumber = info[1].As<v8::Number>();
     Nan::Maybe<uint32_t> numMessagesMaybe = Nan::To<uint32_t>(numMessagesNumber);  // NOLINT
 
     uint32_t numMessages;
@@ -1142,10 +1127,10 @@ NAN_METHOD(KafkaConsumer::NodeConsume) {
 
     KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
-    v8::Local<v8::Function> cb = info[3].As<v8::Function>();
+    v8::Local<v8::Function> cb = info[2].As<v8::Function>();
     Nan::Callback *callback = new Nan::Callback(cb);
     Nan::AsyncQueueWorker(
-      new Workers::KafkaConsumerConsumeNum(callback, consumer, errorsAsMessages, numMessages, timeout_ms));  // NOLINT
+      new Workers::KafkaConsumerConsumeNum(callback, consumer, numMessages, timeout_ms));  // NOLINT
 
   } else {
     if (!info[1]->IsFunction()) {

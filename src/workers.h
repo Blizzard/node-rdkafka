@@ -339,7 +339,7 @@ class KafkaConsumerSeek : public ErrorAwareWorker {
 class KafkaConsumerConsumeNum : public ErrorAwareWorker {
  public:
   KafkaConsumerConsumeNum(Nan::Callback*, NodeKafka::KafkaConsumer*,
-    const bool &, const uint32_t &, const int &);
+    const uint32_t &, const int &);
   ~KafkaConsumerConsumeNum();
 
   void Execute();
@@ -347,7 +347,6 @@ class KafkaConsumerConsumeNum : public ErrorAwareWorker {
   void HandleErrorCallback();
  private:
   NodeKafka::KafkaConsumer * m_consumer;
-  const bool m_errors_as_messages;
   const uint32_t m_num_messages;
   const int m_timeout_ms;
   std::vector<RdKafka::Message*> m_messages;
