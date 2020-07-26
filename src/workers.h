@@ -277,7 +277,7 @@ class KafkaConsumerDisconnect : public ErrorAwareWorker {
 class KafkaConsumerConsumeLoop : public MessageWorker {
  public:
   KafkaConsumerConsumeLoop(Nan::Callback*,
-    NodeKafka::KafkaConsumer*, const int &);
+    NodeKafka::KafkaConsumer*, const int &, const int &);
   ~KafkaConsumerConsumeLoop();
 
   void Execute(const ExecutionMessageBus&);
@@ -288,6 +288,7 @@ class KafkaConsumerConsumeLoop : public MessageWorker {
   NodeKafka::KafkaConsumer * consumer;
   const int m_timeout_ms;
   unsigned int m_rand_seed;
+  const int m_timeout_sleep_delay_ms;
 };
 
 class KafkaConsumerConsume : public ErrorAwareWorker {
