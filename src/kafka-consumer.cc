@@ -1049,6 +1049,10 @@ NAN_METHOD(KafkaConsumer::NodeConsumeLoop) {
     return Nan::ThrowError("Invalid number of parameters");
   }
 
+  if (!info[0]->IsNumber()) {
+    return Nan::ThrowError("Need to specify a timeout");
+  }
+
   if (!info[1]->IsNumber()) {
     return Nan::ThrowError("Need to specify a sleep delay");
   }
