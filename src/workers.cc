@@ -488,19 +488,20 @@ void KafkaConsumerConsumeLoop::HandleMessageCallback(RdKafka::Message* msg) {
 
   argv[0] = Nan::Null();
   switch (msg->err()) {
-    case RdKafka::ERR_PARTITION_EOF:
+    case RdKafka::ERR__PARTITION_EOF: {
       argv[1] = Nan::Null();
       v8::Local<v8::Object> eofEvent = Nan::New<v8::Object>();
 
       Nan::Set(eofEvent, Nan::New<v8::String>("topic").ToLocalChecked(),
-        Nan::New<v8::String>(message->topic_name()).ToLocalChecked());
+        Nan::New<v8::String>(msg->topic_name()).ToLocalChecked());
       Nan::Set(eofEvent, Nan::New<v8::String>("offset").ToLocalChecked(),
-        Nan::New<v8::Number>(message->offset()));
+        Nan::New<v8::Number>(msg->offset()));
       Nan::Set(eofEvent, Nan::New<v8::String>("partition").ToLocalChecked(),
-        Nan::New<v8::Number>(message->partition()));
+        Nan::New<v8::Number>(msg->partition()));
 
       argv[2] = eofEvent;
       break;
+    }
     default:
       argv[1] = Conversion::Message::ToV8Object(msg);
       argv[2] = Nan::Null();
@@ -635,7 +636,7 @@ void KafkaConsumerConsumeNum::HandleOKCallback() {
           
           // also store index at which position in the message array this event was emitted
           // this way, we can later emit it at the right point in time
-          Nan::Set(eofEvent, Nan::New<v8::String>("messageIndex"),
+          Nan::Set(eofEvent, Nan::New<v8::String>("messageIndex").ToLocalChecked(),
             Nan::New<v8::Number>(returnArrayIndex));
 
           Nan::Set(eofEventsArray, eofEventsArrayIndex, eofEvent);
