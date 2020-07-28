@@ -439,7 +439,7 @@ void KafkaConsumerConsumeLoop::Execute(const ExecutionMessageBus& bus) {
       RdKafka::Message *message = b.data<RdKafka::Message*>();
       switch (message->err()) {
         case RdKafka::ERR__PARTITION_EOF:
-          delete message;
+          bus.Send(message);
           // EOF means there are no more messages to read.
           // We should wait a little bit for more messages to come in
           // when in consume loop mode
@@ -483,11 +483,29 @@ void KafkaConsumerConsumeLoop::Execute(const ExecutionMessageBus& bus) {
 void KafkaConsumerConsumeLoop::HandleMessageCallback(RdKafka::Message* msg) {
   Nan::HandleScope scope;
 
-  const unsigned int argc = 2;
+  const unsigned int argc = 3;
   v8::Local<v8::Value> argv[argc];
 
   argv[0] = Nan::Null();
-  argv[1] = Conversion::Message::ToV8Object(msg);
+  switch (msg->err()) {
+    case RdKafka::ERR_PARTITION_EOF:
+      argv[1] = Nan::Null();
+      v8::Local<v8::Object> eofEvent = Nan::New<v8::Object>();
+
+      Nan::Set(eofEvent, Nan::New<v8::String>("topic").ToLocalChecked(),
+        Nan::New<v8::String>(message->topic_name()).ToLocalChecked());
+      Nan::Set(eofEvent, Nan::New<v8::String>("offset").ToLocalChecked(),
+        Nan::New<v8::Number>(message->offset()));
+      Nan::Set(eofEvent, Nan::New<v8::String>("partition").ToLocalChecked(),
+        Nan::New<v8::Number>(message->partition()));
+
+      argv[2] = eofEvent;
+      break;
+    default:
+      argv[1] = Conversion::Message::ToV8Object(msg);
+      argv[2] = Nan::Null();
+      break;
+  }
 
   // We can delete msg now
   delete msg;
