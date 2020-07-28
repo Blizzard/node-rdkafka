@@ -473,23 +473,6 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Message *message,
       Nan::New<v8::Number>(message->timestamp().timestamp));
 
     return pack;
-  } else if (message->err() == RdKafka::ERR__PARTITION_EOF) {
-    v8::Local<v8::Object> pack = Nan::New<v8::Object>();
-
-    Nan::Set(pack, Nan::New("event").ToLocalChecked(),
-      Nan::New<v8::String>("partition.eof").ToLocalChecked());
-    Nan::Set(pack, Nan::New("message").ToLocalChecked(),
-      Nan::New<v8::String>(RdKafka::err2str(message->err())).ToLocalChecked());
-    Nan::Set(pack, Nan::New("code").ToLocalChecked(),
-      Nan::New<v8::Number>(message->err()));
-    Nan::Set(pack, Nan::New<v8::String>("topic").ToLocalChecked(),
-      Nan::New<v8::String>(message->topic_name()).ToLocalChecked());
-    Nan::Set(pack, Nan::New<v8::String>("offset").ToLocalChecked(),
-      Nan::New<v8::Number>(message->offset()));
-    Nan::Set(pack, Nan::New<v8::String>("partition").ToLocalChecked(),
-      Nan::New<v8::Number>(message->partition()));
-
-    return pack;
   } else {
     return RdKafkaError(message->err());
   }

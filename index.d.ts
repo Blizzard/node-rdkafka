@@ -75,6 +75,8 @@ export interface TopicPartitionOffset extends TopicPartition{
 
 export type TopicPartitionTime = TopicPartitionOffset;
 
+export type EofEvent = TopicPartitionOffset;
+
 export type Assignment = TopicPartition | TopicPartitionOffset;
 
 export interface DeliveryReport extends TopicPartitionOffset {
@@ -136,7 +138,7 @@ export interface ConsumerStream extends Readable {
 }
 
 type KafkaClientEvents = 'disconnected' | 'ready' | 'connection.failure' | 'event.error' | 'event.stats' | 'event.log' | 'event.event' | 'event.throttle';
-type KafkaConsumerEvents = 'data' | 'rebalance' | 'rebalance.error' | 'subscribed' | 'unsubscribed' | 'unsubscribe' | 'offset.commit' | KafkaClientEvents;
+type KafkaConsumerEvents = 'data' | 'partition.eof' | 'rebalance' | 'rebalance.error' | 'subscribed' | 'unsubscribed' | 'unsubscribe' | 'offset.commit' | KafkaClientEvents;
 type KafkaProducerEvents = 'delivery-report' | KafkaClientEvents;
 
 type EventListener<K> =
@@ -154,6 +156,7 @@ type EventListener<K> =
 // ### Consumer only
 // domain events
     'data' extends K ? (arg: Message) => void :
+    'partition.eof' extends K ? (arg: EofEvent) => void :
     'rebalance' extends K ? (err: LibrdKafkaError, assignments: TopicPartition[]) => void :
     'rebalance.error' extends K ? (err: Error) => void :
 // connectivity events
