@@ -206,6 +206,77 @@ describe('Consumer/Producer', function() {
     });
   });
 
+  it('should emit partition.eof event when reaching end of partition', function(done) {
+    this.timeout(8000);
+    crypto.randomBytes(4096, function(ex, buffer) {
+      producer.setPollInterval(10);
+
+      producer.once('delivery-report', function(err, report) {
+        t.ifError(err);
+      });
+
+      consumer.subscribe([topic]);
+
+      var events = [];
+
+      consumer.once('data', function(msg) {
+        events.push("data");
+      });
+      
+      consumer.once('partition.eof', function(eof) {
+        events.push("partition.eof");
+      })
+
+      setTimeout(function() {
+        producer.produce(topic, null, buffer, null);
+      }, 500)
+      consumer.setDefaultConsumeTimeout(2000);
+      consumer.consume(1000, function(err, messages) {
+        t.ifError(err);
+        t.equal(messages.length, 1);
+        t.deepStrictEqual(events, ["data", "partition.eof"]);
+        done();
+      });
+    });
+  });
+
+  it('should emit partition.eof when already at end of partition', function(done) {
+    this.timeout(8000);
+    crypto.randomBytes(4096, function(ex, buffer) {
+      producer.setPollInterval(10);
+
+      producer.once('delivery-report', function(err, report) {
+        t.ifError(err);
+      });
+
+      consumer.subscribe([topic]);
+
+      var events = [];
+
+      consumer.once('data', function(msg) {
+        events.push("data");
+      });
+
+      var logEofEvent = function(eof) {
+        events.push("partition.eof");
+      }
+      
+      consumer.on('partition.eof', logEofEvent);
+
+      setTimeout(function() {
+        producer.produce(topic, null, buffer, null);
+      }, 2000)
+      consumer.setDefaultConsumeTimeout(3000);
+      consumer.consume(1000, function(err, messages) {
+        t.ifError(err);
+        t.equal(messages.length, 1);
+        t.deepStrictEqual(events, ["partition.eof", "data", "partition.eof"]);
+        consumer.off('partition.eof', logEofEvent);
+        done();
+      });
+    });
+  });
+
   it('should be able to produce and consume messages: consumeLoop', function(done) {
     var key = 'key';
 

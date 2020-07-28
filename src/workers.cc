@@ -566,7 +566,9 @@ void KafkaConsumerConsumeNum::Execute() {
         case RdKafka::ERR__PARTITION_EOF:
           // If partition EOF and have consumed messages, retry with timeout 1
           // This allows getting ready messages, while not waiting for new ones
-          timeout_ms = 1;
+          if (m_messages.size() > eof_event_count) {
+            timeout_ms = 1;
+          }
           
           // We will only go into this code path when `enable.partition.eof` is set to true
           // In this case, consumer is also interested in EOF messages, so we return an EOF message
