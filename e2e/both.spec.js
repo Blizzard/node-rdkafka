@@ -312,6 +312,60 @@ describe('Consumer/Producer', function() {
     });
   });
 
+  it('should emit \'partition.eof\' events in consumeLoop', function(done) {
+    this.timeout(7000);
+
+    crypto.randomBytes(4096, function(ex, buffer) {
+      producer.setPollInterval(10);
+
+      producer.once('delivery-report', function(err, report) {
+        t.ifError(err);
+      });
+
+
+      var events = [];
+      var offsets = [];
+
+      consumer.on('data', function(message) {
+        t.equal(message.topic, topic);
+        t.equal(message.partition, 0);
+        offsets.push(message.offset);
+        events.push('data');
+      });
+
+      consumer.on('partition.eof', function(eofEvent) {
+        t.equal(eofEvent.topic, topic);
+        t.equal(eofEvent.partition, 0);
+        offsets.push(eofEvent.offset);
+        events.push('partition.eof');
+      });
+
+      consumer.subscribe([topic]);
+      consumer.consume();
+
+      setTimeout(function() {
+        producer.produce(topic, null, buffer);
+      }, 2000);
+
+      setTimeout(function() {
+        producer.produce(topic, null, buffer);
+      }, 4000);
+
+      setTimeout(function() {
+        t.deepStrictEqual(events, ['partition.eof', 'data', 'partition.eof', 'data', 'partition.eof']);
+        var startOffset = offsets[0];
+        t.deepStrictEqual(offsets,
+          [ startOffset,
+            startOffset,
+            startOffset + 1,
+            startOffset + 1,
+            startOffset + 2 ]);
+        console.log(events, offsets);
+        done();
+      }, 6000);
+    })
+  })
+
   it('should be able to produce and consume messages with one header value as string: consumeLoop', function(done) {
     var headers = [
       { key: "value" }
