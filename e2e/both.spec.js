@@ -190,10 +190,13 @@ describe('Consumer/Producer', function() {
       var consumeNone = function() {
         // With no new messages, the consume should wait whole timeout
         var start = Date.now();
-        consumer.setDefaultConsumeTimeout(1000);
+        // Set the timeout to 2000ms to see that it actually waits the whole time
+        // (Needs to be higher than fetch.max.wait.ms which is 1000 here
+        // to ensure we don't only wait that long)
+        consumer.setDefaultConsumeTimeout(2000);
         consumer.consume(100000, function(err, messages) {
           t.ifError(err);
-          t.ok(Date.now() - start >= 998);
+          t.ok(Date.now() - start >= 1998);
           t.equal(messages.length, 0);
 
           // Produce one message to cause EOF with waiting message when consuming all
