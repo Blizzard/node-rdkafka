@@ -370,39 +370,14 @@ export interface GlobalConfig {
     "ssl.key.password"?: string;
 
     /**
-     * Client's private key string (PEM format) used for authentication.
-     */
-    "ssl.key.pem"?: string;
-
-    /**
-     * Client's private key as set by rd_kafka_conf_set_ssl_cert()
-     */
-    "ssl_key"?: any;
-
-    /**
      * Path to client's public key (PEM) used for authentication.
      */
     "ssl.certificate.location"?: string;
 
     /**
-     * Client's public key string (PEM format) used for authentication.
-     */
-    "ssl.certificate.pem"?: string;
-
-    /**
-     * Client's public key as set by rd_kafka_conf_set_ssl_cert()
-     */
-    "ssl_certificate"?: any;
-
-    /**
      * File or directory path to CA certificate(s) for verifying the broker's key. Defaults: On Windows the system's CA certificates are automatically looked up in the Windows Root certificate store. On Mac OSX it is recommended to install openssl using Homebrew, to provide CA certificates. On Linux install the distribution's ca-certificates package. If OpenSSL is statically linked or `ssl.ca.location` is set to `probe` a list of standard paths will be probed and the first one found will be used as the default CA certificate location path. If OpenSSL is dynamically linked the OpenSSL library's default path will be used (see `OPENSSLDIR` in `openssl version -a`).
      */
     "ssl.ca.location"?: string;
-
-    /**
-     * CA certificate as set by rd_kafka_conf_set_ssl_cert()
-     */
-    "ssl_ca"?: any;
 
     /**
      * Path to CRL for verifying broker's certificate validity.
