@@ -12,7 +12,7 @@ buildReleaseDir = 'Release'
 
 # alternative: 'https://api.nuget.org/v3-flatcontainer/librdkafka.redist/{}/librdkafka.redist.{}.nupkg'.format(librdkafkaVersion, librdkafkaVersion)
 env_dist = os.environ
-downloadBaseUrl = env_dist['DOWNLOAD_BASE_URL_LIB_RDKAFKA'] if 'DOWNLOAD_BASE_URL_LIB_RDKAFKA' in env_dist else 'https://globalcdn.nuget.org/packages/'
+downloadBaseUrl = env_dist['BUILD_LIBRDKAFKA'] if 'BUILD_LIBRDKAFKA' in env_dist else 'https://globalcdn.nuget.org/packages/'
 librdkafkaNugetUrl = downloadBaseUrl + 'librdkafka.redist.{}.nupkg'.format(librdkafkaVersion)
 print 'download librdkafka form ' + librdkafkaNugetUrl
 outputDir = 'librdkafka.redist'
