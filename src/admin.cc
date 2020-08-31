@@ -237,7 +237,7 @@ Baton AdminClient::CreateTopic(rd_kafka_NewTopic_t* topic, int timeout_ms) {
       const rd_kafka_resp_err_t errcode = rd_kafka_topic_result_error(terr);
       const char *errmsg = rd_kafka_topic_result_error_string(terr);
 
-      if (errcode != RD_KAFKA_EVENT_CREATETOPICS_RESULT) {
+      if (errcode != RD_KAFKA_RESP_ERR_NO_ERROR) {
         if (errmsg) {
           return Baton(static_cast<RdKafka::ErrorCode>(errcode), std::string(errmsg)); // NOLINT
         } else {
@@ -311,7 +311,7 @@ Baton AdminClient::DeleteTopic(rd_kafka_DeleteTopic_t* topic, int timeout_ms) {
       const rd_kafka_topic_result_t *terr = restopics[i];
       const rd_kafka_resp_err_t errcode = rd_kafka_topic_result_error(terr);
 
-      if (errcode != RD_KAFKA_EVENT_CREATETOPICS_RESULT) {
+      if (errcode != RD_KAFKA_RESP_ERR_NO_ERROR) {
         return Baton(static_cast<RdKafka::ErrorCode>(errcode));
       }
     }
