@@ -63,7 +63,6 @@ Windows build **is not** compiled from `librdkafka` source but it is rather link
 
 Requirements:
  * [node-gyp for Windows](https://github.com/nodejs/node-gyp#on-windows)  (the easies way to get it: `npm install --global --production windows-build-tools`.
- * The setting of environment variable of `BUILD_LIBRDKAFKA` is optional. If you set it, the builder will download the library of `librdkafka` from `${BUILD_LIBRDKAFKA}librdkafka.redist.${librdkafka-version-from-package.json}.nupkg`.
 
 **Note:** I _still_ do not recommend using `node-rdkafka` in production on Windows. This feature was in high demand and is provided to help develop, but we do not test against Windows, and windows support may lag behind Linux/Mac support because those platforms are the ones used to develop this library. Contributors are welcome if any Windows issues are found :)
 
