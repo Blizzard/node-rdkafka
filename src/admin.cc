@@ -385,7 +385,7 @@ Baton AdminClient::CreatePartitions(
       const rd_kafka_resp_err_t errcode = rd_kafka_topic_result_error(terr);
       const char *errmsg = rd_kafka_topic_result_error_string(terr);
 
-      if (errcode != RD_KAFKA_EVENT_CREATEPARTITIONS_RESULT) {
+      if (errcode != RD_KAFKA_RESP_ERR_NO_ERROR) {
         if (errmsg) {
           return Baton(static_cast<RdKafka::ErrorCode>(errcode), std::string(errmsg)); // NOLINT
         } else {
