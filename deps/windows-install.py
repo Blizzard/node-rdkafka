@@ -1,6 +1,7 @@
 librdkafkaVersion = ''
 # read librdkafka version from package.json
 import json
+import os
 with open('../package.json') as f:
     librdkafkaVersion = json.load(f)['librdkafka']
 librdkafkaWinSufix = '7' if librdkafkaVersion == '0.11.5' else '';
@@ -10,7 +11,10 @@ depsIncludeDir = '../deps/include'
 buildReleaseDir = 'Release'
 
 # alternative: 'https://api.nuget.org/v3-flatcontainer/librdkafka.redist/{}/librdkafka.redist.{}.nupkg'.format(librdkafkaVersion, librdkafkaVersion)
-librdkafkaNugetUrl = 'https://www.nuget.org/api/v2/package/librdkafka.redist/{}'.format(librdkafkaVersion)
+env_dist = os.environ
+downloadBaseUrl = env_dist['NODE_RDKAFKA_NUGET_BASE_URL'] if 'NODE_RDKAFKA_NUGET_BASE_URL' in env_dist else 'https://globalcdn.nuget.org/packages/'
+librdkafkaNugetUrl = downloadBaseUrl + 'librdkafka.redist.{}.nupkg'.format(librdkafkaVersion)
+print 'download librdkafka form ' + librdkafkaNugetUrl
 outputDir = 'librdkafka.redist'
 outputFile = outputDir + '.zip'
 dllPath = outputDir + '/runtimes/win{}-x64/native'.format(librdkafkaWinSufix)
