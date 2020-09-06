@@ -59,7 +59,7 @@ Using Alpine Linux? Check out the [docs](https://github.com/Blizzard/node-rdkafk
 
 ### Windows
 
-Windows build **is not** compiled from `librdkafka` source but it is rather linked against appropriate version of static binary that gets downloaded from [librdkafka.redist NuGet package](https://www.nuget.org/packages/librdkafka.redist/) during installation.
+Windows build **is not** compiled from `librdkafka` source but it is rather linked against the appropriate version of [NuGet librdkafka.redist](https://www.nuget.org/packages/librdkafka.redist/) static binary that gets downloaded from `https://globalcdn.nuget.org/packages/librdkafka.redist.1.4.2.nupkg` during installation. This download link can be changed using the environment variable `NODE_RDKAFKA_NUGET_BASE_URL` that defaults to `https://globalcdn.nuget.org/packages/` when it's no set.
 
 Requirements:
  * [node-gyp for Windows](https://github.com/nodejs/node-gyp#on-windows)  (the easies way to get it: `npm install --global --production windows-build-tools`, if your node version is 6.x or below, pleasse use `npm install --global --production windows-build-tools@3.1.0`)
