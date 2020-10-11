@@ -3,6 +3,7 @@
     # may be redefined in command line on configuration stage
     # "BUILD_LIBRDKAFKA%": "<!(echo ${BUILD_LIBRDKAFKA:-1})"
     "BUILD_LIBRDKAFKA%": "<!(node ./util/get-env.js BUILD_LIBRDKAFKA 1)",
+    "SASL": "<!(test -f /usr/include/sasl/sasl.h && echo y || echo n)"
   },
   "targets": [
     {
@@ -88,10 +89,22 @@
                       'OS=="linux"',
                       {
                         "libraries": [
-                          "../build/deps/librdkafka.so",
-                          "../build/deps/librdkafka++.so",
-                          "-Wl,-rpath='$$ORIGIN/../deps'",
+                          "../build/deps/librdkafka.a",
+                          "../build/deps/librdkafka++.a",
+                          "-lm",
+                          "-lz",
+                          "-lrt",
+                          "-ldl",
+                          "-lpthread"
                         ],
+                        'conditions': [
+                          [
+                            "SASL==\"y\"",
+                            {
+                              "libraries": [ "-lsasl2" ]
+                            }
+                          ]
+                        ]
                       }
                     ],
                     [
