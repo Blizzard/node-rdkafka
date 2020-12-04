@@ -360,7 +360,6 @@ describe('Consumer/Producer', function() {
             startOffset + 1,
             startOffset + 1,
             startOffset + 2 ]);
-        console.log(events, offsets);
         done();
       }, 6000);
     })
