@@ -435,38 +435,47 @@ void KafkaConsumerConsumeLoop::Execute(const ExecutionMessageBus& bus) {
   bool looping = true;
   while (consumer->IsConnected() && looping) {
     Baton b = consumer->Consume(m_timeout_ms);
-    switch (b.err()) {
-      case RdKafka::ERR__PARTITION_EOF:
-        // EOF means there are no more messages to read.
-        // We should wait a little bit for more messages to come in
-        // when in consume loop mode
-        // Randomise the wait time to avoid contention on different
-        // slow topics
-        #ifndef _WIN32
-        usleep(static_cast<int>(rand_r(&m_rand_seed) * 1000 * 1000 / RAND_MAX));
-        #else
-        _sleep(1000);
-        #endif
-        break;
-      case RdKafka::ERR__TIMED_OUT:
-      case RdKafka::ERR__TIMED_OUT_QUEUE:
-        // If it is timed out this could just mean there were no
-        // new messages fetched quickly enough. This isn't really
-        // an error that should kill us.
-        #ifndef _WIN32
-        usleep(m_timeout_sleep_delay_ms*1000);
-        #else
-        _sleep(m_timeout_sleep_delay_ms);
-        #endif
-        break;
-      case RdKafka::ERR_NO_ERROR:
-        bus.Send(b.data<RdKafka::Message*>());
-        break;
-      default:
-        // Unknown error. We need to break out of this
-        SetErrorBaton(b);
-        looping = false;
-        break;
+    if (b.err() == RdKafka::ERR_NO_ERROR) {
+      RdKafka::Message *message = b.data<RdKafka::Message*>();
+      switch (message->err()) {
+        case RdKafka::ERR__PARTITION_EOF:
+          bus.Send(message);
+          // EOF means there are no more messages to read.
+          // We should wait a little bit for more messages to come in
+          // when in consume loop mode
+          // Randomise the wait time to avoid contention on different
+          // slow topics
+          #ifndef _WIN32
+          usleep(static_cast<int>(rand_r(&m_rand_seed) * 1000 * 1000 / RAND_MAX));
+          #else
+          _sleep(1000);
+          #endif
+          break;
+        case RdKafka::ERR__TIMED_OUT:
+        case RdKafka::ERR__TIMED_OUT_QUEUE:
+          delete message;
+          // If it is timed out this could just mean there were no
+          // new messages fetched quickly enough. This isn't really
+          // an error that should kill us.
+          #ifndef _WIN32
+          usleep(m_timeout_sleep_delay_ms*1000);
+          #else
+          _sleep(m_timeout_sleep_delay_ms);
+          #endif
+          break;
+        case RdKafka::ERR_NO_ERROR:
+          bus.Send(message);
+          break;
+        default:
+          // Unknown error. We need to break out of this
+          SetErrorBaton(b);
+          looping = false;
+          break;
+        }
+    } else {
+      // Unknown error. We need to break out of this
+      SetErrorBaton(b);
+      looping = false;
     }
   }
 }
@@ -474,11 +483,30 @@ void KafkaConsumerConsumeLoop::Execute(const ExecutionMessageBus& bus) {
 void KafkaConsumerConsumeLoop::HandleMessageCallback(RdKafka::Message* msg) {
   Nan::HandleScope scope;
 
-  const unsigned int argc = 2;
+  const unsigned int argc = 3;
   v8::Local<v8::Value> argv[argc];
 
   argv[0] = Nan::Null();
-  argv[1] = Conversion::Message::ToV8Object(msg);
+  switch (msg->err()) {
+    case RdKafka::ERR__PARTITION_EOF: {
+      argv[1] = Nan::Null();
+      v8::Local<v8::Object> eofEvent = Nan::New<v8::Object>();
+
+      Nan::Set(eofEvent, Nan::New<v8::String>("topic").ToLocalChecked(),
+        Nan::New<v8::String>(msg->topic_name()).ToLocalChecked());
+      Nan::Set(eofEvent, Nan::New<v8::String>("offset").ToLocalChecked(),
+        Nan::New<v8::Number>(msg->offset()));
+      Nan::Set(eofEvent, Nan::New<v8::String>("partition").ToLocalChecked(),
+        Nan::New<v8::Number>(msg->partition()));
+
+      argv[2] = eofEvent;
+      break;
+    }
+    default:
+      argv[1] = Conversion::Message::ToV8Object(msg);
+      argv[2] = Nan::Null();
+      break;
+  }
 
   // We can delete msg now
   delete msg;
@@ -526,58 +554,102 @@ void KafkaConsumerConsumeNum::Execute() {
   std::size_t max = static_cast<std::size_t>(m_num_messages);
   bool looping = true;
   int timeout_ms = m_timeout_ms;
+  std::size_t eof_event_count = 0;
 
-  while (m_messages.size() < max && looping) {
+  while (m_messages.size() - eof_event_count < max && looping) {
     // Get a message
     Baton b = m_consumer->Consume(timeout_ms);
-    switch (b.err()) {
-      case RdKafka::ERR__PARTITION_EOF:
-        // If partition EOF and have consumed messages, retry with timeout 1
-        // This allows getting ready messages, while not waiting for new ones
-        if (m_messages.size() > 0) {
-          timeout_ms = 1;
-        }
-        break;
-      case RdKafka::ERR__TIMED_OUT:
-      case RdKafka::ERR__TIMED_OUT_QUEUE:
-        // Break of the loop if we timed out
-        looping = false;
-        break;
-      case RdKafka::ERR_NO_ERROR:
-        m_messages.push_back(b.data<RdKafka::Message*>());
-        break;
-      default:
-        // Set the error for any other errors and break
-        if (m_messages.size() == 0) {
-          SetErrorBaton(b);
-        }
-        looping = false;
-        break;
+    if (b.err() == RdKafka::ERR_NO_ERROR) {
+      RdKafka::Message *message = b.data<RdKafka::Message*>();
+      RdKafka::ErrorCode errorCode = message->err();
+      switch (errorCode) {
+        case RdKafka::ERR__PARTITION_EOF:
+          // If partition EOF and have consumed messages, retry with timeout 1
+          // This allows getting ready messages, while not waiting for new ones
+          if (m_messages.size() > eof_event_count) {
+            timeout_ms = 1;
+          }
+          
+          // We will only go into this code path when `enable.partition.eof` is set to true
+          // In this case, consumer is also interested in EOF messages, so we return an EOF message
+          m_messages.push_back(message);
+          eof_event_count += 1;
+          break;
+        case RdKafka::ERR__TIMED_OUT:
+        case RdKafka::ERR__TIMED_OUT_QUEUE:
+          // Break of the loop if we timed out
+          delete message;
+          looping = false;
+          break;
+        case RdKafka::ERR_NO_ERROR:
+          m_messages.push_back(b.data<RdKafka::Message*>());
+          break;
+        default:
+          // Set the error for any other errors and break
+          delete message;
+          if (m_messages.size() == 0) {
+            SetErrorBaton(Baton(errorCode));
+          }
+          looping = false;
+          break;
+      }
+    } else {
+      if (m_messages.size() == 0) {
+        SetErrorBaton(b);
+      }
+      looping = false;
     }
   }
 }
 
 void KafkaConsumerConsumeNum::HandleOKCallback() {
   Nan::HandleScope scope;
-  const unsigned int argc = 2;
+  const unsigned int argc = 3;
   v8::Local<v8::Value> argv[argc];
   argv[0] = Nan::Null();
 
   v8::Local<v8::Array> returnArray = Nan::New<v8::Array>();
+  v8::Local<v8::Array> eofEventsArray = Nan::New<v8::Array>();
 
   if (m_messages.size() > 0) {
-    int i = -1;
+    int returnArrayIndex = -1;
+    int eofEventsArrayIndex = -1;
     for (std::vector<RdKafka::Message*>::iterator it = m_messages.begin();
         it != m_messages.end(); ++it) {
-      i++;
       RdKafka::Message* message = *it;
-      Nan::Set(returnArray, i, Conversion::Message::ToV8Object(message));
+      
+      switch (message->err()) {
+        case RdKafka::ERR_NO_ERROR:
+          ++returnArrayIndex;
+          Nan::Set(returnArray, returnArrayIndex, Conversion::Message::ToV8Object(message));
+          break;
+        case RdKafka::ERR__PARTITION_EOF:
+          ++eofEventsArrayIndex;
 
+          // create EOF event
+          v8::Local<v8::Object> eofEvent = Nan::New<v8::Object>();
+
+          Nan::Set(eofEvent, Nan::New<v8::String>("topic").ToLocalChecked(),
+            Nan::New<v8::String>(message->topic_name()).ToLocalChecked());
+          Nan::Set(eofEvent, Nan::New<v8::String>("offset").ToLocalChecked(),
+            Nan::New<v8::Number>(message->offset()));
+          Nan::Set(eofEvent, Nan::New<v8::String>("partition").ToLocalChecked(),
+            Nan::New<v8::Number>(message->partition()));
+          
+          // also store index at which position in the message array this event was emitted
+          // this way, we can later emit it at the right point in time
+          Nan::Set(eofEvent, Nan::New<v8::String>("messageIndex").ToLocalChecked(),
+            Nan::New<v8::Number>(returnArrayIndex));
+
+          Nan::Set(eofEventsArray, eofEventsArrayIndex, eofEvent);
+      }
+      
       delete message;
     }
   }
 
   argv[1] = returnArray;
+  argv[2] = eofEventsArray;
 
   callback->Call(argc, argv);
 }
@@ -622,13 +694,15 @@ KafkaConsumerConsume::~KafkaConsumerConsume() {}
 void KafkaConsumerConsume::Execute() {
   Baton b = consumer->Consume(m_timeout_ms);
   if (b.err() != RdKafka::ERR_NO_ERROR) {
-    if (b.err() != RdKafka::ERR__TIMED_OUT ||
-      b.err() != RdKafka::ERR__PARTITION_EOF ||
-      b.err() != RdKafka::ERR__TIMED_OUT_QUEUE) {
-      SetErrorBaton(b);
-    }
+    SetErrorBaton(b);
   } else {
-    m_message = b.data<RdKafka::Message*>();
+    RdKafka::Message *message = b.data<RdKafka::Message*>();
+    RdKafka::ErrorCode errorCode = message->err();
+    if (errorCode == RdKafka::ERR_NO_ERROR) {
+      m_message = message;
+    } else {
+      delete message;
+    }
   }
 }
 

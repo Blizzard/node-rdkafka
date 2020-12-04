@@ -503,6 +503,7 @@ The following table lists events for this API.
 |Event|Description|
 |-------|----------|
 |`data` | When using the Standard API consumed messages are emitted in this event. |
+|`partition.eof` | When using Standard API and the configuration option `enable.partition.eof` is set, `partition.eof` events are emitted in this event. The event contains `topic`, `partition` and `offset` properties. |
 |`disconnected` | The `disconnected` event is emitted when the broker disconnects. <br><br>This event is only emitted when `.disconnect` is called. The wrapper will always try to reconnect otherwise. |
 |`ready` | The `ready` event is emitted when the `Consumer` is ready to read messages. |
 |`event` | The `event` event is emitted when `librdkafka` reports an event (if you opted in via the `event_cb` option).|
