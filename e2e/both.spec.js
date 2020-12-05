@@ -257,11 +257,9 @@ describe('Consumer/Producer', function() {
         events.push("data");
       });
 
-      var logEofEvent = function(eof) {
+      consumer.on('partition.eof', function(eof) {
         events.push("partition.eof");
-      }
-      
-      consumer.on('partition.eof', logEofEvent);
+      });
 
       setTimeout(function() {
         producer.produce(topic, null, buffer, null);
@@ -271,7 +269,6 @@ describe('Consumer/Producer', function() {
         t.ifError(err);
         t.equal(messages.length, 1);
         t.deepStrictEqual(events, ["partition.eof", "data", "partition.eof"]);
-        consumer.off('partition.eof', logEofEvent);
         done();
       });
     });
