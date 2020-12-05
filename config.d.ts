@@ -1,4 +1,4 @@
-// ====== Generated from librdkafka 1.4.2 file CONFIGURATION.md ======
+// ====== Generated from librdkafka 1.5.2 file CONFIGURATION.md ======
 // Code that generated this is a derivative work of the code from Nam Nguyen
 // https://gist.github.com/ntgn81/066c2c8ec5b4238f85d1e9168a04e3fb
 
@@ -103,6 +103,13 @@ export interface GlobalConfig {
      * @default true
      */
     "topic.metadata.refresh.sparse"?: boolean;
+
+    /**
+     * Apache Kafka topic creation is asynchronous and it takes some time for a new topic to propagate throughout the cluster to all brokers. If a client requests topic metadata after manual topic creation but before the topic has been fully propagated to the broker the client is requesting metadata from, the topic will seem to be non-existent and the client will mark the topic as such, failing queued produced messages with `ERR__UNKNOWN_TOPIC`. This setting delays marking a topic as non-existent until the configured propagation max time has passed. The maximum propagation time is calculated from the time the topic is first referenced in the client, e.g., on produce().
+     *
+     * @default 30000
+     */
+    "topic.metadata.propagation.max.ms"?: number;
 
     /**
      * Topic blacklist, a comma-separated list of regular expressions for matching topic names that should be ignored in broker metadata information as if the topics did not exist.
@@ -579,28 +586,28 @@ export interface ProducerGlobalConfig extends GlobalConfig {
     /**
      * Delay in milliseconds to wait for messages in the producer queue to accumulate before constructing message batches (MessageSets) to transmit to brokers. A higher value allows larger and more effective (less overhead, improved compression) batches of messages to accumulate at the expense of increased message delivery latency.
      *
-     * @default 0.5
+     * @default 5
      */
     "queue.buffering.max.ms"?: any;
 
     /**
      * Alias for `queue.buffering.max.ms`: Delay in milliseconds to wait for messages in the producer queue to accumulate before constructing message batches (MessageSets) to transmit to brokers. A higher value allows larger and more effective (less overhead, improved compression) batches of messages to accumulate at the expense of increased message delivery latency.
      *
-     * @default 0.5
+     * @default 5
      */
     "linger.ms"?: any;
 
     /**
      * How many times to retry sending a failing Message. **Note:** retrying may cause reordering unless `enable.idempotence` is set to true.
      *
-     * @default 2
+     * @default 2147483647
      */
     "message.send.max.retries"?: number;
 
     /**
      * Alias for `message.send.max.retries`: How many times to retry sending a failing Message. **Note:** retrying may cause reordering unless `enable.idempotence` is set to true.
      *
-     * @default 2
+     * @default 2147483647
      */
     "retries"?: number;
 
@@ -633,11 +640,18 @@ export interface ProducerGlobalConfig extends GlobalConfig {
     "compression.type"?: 'none' | 'gzip' | 'snappy' | 'lz4' | 'zstd';
 
     /**
-     * Maximum number of messages batched in one MessageSet. The total MessageSet size is also limited by message.max.bytes.
+     * Maximum number of messages batched in one MessageSet. The total MessageSet size is also limited by batch.size and message.max.bytes.
      *
      * @default 10000
      */
     "batch.num.messages"?: number;
+
+    /**
+     * Maximum size (in bytes) of all messages batched in one MessageSet, including protocol framing overhead. This limit is applied after the first message has been added to the batch, regardless of the first message's size, this is to ensure that messages that exceed batch.size are produced. The total MessageSet size is also limited by batch.num.messages and message.max.bytes.
+     *
+     * @default 1000000
+     */
+    "batch.size"?: number;
 
     /**
      * Only provide delivery reports for failed messages.
@@ -739,16 +753,16 @@ export interface ConsumerGlobalConfig extends GlobalConfig {
     "queued.min.messages"?: number;
 
     /**
-     * Maximum number of kilobytes per topic+partition in the local consumer queue. This value may be overshot by fetch.message.max.bytes. This property has higher priority than queued.min.messages.
+     * Maximum number of kilobytes of queued pre-fetched messages in the local consumer queue. If using the high-level consumer this setting applies to the single consumer queue, regardless of the number of partitions. When using the legacy simple consumer or when separate partition queues are used this setting applies per partition. This value may be overshot by fetch.message.max.bytes. This property has higher priority than queued.min.messages.
      *
-     * @default 1048576
+     * @default 65536
      */
     "queued.max.messages.kbytes"?: number;
 
     /**
-     * Maximum time the broker may wait to fill the response with fetch.min.bytes.
+     * Maximum time the broker may wait to fill the Fetch response with fetch.min.bytes of messages.
      *
-     * @default 100
+     * @default 500
      */
     "fetch.wait.max.ms"?: number;
 
@@ -829,6 +843,13 @@ export interface ConsumerGlobalConfig extends GlobalConfig {
      * @default false
      */
     "check.crcs"?: boolean;
+
+    /**
+     * Allow automatic topic creation on the broker when subscribing to or assigning non-existent topics. The broker must also be configured with `auto.create.topics.enable=true` for this configuraiton to take effect. Note: The default value (false) is different from the Java consumer (true). Requires broker version >= 0.11.0.0, for older broker versions only the broker configuration applies.
+     *
+     * @default false
+     */
+    "allow.auto.create.topics"?: boolean;
 }
 
 export interface TopicConfig {
@@ -856,7 +877,7 @@ export interface ProducerTopicConfig extends TopicConfig {
     /**
      * The ack timeout of the producer request in milliseconds. This value is only enforced by the broker and relies on `request.required.acks` being != 0.
      *
-     * @default 5000
+     * @default 30000
      */
     "request.timeout.ms"?: number;
 

@@ -1,4 +1,4 @@
-// ====== Generated from librdkafka 1.4.2 file src-cpp/rdkafkacpp.h ======
+// ====== Generated from librdkafka 1.5.2 file src-cpp/rdkafkacpp.h ======
 export const CODES: { ERRORS: {
   /* Internal errors to rdkafka: */
   /** Begin internal error codes (**-200**) */
@@ -303,4 +303,16 @@ export const CODES: { ERRORS: {
   /** Static consumer fenced by other consumer with same
   * group.instance.id (**82**) */
   ERR_FENCED_INSTANCE_ID: number,
+  /** Eligible partition leaders are not available (**83**) */
+  ERR_ELIGIBLE_LEADERS_NOT_AVAILABLE: number,
+  /** Leader election not needed for topic partition (**84**) */
+  ERR_ELECTION_NOT_NEEDED: number,
+  /** No partition reassignment is in progress (**85**) */
+  ERR_NO_REASSIGNMENT_IN_PROGRESS: number,
+  /** Deleting offsets of a topic while the consumer group is subscribed to it (**86**) */
+  ERR_GROUP_SUBSCRIBED_TO_TOPIC: number,
+  /** Broker failed to validate record (**87**) */
+  ERR_INVALID_RECORD: number,
+  /** There are unstable offsets that need to be cleared (**88**) */
+  ERR_UNSTABLE_OFFSET_COMMIT: number,
 }}
