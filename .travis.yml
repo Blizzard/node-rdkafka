@@ -13,14 +13,14 @@ node_js:
 sudo: required
 services: docker
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_BUILD_STAGE_NAME" =~ Test.* ]]; then ./run_docker.sh; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_BUILD_STAGE_NAME" =~ [tT]est.* ]]; then ./run_docker.sh; fi
   # - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install openssl; fi
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then ./win_install.bat; fi
 install:
-  - if [[ "$TRAVIS_BUILD_STAGE_NAME" =~ Test.* ]]; then npm install; fi
+  - if [[ "$TRAVIS_BUILD_STAGE_NAME" =~ [tT]est.* ]]; then npm install; fi
 
 script:
-  - if [[ "$TRAVIS_BUILD_STAGE_NAME" =~ Test.* ]]; then make lint && make test && make check; else echo $TRAVIS_BUILD_STAGE_NAME; fi
+  - if [[ "$TRAVIS_BUILD_STAGE_NAME" =~ [tT]est.* ]]; then make lint && make test && make check; else echo $TRAVIS_BUILD_STAGE_NAME; fi
 
 jobs:
   include:
