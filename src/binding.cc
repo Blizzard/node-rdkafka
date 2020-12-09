@@ -73,7 +73,7 @@ void ConstantsInit(v8::Local<v8::Object> exports) {
     Nan::GetFunction(Nan::New<v8::FunctionTemplate>(NodeRdKafkaBuildInFeatures)).ToLocalChecked());  // NOLINT
 }
 
-void Init(v8::Local<v8::Object> exports, v8::Local<v8::Context> context/*, v8::Local<v8::Value> m_, void* v_*/) {
+void Init(v8::Local<v8::Object> exports, v8::Local<v8::Context> context) {
 #if NODE_MAJOR_VERSION <= 9 || (NODE_MAJOR_VERSION == 10 && NODE_MINOR_VERSION <= 15)
   AtExit(RdKafkaCleanup);
 #else
@@ -94,12 +94,12 @@ void Init(v8::Local<v8::Object> exports, v8::Local<v8::Context> context/*, v8::L
 }
 
 #if (NODE_MAJOR_VERSION >= 10 && NODE_MINOR_VERSION >= 7) || NODE_MAJOR_VERSION >= 11
-  // Initialize this addon to be context-aware
-  #define NODE_GYP_MODULE_NAME kafka // the default name is target_name "node-librdkafka", but the hyphen breaks macro
+  // Initialize this module with proper Worker-compatible context
+  #define NODE_GYP_MODULE_NAME kafka // Default value is target_name "node-librdkafka", but the hyphen breaks macro
   NODE_MODULE_INIT(/* exports, module, context */) {
     Init(exports, context);
   }
 #else
-  // For backwards compatibility
+  // Initialize this module with legacy context for backwards compatibility
   NODE_MODULE(kafka, Init);
 #endif
