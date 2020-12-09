@@ -73,11 +73,13 @@ void ConstantsInit(v8::Local<v8::Object> exports) {
     Nan::GetFunction(Nan::New<v8::FunctionTemplate>(NodeRdKafkaBuildInFeatures)).ToLocalChecked());  // NOLINT
 }
 
-void Init(v8::Local<v8::Object> exports, v8::Local<v8::Value> m_, void* v_) {
+void Init(v8::Local<v8::Object> exports, v8::Local<v8::Context> context/*, v8::Local<v8::Value> m_, void* v_*/) {
 #if NODE_MAJOR_VERSION <= 9 || (NODE_MAJOR_VERSION == 10 && NODE_MINOR_VERSION <= 15)
   AtExit(RdKafkaCleanup);
 #else
-  v8::Local<v8::Context> context = Nan::GetCurrentContext();
+  #if !((NODE_MAJOR_VERSION >= 10 && NODE_MINOR_VERSION >= 7) || NODE_MAJOR_VERSION >= 11)
+  context = Nan::GetCurrentContext();
+  #endif
   node::Environment* env = node::GetCurrentEnvironment(context);
   AtExit(env, RdKafkaCleanup, NULL);
 #endif
@@ -91,4 +93,13 @@ void Init(v8::Local<v8::Object> exports, v8::Local<v8::Value> m_, void* v_) {
       Nan::New(RdKafka::version_str().c_str()).ToLocalChecked());
 }
 
-NODE_MODULE(kafka, Init)
+#if (NODE_MAJOR_VERSION >= 10 && NODE_MINOR_VERSION >= 7) || NODE_MAJOR_VERSION >= 11
+  // Initialize this addon to be context-aware
+  #define NODE_GYP_MODULE_NAME kafka
+  NODE_MODULE_INIT(/* exports, module, context */) {
+    Init(exports, context);
+  }
+#else
+  // For backwards compatibility
+  NODE_MODULE(kafka, Init);
+#endif
