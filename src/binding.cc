@@ -95,7 +95,7 @@ void Init(v8::Local<v8::Object> exports, v8::Local<v8::Context> context/*, v8::L
 
 #if (NODE_MAJOR_VERSION >= 10 && NODE_MINOR_VERSION >= 7) || NODE_MAJOR_VERSION >= 11
   // Initialize this addon to be context-aware
-  #define NODE_GYP_MODULE_NAME kafka
+  #define NODE_GYP_MODULE_NAME kafka // the default name is target_name "node-librdkafka", but the hyphen breaks macro
   NODE_MODULE_INIT(/* exports, module, context */) {
     Init(exports, context);
   }
