@@ -14,8 +14,13 @@ module.exports = {
   'Node package': {
     'should not throw an error when module is loaded inside a worker': function() {
       t.doesNotThrow(function() {
-        new worker.Worker('require("./librdkafka.js")', { eval: true })
-      })
+        new worker.Worker(`
+          const t = require('assert');
+          const { isMainThread } = require('worker_threads');
+          t.strictEqual(isMainThread, false);
+          require("./librdkafka.js");
+        `, { eval: true });
+      });
     },
   }
 }
