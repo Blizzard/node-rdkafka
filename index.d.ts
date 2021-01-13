@@ -141,34 +141,36 @@ type KafkaClientEvents = 'disconnected' | 'ready' | 'connection.failure' | 'even
 type KafkaConsumerEvents = 'data' | 'partition.eof' | 'rebalance' | 'rebalance.error' | 'subscribed' | 'unsubscribed' | 'unsubscribe' | 'offset.commit' | KafkaClientEvents;
 type KafkaProducerEvents = 'delivery-report' | KafkaClientEvents;
 
-type EventListener<K> =
-// ### Client
-// connectivity events
-    'disconnected' extends K ? (metrics: ClientMetrics) => void :
-    'ready' extends K ? (info: ReadyInfo, metadata: Metadata) => void :
-    'connection.failure' extends K ? (error: LibrdKafkaError, metrics: ClientMetrics) => void :
-// event messages
-    'event.error' extends K ? (error: LibrdKafkaError) => void :
-    'event.stats' extends K ? (eventData: any) => void :
-    'event.log' extends K ? (eventData: any) => void :
-    'event.event' extends K ? (eventData: any) => void :
-    'event.throttle' extends K ? (eventData: any) => void :
-// ### Consumer only
-// domain events
-    'data' extends K ? (arg: Message) => void :
-    'partition.eof' extends K ? (arg: EofEvent) => void :
-    'rebalance' extends K ? (err: LibrdKafkaError, assignments: TopicPartition[]) => void :
-    'rebalance.error' extends K ? (err: Error) => void :
-// connectivity events
-    'subscribed' extends K ? (topics: SubscribeTopicList) => void :
-    'unsubscribe' extends K ? () => void :
-    'unsubscribed' extends K ? () => void :
-// offsets
-    'offset.commit' extends K ? (error: LibrdKafkaError, topicPartitions: TopicPartitionOffset[]) => void :
-// ### Producer only
-// delivery
-    'delivery-report' extends K ? (error: LibrdKafkaError, report: DeliveryReport) => void :
-    never;
+type EventListenerMap = {
+    // ### Client
+    // connectivity events
+    'disconnected': (metrics: ClientMetrics) => void,
+    'ready': (info: ReadyInfo, metadata: Metadata) => void,
+    'connection.failure': (error: LibrdKafkaError, metrics: ClientMetrics) => void,
+    // event messages 
+    'event.error': (error: LibrdKafkaError) => void,
+    'event.stats': (eventData: any) => void,
+    'event.log': (eventData: any) => void,
+    'event.event': (eventData: any) => void,
+    'event.throttle': (eventData: any) => void,
+    // ### Consumer only
+    // domain events
+    'data': (arg: Message) => void,
+    'partition.eof': (arg: Message) => void,
+    'rebalance': (err: LibrdKafkaError, assignments: TopicPartition[]) => void,
+    'rebalance.error': (err: Error) => void,
+    // connectivity events
+    'subscribed': (topics: SubscribeTopicList) => void,
+    'unsubscribe': () => void,
+    'unsubscribed': () => void,
+    // offsets
+    'offset.commit': (error: LibrdKafkaError, topicPartitions: TopicPartitionOffset[]) => void,
+    // ### Producer only
+    // delivery
+    'delivery-report': (error: LibrdKafkaError, report: DeliveryReport) => void,
+}
+
+type EventListener<K extends string> = K extends keyof EventListenerMap ? EventListenerMap[K] : never;
 
 export abstract class Client<Events extends string> extends EventEmitter {
     constructor(globalConf: GlobalConfig, SubClientType: any, topicConf: TopicConfig);
