@@ -156,7 +156,7 @@ type EventListenerMap = {
     // ### Consumer only
     // domain events
     'data': (arg: Message) => void,
-    'partition.eof': (arg: Message) => void,
+    'partition.eof': (arg: EofEvent) => void,
     'rebalance': (err: LibrdKafkaError, assignments: TopicPartition[]) => void,
     'rebalance.error': (err: Error) => void,
     // connectivity events
