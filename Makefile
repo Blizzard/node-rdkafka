@@ -23,7 +23,7 @@ CONFIG_OUTPUTS = \
   build/binding.Makefile build/config.gypi
 
 CPPLINT_FILES = $(wildcard src/*.cc src/*.h)
-CPPLINT_FILTER = -legal/copyright
+CPPLINT_FILTER = -legal/copyright,-runtime/references
 JSLINT_FILES = lib/*.js test/*.js e2e/*.js
 CPPLINT_LINE_LENGTH=130
 
