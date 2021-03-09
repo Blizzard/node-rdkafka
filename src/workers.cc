@@ -435,7 +435,8 @@ void KafkaConsumerConsumeLoop::Execute(const ExecutionMessageBus& bus) {
   bool looping = true;
   while (consumer->IsConnected() && looping) {
     Baton b = consumer->Consume(m_timeout_ms);
-    if (b.err() == RdKafka::ERR_NO_ERROR) {
+    RdKafka::ErrorCode ec = b.err();
+    if (ec == RdKafka::ERR_NO_ERROR) {
       RdKafka::Message *message = b.data<RdKafka::Message*>();
       switch (message->err()) {
         case RdKafka::ERR__PARTITION_EOF:
@@ -472,6 +473,8 @@ void KafkaConsumerConsumeLoop::Execute(const ExecutionMessageBus& bus) {
           looping = false;
           break;
         }
+    } else if (ec == RdKafka::ERR_UNKNOWN_TOPIC_OR_PART || ec == RdKafka::ERR_TOPIC_AUTHORIZATION_FAILED) {
+      bus.SendWarning(ec);
     } else {
       // Unknown error. We need to break out of this
       SetErrorBaton(b);
@@ -480,36 +483,43 @@ void KafkaConsumerConsumeLoop::Execute(const ExecutionMessageBus& bus) {
   }
 }
 
-void KafkaConsumerConsumeLoop::HandleMessageCallback(RdKafka::Message* msg) {
+void KafkaConsumerConsumeLoop::HandleMessageCallback(RdKafka::Message* msg, RdKafka::ErrorCode ec) {
   Nan::HandleScope scope;
 
-  const unsigned int argc = 3;
+  const unsigned int argc = 4;
   v8::Local<v8::Value> argv[argc];
 
   argv[0] = Nan::Null();
-  switch (msg->err()) {
-    case RdKafka::ERR__PARTITION_EOF: {
-      argv[1] = Nan::Null();
-      v8::Local<v8::Object> eofEvent = Nan::New<v8::Object>();
+  if (msg == NULL) {
+    argv[1] = Nan::Null();
+    argv[2] = Nan::Null();
+    argv[3] = Nan::New<v8::Number>(ec);
+  } else {
+    argv[3] = Nan::Null();
+    switch (msg->err()) {
+      case RdKafka::ERR__PARTITION_EOF: {
+        argv[1] = Nan::Null();
+        v8::Local<v8::Object> eofEvent = Nan::New<v8::Object>();
 
-      Nan::Set(eofEvent, Nan::New<v8::String>("topic").ToLocalChecked(),
-        Nan::New<v8::String>(msg->topic_name()).ToLocalChecked());
-      Nan::Set(eofEvent, Nan::New<v8::String>("offset").ToLocalChecked(),
-        Nan::New<v8::Number>(msg->offset()));
-      Nan::Set(eofEvent, Nan::New<v8::String>("partition").ToLocalChecked(),
-        Nan::New<v8::Number>(msg->partition()));
+        Nan::Set(eofEvent, Nan::New<v8::String>("topic").ToLocalChecked(),
+          Nan::New<v8::String>(msg->topic_name()).ToLocalChecked());
+        Nan::Set(eofEvent, Nan::New<v8::String>("offset").ToLocalChecked(),
+          Nan::New<v8::Number>(msg->offset()));
+        Nan::Set(eofEvent, Nan::New<v8::String>("partition").ToLocalChecked(),
+          Nan::New<v8::Number>(msg->partition()));
 
-      argv[2] = eofEvent;
-      break;
+        argv[2] = eofEvent;
+        break;
+      }
+      default:
+        argv[1] = Conversion::Message::ToV8Object(msg);
+        argv[2] = Nan::Null();
+        break;
     }
-    default:
-      argv[1] = Conversion::Message::ToV8Object(msg);
-      argv[2] = Nan::Null();
-      break;
-  }
 
-  // We can delete msg now
-  delete msg;
+    // We can delete msg now
+    delete msg;
+  }
 
   callback->Call(argc, argv);
 }

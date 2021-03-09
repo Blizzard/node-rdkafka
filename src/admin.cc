@@ -156,10 +156,12 @@ rd_kafka_event_t* PollForEvent(
   // Establish what attempt we are on
   int attempt = 0;
 
-  rd_kafka_event_t * event_response;
+  rd_kafka_event_t * event_response = nullptr;
 
   // Poll the event queue until we get it
   do {
+    // free previously fetched event
+    rd_kafka_event_destroy(event_response);
     // Increment attempt counter
     attempt = attempt + 1;
     event_response = rd_kafka_queue_poll(topic_rkqu, timeout_ms);
@@ -171,6 +173,7 @@ rd_kafka_event_t* PollForEvent(
   // type, bail out with a null
   if (event_response == NULL ||
     rd_kafka_event_type(event_response) != event_type) {
+    rd_kafka_event_destroy(event_response);
     return NULL;
   }
 
@@ -219,8 +222,9 @@ Baton AdminClient::CreateTopic(rd_kafka_NewTopic_t* topic, int timeout_ms) {
     // Now we can get the error code from the event
     if (rd_kafka_event_error(event_response)) {
       // If we had a special error code, get out of here with it
-      return Baton(static_cast<RdKafka::ErrorCode>(
-        rd_kafka_event_error(event_response)));
+      const rd_kafka_resp_err_t errcode = rd_kafka_event_error(event_response);
+      rd_kafka_event_destroy(event_response);
+      return Baton(static_cast<RdKafka::ErrorCode>(errcode));
     }
 
     // get the created results
@@ -239,13 +243,17 @@ Baton AdminClient::CreateTopic(rd_kafka_NewTopic_t* topic, int timeout_ms) {
 
       if (errcode != RD_KAFKA_RESP_ERR_NO_ERROR) {
         if (errmsg) {
-          return Baton(static_cast<RdKafka::ErrorCode>(errcode), std::string(errmsg)); // NOLINT
+          const std::string errormsg = std::string(errmsg);
+          rd_kafka_event_destroy(event_response);
+          return Baton(static_cast<RdKafka::ErrorCode>(errcode), errormsg); // NOLINT
         } else {
+          rd_kafka_event_destroy(event_response);
           return Baton(static_cast<RdKafka::ErrorCode>(errcode));
         }
       }
     }
 
+    rd_kafka_event_destroy(event_response);
     return Baton(RdKafka::ERR_NO_ERROR);
   }
 }
@@ -294,8 +302,9 @@ Baton AdminClient::DeleteTopic(rd_kafka_DeleteTopic_t* topic, int timeout_ms) {
     // Now we can get the error code from the event
     if (rd_kafka_event_error(event_response)) {
       // If we had a special error code, get out of here with it
-      return Baton(static_cast<RdKafka::ErrorCode>(
-        rd_kafka_event_error(event_response)));
+      const rd_kafka_resp_err_t errcode = rd_kafka_event_error(event_response);
+      rd_kafka_event_destroy(event_response);
+      return Baton(static_cast<RdKafka::ErrorCode>(errcode));
     }
 
     // get the created results
@@ -312,10 +321,12 @@ Baton AdminClient::DeleteTopic(rd_kafka_DeleteTopic_t* topic, int timeout_ms) {
       const rd_kafka_resp_err_t errcode = rd_kafka_topic_result_error(terr);
 
       if (errcode != RD_KAFKA_RESP_ERR_NO_ERROR) {
+        rd_kafka_event_destroy(event_response);
         return Baton(static_cast<RdKafka::ErrorCode>(errcode));
       }
     }
 
+    rd_kafka_event_destroy(event_response);
     return Baton(RdKafka::ERR_NO_ERROR);
   }
 }
@@ -367,8 +378,9 @@ Baton AdminClient::CreatePartitions(
     // Now we can get the error code from the event
     if (rd_kafka_event_error(event_response)) {
       // If we had a special error code, get out of here with it
-      return Baton(static_cast<RdKafka::ErrorCode>(
-        rd_kafka_event_error(event_response)));
+      const rd_kafka_resp_err_t errcode = rd_kafka_event_error(event_response);
+      rd_kafka_event_destroy(event_response);
+      return Baton(static_cast<RdKafka::ErrorCode>(errcode));
     }
 
     // get the created results
@@ -387,13 +399,17 @@ Baton AdminClient::CreatePartitions(
 
       if (errcode != RD_KAFKA_RESP_ERR_NO_ERROR) {
         if (errmsg) {
-          return Baton(static_cast<RdKafka::ErrorCode>(errcode), std::string(errmsg)); // NOLINT
+          const std::string errormsg = std::string(errmsg);
+          rd_kafka_event_destroy(event_response);
+          return Baton(static_cast<RdKafka::ErrorCode>(errcode), errormsg); // NOLINT
         } else {
+          rd_kafka_event_destroy(event_response);
           return Baton(static_cast<RdKafka::ErrorCode>(errcode));
         }
       }
     }
 
+    rd_kafka_event_destroy(event_response);
     return Baton(RdKafka::ERR_NO_ERROR);
   }
 }

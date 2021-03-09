@@ -365,6 +365,21 @@ describe('Consumer/Producer', function() {
     });
   });
 
+  it('should emit [warning] event on UNKNOWN_TOPIC_OR_PART error: consumeLoop', function(done) {
+    consumer.on('warning', function (err) {
+      if (err.code === Kafka.CODES.ERRORS.ERR_UNKNOWN_TOPIC_OR_PART) {
+        consumer.disconnect(function() {
+          done();
+        });
+      } else {
+        t.ifError(err);
+      }
+    });
+
+    consumer.subscribe(['non_existing_topic']);
+    consumer.consume();
+  });
+
   it('should be able to produce and consume messages with one header value as string: consumeLoop', function(done) {
     var headers = [
       { key: "value" }
