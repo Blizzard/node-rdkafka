@@ -228,11 +228,11 @@ describe('Consumer/Producer', function() {
       
       consumer.once('partition.eof', function(eof) {
         events.push("partition.eof");
-      })
+      });
 
       setTimeout(function() {
         producer.produce(topic, null, buffer, null);
-      }, 500)
+      }, 500);
       consumer.setDefaultConsumeTimeout(2000);
       consumer.consume(1000, function(err, messages) {
         t.ifError(err);
@@ -266,7 +266,7 @@ describe('Consumer/Producer', function() {
 
       setTimeout(function() {
         producer.produce(topic, null, buffer, null);
-      }, 2000)
+      }, 2000);
       consumer.setDefaultConsumeTimeout(3000);
       consumer.consume(1000, function(err, messages) {
         t.ifError(err);
@@ -362,8 +362,8 @@ describe('Consumer/Producer', function() {
             startOffset + 2 ]);
         done();
       }, 6000);
-    })
-  })
+    });
+  });
 
   it('should be able to produce and consume messages with one header value as string: consumeLoop', function(done) {
     var headers = [
