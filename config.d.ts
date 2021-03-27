@@ -1,4 +1,4 @@
-// ====== Generated from librdkafka 1.5.3 file CONFIGURATION.md ======
+// ====== Generated from librdkafka 1.6.1 file CONFIGURATION.md ======
 // Code that generated this is a derivative work of the code from Nam Nguyen
 // https://gist.github.com/ntgn81/066c2c8ec5b4238f85d1e9168a04e3fb
 
@@ -261,7 +261,7 @@ export interface GlobalConfig {
     "log.thread.name"?: boolean;
 
     /**
-     * If enabled librdkafka will initialize the POSIX PRNG with srand(current_time.milliseconds) on the first invocation of rd_kafka_new(). If disabled the application must call srand() prior to calling rd_kafka_new().
+     * If enabled librdkafka will initialize the PRNG with srand(current_time.milliseconds) on the first invocation of rd_kafka_new() (required only if rand_r() is not available on your platform). If disabled the application must call srand() prior to calling rd_kafka_new().
      *
      * @default true
      */
@@ -402,7 +402,9 @@ export interface GlobalConfig {
     "ssl_certificate"?: any;
 
     /**
-     * File or directory path to CA certificate(s) for verifying the broker's key. Defaults: On Windows the system's CA certificates are automatically looked up in the Windows Root certificate store. On Mac OSX it is recommended to install openssl using Homebrew, to provide CA certificates. On Linux install the distribution's ca-certificates package. If OpenSSL is statically linked or `ssl.ca.location` is set to `probe` a list of standard paths will be probed and the first one found will be used as the default CA certificate location path. If OpenSSL is dynamically linked the OpenSSL library's default path will be used (see `OPENSSLDIR` in `openssl version -a`).
+     * File or directory path to CA certificate(s) for verifying the broker's key. Defaults: On Windows the system's CA certificates are automatically looked up in the Windows Root certificate store. On Mac OSX this configuration defaults to `probe`. It is recommended to install openssl using Homebrew, to provide CA certificates. On Linux install the distribution's ca-certificates package. If OpenSSL is statically linked or `ssl.ca.location` is set to `probe` a list of standard paths will be probed and the first one found will be used as the default CA certificate location path. If OpenSSL is dynamically linked the OpenSSL library's default path will be used (see `OPENSSLDIR` in `openssl version -a`).
+     *
+     * @default probe
      */
     "ssl.ca.location"?: string;
 
@@ -410,6 +412,13 @@ export interface GlobalConfig {
      * CA certificate as set by rd_kafka_conf_set_ssl_cert()
      */
     "ssl_ca"?: any;
+
+    /**
+     * Comma-separated list of Windows Certificate stores to load CA certificates from. Certificates will be loaded in the same order as stores are specified. If no certificates can be loaded from any of the specified stores an error is logged and the OpenSSL library's default CA location is used instead. Store names are typically one or more of: MY, Root, Trust, CA.
+     *
+     * @default Root
+     */
+    "ssl.ca.certificate.stores"?: string;
 
     /**
      * Path to CRL for verifying broker's certificate validity.
@@ -669,6 +678,13 @@ export interface ProducerGlobalConfig extends GlobalConfig {
      * Delivery report callback (set with rd_kafka_conf_set_dr_msg_cb())
      */
     "dr_msg_cb"?: boolean;
+
+    /**
+     * Delay in milliseconds to wait to assign new sticky partitions for each topic. By default, set to double the time of linger.ms. To disable sticky behavior, set to 0. This behavior affects messages with the key NULL in all cases, and messages with key lengths of zero when the consistent_random partitioner is in use. These messages would otherwise be assigned randomly. A higher value allows for more effective batching of these messages.
+     *
+     * @default 10
+     */
+    "sticky.partitioning.linger.ms"?: number;
 }
 
 export interface ConsumerGlobalConfig extends GlobalConfig {
@@ -683,7 +699,7 @@ export interface ConsumerGlobalConfig extends GlobalConfig {
     "group.instance.id"?: string;
 
     /**
-     * Name of partition assignment strategy to use when elected group leader assigns partitions to group members.
+     * The name of one or more partition assignment strategies. The elected group leader will use a strategy supported by all members of the group to assign partitions to group members. If there is more than one eligible strategy, preference is determined by the order of this list (strategies earlier in the list have higher priority). Cooperative and non-cooperative (eager) strategies must not be mixed. Available strategies: range, roundrobin, cooperative-sticky.
      *
      * @default range,roundrobin
      */
@@ -704,7 +720,7 @@ export interface ConsumerGlobalConfig extends GlobalConfig {
     "heartbeat.interval.ms"?: number;
 
     /**
-     * Group protocol type
+     * Group protocol type. NOTE: Currently, the only supported group protocol type is `consumer`.
      *
      * @default consumer
      */
@@ -971,7 +987,7 @@ export interface ConsumerTopicConfig extends TopicConfig {
     "auto.commit.interval.ms"?: number;
 
     /**
-     * Action to take when there is no initial offset in offset store or the desired offset is out of range: 'smallest','earliest' - automatically reset the offset to the smallest offset, 'largest','latest' - automatically reset the offset to the largest offset, 'error' - trigger an error which is retrieved by consuming messages and checking 'message->err'.
+     * Action to take when there is no initial offset in offset store or the desired offset is out of range: 'smallest','earliest' - automatically reset the offset to the smallest offset, 'largest','latest' - automatically reset the offset to the largest offset, 'error' - trigger an error (ERR__AUTO_OFFSET_RESET) which is retrieved by consuming messages and checking 'message->err'.
      *
      * @default largest
      */
