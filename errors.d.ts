@@ -1,4 +1,4 @@
-// ====== Generated from librdkafka 1.5.3 file src-cpp/rdkafkacpp.h ======
+// ====== Generated from librdkafka 1.6.1 file src-cpp/rdkafkacpp.h ======
 export const CODES: { ERRORS: {
   /* Internal errors to rdkafka: */
   /** Begin internal error codes (**-200**) */
@@ -120,6 +120,12 @@ export const CODES: { ERRORS: {
   ERR__FENCED: number,
   /** Application generated error (**-143**) */
   ERR__APPLICATION: number,
+  /** Assignment lost (**-142**) */
+  ERR__ASSIGNMENT_LOST: number,
+  /** No operation performed (**-141**) */
+  ERR__NOOP: number,
+  /** No offset to automatically reset to (**-140**) */
+  ERR__AUTO_OFFSET_RESET: number,
   /** End internal error codes (**-100**) */
   ERR__END: number,
   /* Kafka broker errors: */
@@ -309,10 +315,31 @@ export const CODES: { ERRORS: {
   ERR_ELECTION_NOT_NEEDED: number,
   /** No partition reassignment is in progress (**85**) */
   ERR_NO_REASSIGNMENT_IN_PROGRESS: number,
-  /** Deleting offsets of a topic while the consumer group is subscribed to it (**86**) */
+  /** Deleting offsets of a topic while the consumer group is
+  *  subscribed to it (**86**) */
   ERR_GROUP_SUBSCRIBED_TO_TOPIC: number,
   /** Broker failed to validate record (**87**) */
   ERR_INVALID_RECORD: number,
   /** There are unstable offsets that need to be cleared (**88**) */
   ERR_UNSTABLE_OFFSET_COMMIT: number,
+  /** Throttling quota has been exceeded (**89**) */
+  ERR_THROTTLING_QUOTA_EXCEEDED: number,
+  /** There is a newer producer with the same transactionalId
+  *  which fences the current one (**90**) */
+  ERR_PRODUCER_FENCED: number,
+  /** Request illegally referred to resource that does not exist (**91**) */
+  ERR_RESOURCE_NOT_FOUND: number,
+  /** Request illegally referred to the same resource twice (**92**) */
+  ERR_DUPLICATE_RESOURCE: number,
+  /** Requested credential would not meet criteria for acceptability (**93**) */
+  ERR_UNACCEPTABLE_CREDENTIAL: number,
+  /** Indicates that the either the sender or recipient of a
+  *  voter-only request is not one of the expected voters (**94**) */
+  ERR_INCONSISTENT_VOTER_SET: number,
+  /** Invalid update version (**95**) */
+  ERR_INVALID_UPDATE_VERSION: number,
+  /** Unable to update finalized features due to server error (**96**) */
+  ERR_FEATURE_UPDATE_FAILED: number,
+  /** Request principal deserialization failed during forwarding (**97**) */
+  ERR_PRINCIPAL_DESERIALIZATION_FAILURE: number,
 }}

@@ -2,7 +2,7 @@
   "name": "node-rdkafka",
   "version": "v2.10.1",
   "description": "Node.js bindings for librdkafka",
-  "librdkafka": "1.5.3",
+  "librdkafka": "1.6.1",
   "main": "lib/index.js",
   "scripts": {
     "configure": "node-gyp configure",
