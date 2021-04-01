@@ -82,6 +82,11 @@ class Producer : public Connection {
 
   void ConfigureCallback(const std::string &string_key, const v8::Local<v8::Function> &cb, bool add) override;
 
+  Baton InitTransactions(int32_t timeout_ms);
+  Baton BeginTransaction();
+  Baton CommitTransaction(int32_t timeout_ms);
+  Baton AbortTransaction(int32_t timeout_ms);
+
  protected:
   static Nan::Persistent<v8::Function> constructor;
   static void New(const Nan::FunctionCallbackInfo<v8::Value>&);
@@ -98,6 +103,10 @@ class Producer : public Connection {
   #if RD_KAFKA_VERSION > 0x00090200
   static NAN_METHOD(NodeFlush);
   #endif
+  static NAN_METHOD(NodeInitTransactions);
+  static NAN_METHOD(NodeBeginTransaction);
+  static NAN_METHOD(NodeCommitTransaction);
+  static NAN_METHOD(NodeAbortTransaction);
 
   Callbacks::Delivery m_dr_cb;
   Callbacks::Partitioner m_partitioner_cb;
