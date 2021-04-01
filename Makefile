@@ -15,6 +15,7 @@ CPPLINT ?= cpplint.py
 BUILDTYPE ?= Release
 TESTS = "test/**/*.js"
 E2E_TESTS = $(wildcard e2e/*.spec.js)
+E2E_TESTS_TRANSACTIONS = $(wildcard e2e_transactions/*.spec.js)
 TEST_REPORTER =
 TEST_OUTPUT =
 CONFIG_OUTPUTS = \
@@ -34,7 +35,7 @@ ifeq ($(BUILDTYPE),Debug)
 GYPBUILDARGS=--debug
 endif
 
-.PHONY: all clean lint test lib docs e2e ghpages check
+.PHONY: all clean lint test lib docs e2e e2e_transactions ghpages check
 
 all: lint lib test e2e
 
@@ -64,6 +65,9 @@ check: node_modules/.dirstamp
 
 e2e: $(E2E_TESTS)
 	@./node_modules/.bin/mocha --exit $(TEST_REPORTER) $(E2E_TESTS) $(TEST_OUTPUT)
+
+e2e_transactions: $(E2E_TESTS_TRANSACTIONS)
+	@./node_modules/.bin/mocha --exit $(TEST_REPORTER) $(E2E_TESTS_TRANSACTIONS) $(TEST_OUTPUT)
 
 define release
 	NEXT_VERSION=$(shell node -pe 'require("semver").inc("$(VERSION)", "$(1)")')
