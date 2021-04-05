@@ -90,19 +90,25 @@ class MessageWorker : public ErrorAwareWorker {
     }
 
     std::vector<RdKafka::Message*> message_queue;
+    std::vector<RdKafka::ErrorCode> warning_queue;
 
     {
       scoped_mutex_lock lock(m_async_lock);
       // Copy the vector and empty it
       m_asyncdata.swap(message_queue);
+      m_asyncwarning.swap(warning_queue);
     }
 
     for (unsigned int i = 0; i < message_queue.size(); i++) {
-      HandleMessageCallback(message_queue[i]);
+      HandleMessageCallback(message_queue[i], RdKafka::ERR_NO_ERROR);
 
       // we are done with it. it is about to go out of scope
       // for the last time so let's just free it up here. can't rely
       // on the destructor
+    }
+
+    for (unsigned int i = 0; i < warning_queue.size(); i++) {
+      HandleMessageCallback(NULL, warning_queue[i]);
     }
   }
 
@@ -112,13 +118,16 @@ class MessageWorker : public ErrorAwareWorker {
      void Send(RdKafka::Message* m) const {
        that_->Produce_(m);
      }
+     void SendWarning(RdKafka::ErrorCode c) const {
+       that_->ProduceWarning_(c);
+     }
    private:
     explicit ExecutionMessageBus(MessageWorker* that) : that_(that) {}
     MessageWorker* const that_;
   };
 
   virtual void Execute(const ExecutionMessageBus&) = 0;
-  virtual void HandleMessageCallback(RdKafka::Message*) = 0;
+  virtual void HandleMessageCallback(RdKafka::Message*, RdKafka::ErrorCode) = 0;
 
   virtual void Destroy() {
     uv_close(reinterpret_cast<uv_handle_t*>(m_async), AsyncClose_);
@@ -135,6 +144,13 @@ class MessageWorker : public ErrorAwareWorker {
     m_asyncdata.push_back(m);
     uv_async_send(m_async);
   }
+
+  void ProduceWarning_(RdKafka::ErrorCode c) {
+    scoped_mutex_lock lock(m_async_lock);
+    m_asyncwarning.push_back(c);
+    uv_async_send(m_async);
+  }
+
   NAN_INLINE static NAUV_WORK_CB(m_async_message) {
     MessageWorker *worker = static_cast<MessageWorker*>(async->data);
     worker->WorkMessage();
@@ -149,6 +165,7 @@ class MessageWorker : public ErrorAwareWorker {
   uv_async_t *m_async;
   uv_mutex_t m_async_lock;
   std::vector<RdKafka::Message*> m_asyncdata;
+  std::vector<RdKafka::ErrorCode> m_asyncwarning;
 };
 
 namespace Handle {
@@ -283,7 +300,7 @@ class KafkaConsumerConsumeLoop : public MessageWorker {
   void Execute(const ExecutionMessageBus&);
   void HandleOKCallback();
   void HandleErrorCallback();
-  void HandleMessageCallback(RdKafka::Message*);
+  void HandleMessageCallback(RdKafka::Message*, RdKafka::ErrorCode);
  private:
   NodeKafka::KafkaConsumer * consumer;
   const int m_timeout_ms;
