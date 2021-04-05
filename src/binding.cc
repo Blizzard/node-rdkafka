@@ -73,13 +73,11 @@ void ConstantsInit(v8::Local<v8::Object> exports) {
     Nan::GetFunction(Nan::New<v8::FunctionTemplate>(NodeRdKafkaBuildInFeatures)).ToLocalChecked());  // NOLINT
 }
 
-void Init(v8::Local<v8::Object> exports, v8::Local<v8::Context> context) {
+void Init(v8::Local<v8::Object> exports) {
 #if NODE_MAJOR_VERSION <= 9 || (NODE_MAJOR_VERSION == 10 && NODE_MINOR_VERSION <= 15)
   AtExit(RdKafkaCleanup);
 #else
-  #if !((NODE_MAJOR_VERSION >= 10 && NODE_MINOR_VERSION >= 7) || NODE_MAJOR_VERSION >= 11)
-  context = Nan::GetCurrentContext();
-  #endif
+  v8::Local<v8::Context> context = Nan::GetCurrentContext();
   node::Environment* env = node::GetCurrentEnvironment(context);
   AtExit(env, RdKafkaCleanup, NULL);
 #endif
@@ -93,13 +91,4 @@ void Init(v8::Local<v8::Object> exports, v8::Local<v8::Context> context) {
       Nan::New(RdKafka::version_str().c_str()).ToLocalChecked());
 }
 
-#if (NODE_MAJOR_VERSION >= 10 && NODE_MINOR_VERSION >= 7) || NODE_MAJOR_VERSION >= 11
-  // Initialize this module with proper Worker-compatible context
-  #define NODE_GYP_MODULE_NAME kafka // Default value is target_name "node-librdkafka", but the hyphen breaks macro
-  NODE_MODULE_INIT(/* exports, module, context */) {
-    Init(exports, context);
-  }
-#else
-  // Initialize this module with legacy context for backwards compatibility
-  NODE_MODULE(kafka, Init);
-#endif
+NAN_MODULE_WORKER_ENABLED(kafka, Init)
