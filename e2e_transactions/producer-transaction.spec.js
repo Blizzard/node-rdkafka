@@ -70,11 +70,13 @@ describe('Producer', function() {
         producer.initTransactions(transactions_timeout_ms);
         producer.beginTransaction();
 
-        for (total = 0; total <= max; total++) {
-          producer.produce(topic, null, Buffer.from('message ' + total), null);
-        }
+        setTimeout(function() {
+          for (total = 0; total <= max; total++) {
+            producer.produce(topic, null, Buffer.from('message ' + total), null);
+          }
 
-        producer.commitTransaction(transactions_timeout_ms);
+          producer.commitTransaction(transactions_timeout_ms);
+        }, 2000);
       });
 
       var counter = 0;
@@ -117,11 +119,13 @@ describe('Producer', function() {
         producer.initTransactions(transactions_timeout_ms);
         producer.beginTransaction();
 
-        for (total = 0; total <= max; total++) {
-          producer.produce(topic, null, Buffer.from('message ' + total), null);
-        }
+        setTimeout( function () {
+          for (total = 0; total <= max; total++) {
+            producer.produce(topic, null, Buffer.from('message ' + total), null);
+          }
 
-        producer.abortTransaction(transactions_timeout_ms);
+          producer.abortTransaction(transactions_timeout_ms);
+        }, 2000);
       });
 
       var received = 0;

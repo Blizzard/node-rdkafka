@@ -348,6 +348,18 @@ void Producer::ConfigureCallback(const std::string &string_key, const v8::Local<
   }
 }
 
+Baton rdkafkaErrorToBaton(RdKafka::Error* error) {
+  if ( NULL == error) {
+    return Baton(RdKafka::ERR_NO_ERROR);
+  }
+  else {
+    Baton result(error->code(), error->str(), error->is_fatal(),
+                 error->is_retriable(), error->txn_requires_abort());
+    delete error;
+    return result;
+  }
+}
+
 Baton Producer::InitTransactions(int32_t timeout_ms) {
   if (!IsConnected()) {
     return Baton(RdKafka::ERR__STATE);
@@ -356,14 +368,7 @@ Baton Producer::InitTransactions(int32_t timeout_ms) {
   RdKafka::Producer* producer = dynamic_cast<RdKafka::Producer*>(m_client);
   RdKafka::Error* error = producer->init_transactions(timeout_ms);
 
-  if ( NULL == error) {
-    return Baton(RdKafka::ERR_NO_ERROR);
-  }
-  else {
-    Baton result(error->code());
-    delete error;
-    return result;
-  }
+  return rdkafkaErrorToBaton( error);
 }
 
 Baton Producer::BeginTransaction() {
@@ -374,14 +379,7 @@ Baton Producer::BeginTransaction() {
   RdKafka::Producer* producer = dynamic_cast<RdKafka::Producer*>(m_client);
   RdKafka::Error* error = producer->begin_transaction();
 
-  if ( NULL == error) {
-    return Baton(RdKafka::ERR_NO_ERROR);
-  }
-  else {
-    Baton result(error->code());
-    delete error;
-    return result;
-  }
+  return rdkafkaErrorToBaton( error);
 }
 
 Baton Producer::CommitTransaction(int32_t timeout_ms) {
@@ -392,14 +390,7 @@ Baton Producer::CommitTransaction(int32_t timeout_ms) {
   RdKafka::Producer* producer = dynamic_cast<RdKafka::Producer*>(m_client);
   RdKafka::Error* error = producer->commit_transaction(timeout_ms);
 
-  if ( NULL == error) {
-    return Baton(RdKafka::ERR_NO_ERROR);
-  }
-  else {
-    Baton result(error->code());
-    delete error;
-    return result;
-  }
+  return rdkafkaErrorToBaton( error);
 }
 
 Baton Producer::AbortTransaction(int32_t timeout_ms) {
@@ -410,14 +401,7 @@ Baton Producer::AbortTransaction(int32_t timeout_ms) {
   RdKafka::Producer* producer = dynamic_cast<RdKafka::Producer*>(m_client);
   RdKafka::Error* error = producer->abort_transaction(timeout_ms);
 
-  if ( NULL == error) {
-    return Baton(RdKafka::ERR_NO_ERROR);
-  }
-  else {
-    Baton result(error->code());
-    delete error;
-    return result;
-  }
+  return rdkafkaErrorToBaton( error);
 }
 
 /* Node exposed methods */
@@ -750,7 +734,7 @@ NAN_METHOD(Producer::NodeInitTransactions) {
   }
 
   Baton result = producer->InitTransactions(timeout_ms);
-  info.GetReturnValue().Set(Nan::New<v8::Number>(static_cast<int>(result.err())));
+  info.GetReturnValue().Set(result.ToTxnObject());
 }
 
 NAN_METHOD(Producer::NodeBeginTransaction) {
@@ -763,7 +747,7 @@ NAN_METHOD(Producer::NodeBeginTransaction) {
   }
 
   Baton result = producer->BeginTransaction();
-  info.GetReturnValue().Set(Nan::New<v8::Number>(static_cast<int>(result.err())));
+  info.GetReturnValue().Set(result.ToTxnObject());
 }
 
 NAN_METHOD(Producer::NodeCommitTransaction) {
@@ -782,7 +766,7 @@ NAN_METHOD(Producer::NodeCommitTransaction) {
   }
 
   Baton result = producer->CommitTransaction(timeout_ms);
-  info.GetReturnValue().Set(Nan::New<v8::Number>(static_cast<int>(result.err())));
+  info.GetReturnValue().Set(result.ToTxnObject());
 }
 
 NAN_METHOD(Producer::NodeAbortTransaction) {
@@ -801,7 +785,7 @@ NAN_METHOD(Producer::NodeAbortTransaction) {
   }
 
   Baton result = producer->AbortTransaction(timeout_ms);
-  info.GetReturnValue().Set(Nan::New<v8::Number>(static_cast<int>(result.err())));
+  info.GetReturnValue().Set(result.ToTxnObject());
 }
 
 }  // namespace NodeKafka
