@@ -86,6 +86,7 @@ class Producer : public Connection {
   Baton BeginTransaction();
   Baton CommitTransaction(int32_t timeout_ms);
   Baton AbortTransaction(int32_t timeout_ms);
+  Baton SendOffsetsToTransaction(NodeKafka::KafkaConsumer* consumer, int timeout_ms);
 
  protected:
   static Nan::Persistent<v8::Function> constructor;
@@ -107,6 +108,7 @@ class Producer : public Connection {
   static NAN_METHOD(NodeBeginTransaction);
   static NAN_METHOD(NodeCommitTransaction);
   static NAN_METHOD(NodeAbortTransaction);
+  static NAN_METHOD(NodeSendOffsetsToTransaction);
 
   Callbacks::Delivery m_dr_cb;
   Callbacks::Partitioner m_partitioner_cb;
