@@ -147,7 +147,7 @@ type EventListenerMap = {
     'disconnected': (metrics: ClientMetrics) => void,
     'ready': (info: ReadyInfo, metadata: Metadata) => void,
     'connection.failure': (error: LibrdKafkaError, metrics: ClientMetrics) => void,
-    // event messages 
+    // event messages
     'event.error': (error: LibrdKafkaError) => void,
     'event.stats': (eventData: any) => void,
     'event.log': (eventData: any) => void,
@@ -262,6 +262,11 @@ export class Producer extends Client<KafkaProducerEvents> {
     setPollInterval(interval: number): this;
 
     static createWriteStream(conf: ProducerGlobalConfig, topicConf: ProducerTopicConfig, streamOptions: WriteStreamOptions): ProducerStream;
+
+    initTransactions(timeout?: NumberNullUndefined): any;
+    beginTransaction(): any;
+    commitTransaction(timeout?: NumberNullUndefined): any;
+    abortTransaction(timeout?: NumberNullUndefined): any;
 }
 
 export class HighLevelProducer extends Producer {
