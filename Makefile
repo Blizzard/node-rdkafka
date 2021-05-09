@@ -66,9 +66,6 @@ check: node_modules/.dirstamp
 e2e: $(E2E_TESTS)
 	@./node_modules/.bin/mocha --exit $(TEST_REPORTER) $(E2E_TESTS) $(TEST_OUTPUT)
 
-e2e_transactions: $(E2E_TESTS_TRANSACTIONS)
-	@./node_modules/.bin/mocha --exit $(TEST_REPORTER) $(E2E_TESTS_TRANSACTIONS) $(TEST_OUTPUT)
-
 define release
 	NEXT_VERSION=$(shell node -pe 'require("semver").inc("$(VERSION)", "$(1)")')
 	node -e "\

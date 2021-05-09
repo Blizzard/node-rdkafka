@@ -155,4 +155,42 @@ describe('Producer', function() {
     });
   });
 
+  describe('with dr_cb', function() {
+    beforeEach(function(done) {
+      producer = new Kafka.Producer({
+        'client.id': 'kafka-test',
+        'metadata.broker.list': kafkaBrokerList,
+        'dr_cb': true,
+        'debug': 'all',
+        'transactional.id': 'noderdkafka_transactions_test',
+        'enable.idempotence': true
+      });
+
+      producer.connect({}, function(err) {
+        t.ifError(err);
+        done();
+      });
+    });
+
+    afterEach(function(done) {
+      producer.disconnect(function() {
+        done();
+      });
+    });
+
+    it('should throw exception if Init not called', function(done) {
+
+      t.throws( () => {producer.beginTransaction()},
+      {
+        isTxnFatal: false,
+        isTxnRetriable: false,
+        isTxnRequiresAbort: false
+      });
+
+      done();
+    })
+  })
+
 });
+
+
