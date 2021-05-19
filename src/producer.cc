@@ -86,6 +86,7 @@ void Producer::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(tpl, "beginTransaction", NodeBeginTransaction);
   Nan::SetPrototypeMethod(tpl, "commitTransaction", NodeCommitTransaction);
   Nan::SetPrototypeMethod(tpl, "abortTransaction", NodeAbortTransaction);
+  Nan::SetPrototypeMethod(tpl, "sendOffsetsToTransaction", NodeSendOffsetsToTransaction);
 
     // connect. disconnect. resume. pause. get meta data
   constructor.Reset((tpl->GetFunction(Nan::GetCurrentContext()))
@@ -400,6 +401,21 @@ Baton Producer::AbortTransaction(int32_t timeout_ms) {
 
   RdKafka::Producer* producer = dynamic_cast<RdKafka::Producer*>(m_client);
   RdKafka::Error* error = producer->abort_transaction(timeout_ms);
+
+  return rdkafkaErrorToBaton( error);
+}
+
+Baton Producer::SendOffsetsToTransaction(NodeKafka::KafkaConsumer* nodeKafkaConsumer, int timeout_ms) {
+  if (!IsConnected()) {
+    return Baton(RdKafka::ERR__STATE);
+  }
+
+  RdKafka::KafkaConsumer* consumer = dynamic_cast<RdKafka::KafkaConsumer*>(nodeKafkaConsumer ->GetClient());
+  std::vector<RdKafka::TopicPartition * > partitions;
+  consumer->position(partitions);
+  RdKafka::Producer* producer = dynamic_cast<RdKafka::Producer*>(m_client);
+  RdKafka::Error* error = producer->send_offsets_to_transaction(partitions, consumer->groupMetadata(),
+    timeout_ms);
 
   return rdkafkaErrorToBaton( error);
 }
@@ -785,6 +801,29 @@ NAN_METHOD(Producer::NodeAbortTransaction) {
   }
 
   Baton result = producer->AbortTransaction(timeout_ms);
+  info.GetReturnValue().Set(result.ToTxnObject());
+}
+
+NAN_METHOD(Producer::NodeSendOffsetsToTransaction) {
+  Nan::HandleScope scope;
+
+  if (info.Length() != 2) {
+    return Nan::ThrowError("Need to specify consumer and timeout for 'send offsets to transaction'");
+  }
+  if (!info[0]->IsObject()) {
+    return Nan::ThrowError("First argument to 'send offsets to transaction' has to be a consumer object");
+  }
+
+  KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info[0].As<v8::Object>());
+  int timeout_ms = Nan::To<int>(info[1]).FromJust();
+
+  Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
+
+  if (!producer->IsConnected()) {
+    Nan::ThrowError("Producer is disconnected");
+  }
+
+  Baton result = producer->SendOffsetsToTransaction(consumer, timeout_ms);
   info.GetReturnValue().Set(result.ToTxnObject());
 }
 

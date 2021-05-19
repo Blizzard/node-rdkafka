@@ -15,7 +15,6 @@ CPPLINT ?= cpplint.py
 BUILDTYPE ?= Release
 TESTS = "test/**/*.js"
 E2E_TESTS = $(wildcard e2e/*.spec.js)
-E2E_TESTS_TRANSACTIONS = $(wildcard e2e_transactions/*.spec.js)
 TEST_REPORTER =
 TEST_OUTPUT =
 CONFIG_OUTPUTS = \
@@ -35,7 +34,7 @@ ifeq ($(BUILDTYPE),Debug)
 GYPBUILDARGS=--debug
 endif
 
-.PHONY: all clean lint test lib docs e2e e2e_transactions ghpages check
+.PHONY: all clean lint test lib docs e2e ghpages check
 
 all: lint lib test e2e
 
