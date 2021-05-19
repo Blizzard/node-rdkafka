@@ -83,6 +83,7 @@ class KafkaConsumer : public Connection {
   void ActivateDispatchers();
   void DeactivateDispatchers();
 
+  RdKafka::ConsumerGroupMetadata* GetConsumerGroupMetadata();
  protected:
   static Nan::Persistent<v8::Function> constructor;
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);

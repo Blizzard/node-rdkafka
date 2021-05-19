@@ -24,6 +24,8 @@
 
 namespace NodeKafka {
 
+class KafkaConsumer;
+
 class ProducerMessage {
  public:
   explicit ProducerMessage(v8::Local<v8::Object>, NodeKafka::Topic*);
@@ -86,7 +88,11 @@ class Producer : public Connection {
   Baton BeginTransaction();
   Baton CommitTransaction(int32_t timeout_ms);
   Baton AbortTransaction(int32_t timeout_ms);
-  Baton SendOffsetsToTransaction(NodeKafka::KafkaConsumer* consumer, int timeout_ms);
+  Baton SendOffsetsToTransaction(
+    std::vector<RdKafka::TopicPartition*> &offsets,
+    NodeKafka::KafkaConsumer* consumer,
+    int timeout_ms
+  );
 
  protected:
   static Nan::Persistent<v8::Function> constructor;

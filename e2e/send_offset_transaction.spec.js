@@ -74,7 +74,7 @@ describe('Producer', function() {
           for (total = 0; total <= max; total++) {
             producer.produce(topic, null, Buffer.from('message ' + total), null);
           }
-          producer.sendOffsetsToTransaction(consumer, transactions_timeout_ms)
+          producer.sendOffsetsToTransaction(consumer.position(), consumer, transactions_timeout_ms)
           console.log("Calling commitTransaction")
           producer.commitTransaction(transactions_timeout_ms)
         }, 2000);
