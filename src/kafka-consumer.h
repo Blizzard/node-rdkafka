@@ -35,6 +35,7 @@ namespace NodeKafka {
  */
 
 class KafkaConsumer : public Connection {
+  friend class Producer;
  public:
   static void Init(v8::Local<v8::Object>);
   static v8::Local<v8::Object> NewInstance(v8::Local<v8::Value>);
@@ -83,7 +84,6 @@ class KafkaConsumer : public Connection {
   void ActivateDispatchers();
   void DeactivateDispatchers();
 
-  RdKafka::ConsumerGroupMetadata* GetConsumerGroupMetadata();
  protected:
   static Nan::Persistent<v8::Function> constructor;
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);

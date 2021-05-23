@@ -467,12 +467,6 @@ Baton KafkaConsumer::RefreshAssignments() {
   }
 }
 
-RdKafka::ConsumerGroupMetadata* KafkaConsumer::GetConsumerGroupMetadata(){
-  RdKafka::KafkaConsumer* consumer = dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
-  RdKafka::ConsumerGroupMetadata* metadata = consumer->groupMetadata();
-  return metadata;
-}
-
 std::string KafkaConsumer::Name() {
   if (!IsConnected()) {
     return std::string("");

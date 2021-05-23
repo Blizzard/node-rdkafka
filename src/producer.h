@@ -24,8 +24,6 @@
 
 namespace NodeKafka {
 
-class KafkaConsumer;
-
 class ProducerMessage {
  public:
   explicit ProducerMessage(v8::Local<v8::Object>, NodeKafka::Topic*);
