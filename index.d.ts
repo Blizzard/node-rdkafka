@@ -267,6 +267,7 @@ export class Producer extends Client<KafkaProducerEvents> {
     beginTransaction(): any;
     commitTransaction(timeout?: NumberNullUndefined): any;
     abortTransaction(timeout?: NumberNullUndefined): any;
+    sendOffsetsToTransaction(topicPartition: TopicPartitionOffset | TopicPartitionOffset[], consumer: KafkaConsumer, timeout?: NumberNullUndefined): any;
 }
 
 export class HighLevelProducer extends Producer {
