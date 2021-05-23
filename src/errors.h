@@ -42,8 +42,8 @@ class Baton {
   void* m_data;
   std::string m_errstr;
   RdKafka::ErrorCode m_err;
-  bool m_isTxnFatal;
-  bool m_isTxnRetriable;
+  bool m_isFatal;
+  bool m_isRetriable;
   bool m_isTxnRequiresAbort;
 };
 
