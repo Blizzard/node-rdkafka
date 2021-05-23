@@ -12,7 +12,7 @@ var t = require('assert');
 
 var kafkaBrokerList = process.env.KAFKA_HOST || 'localhost:9092';
 
-describe('Producer', function() {
+describe('Send offsets to transaction', function() {
   var producer;
   var consumer;
 
@@ -28,7 +28,6 @@ describe('Producer', function() {
       });
 
       consumer = new Kafka.KafkaConsumer({
-        //'debug': 'all',
         'metadata.broker.list': kafkaBrokerList,
         'group.id': 'node-rdkafka-consumer-send-offset',
         'enable.auto.commit': false,
@@ -49,59 +48,42 @@ describe('Producer', function() {
       });
     });
 
-    it('consumer offsets should get commited by sending to transaction', function(done) {
+    it('consumer offsets should get committed by sending to transaction', function(done) {
       this.timeout(3000);
 
-      var total = 0;
-      var max = 100;
-      var transactions_timeout_ms = 200;
-
-      var tt = setInterval(function() {
-        producer.poll();
-      }, 200);
-      var topic = "test2";
+      let transactions_timeout_ms = 200
+      let topic = "test2"
+      test_offset = [ { offset: 1000000, partition: 0, topic: 'test2' } ]
 
       consumer.on('ready', function(arg) {
         consumer.subscribe([topic]);
 
-        //start consuming messages
         consumer.consume();
 
         producer.initTransactions(transactions_timeout_ms);
         producer.beginTransaction();
 
         setTimeout(function() {
-          for (total = 0; total <= max; total++) {
-            producer.produce(topic, null, Buffer.from('message ' + total), null);
-          }
-          producer.sendOffsetsToTransaction(consumer.position(), consumer, transactions_timeout_ms)
-          console.log("Calling commitTransaction")
+          producer.produce(topic, null, Buffer.from('test message'), null)
+          producer.sendOffsetsToTransaction(test_offset, consumer.getClient(), transactions_timeout_ms)
           producer.commitTransaction(transactions_timeout_ms)
-        }, 2000);
+        }, 1000);
       });
 
-      var counter = 0;
-      consumer.on('data', function(m) {
-        counter++;
-
-        //consumer.commit(m);
-        if (counter == max) {
-          clearInterval(tt);
-          console.log("Consumer positions are are: ", consumer.position())
-          consumer.committed(null, transactions_timeout_ms, function (err, topicPartitions) {
-            console.log("Consumer committed are are: ", topicPartitions)
-          })
+      consumer.once('data', function(m) {
+        position = consumer.position()
+        consumer.committed(null, transactions_timeout_ms, function (err, committed) {
+          // Assert that what the consumer sees as committed offsets matches whats added to the transaction
+          t.deepStrictEqual(test_offset, committed)
           done()
-        }
+        })
       });
 
       consumer.on('event.error', function(err) {
-        console.error('Error from consumer');
         console.error(err);
       });
 
       consumer.connect();
     });
   });
-
 });

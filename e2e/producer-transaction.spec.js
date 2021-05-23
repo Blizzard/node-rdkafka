@@ -12,11 +12,11 @@ var t = require('assert');
 
 var kafkaBrokerList = process.env.KAFKA_HOST || 'localhost:9092';
 
-describe('Producer', function() {
+describe('Transactional Producer', function() {
   var producer;
   var consumer;
 
-  describe('with dr_cb', function() {
+  describe('with consumer', function() {
     beforeEach(function(done) {
       producer = new Kafka.Producer({
         'client.id': 'kafka-test',
@@ -28,7 +28,6 @@ describe('Producer', function() {
       });
 
       consumer = new Kafka.KafkaConsumer({
-        //'debug': 'all',
         'metadata.broker.list': kafkaBrokerList,
         'group.id': 'node-rdkafka-consumer-flow-example',
         'enable.auto.commit': true,
@@ -70,20 +69,17 @@ describe('Producer', function() {
         producer.initTransactions(transactions_timeout_ms);
         producer.beginTransaction();
 
-        setTimeout(function() {
-          for (total = 0; total <= max; total++) {
-            producer.produce(topic, null, Buffer.from('message ' + total), null);
-          }
+        for (total = 0; total <= max; total++) {
+          producer.produce(topic, null, Buffer.from('message ' + total), null);
+        }
 
-          producer.commitTransaction(transactions_timeout_ms);
-        }, 2000);
+        producer.commitTransaction(transactions_timeout_ms);
       });
 
       var counter = 0;
       consumer.on('data', function(m) {
         counter++;
 
-        consumer.commit(m);
         if (counter == max) {
           clearInterval(tt);
           done()
@@ -119,19 +115,16 @@ describe('Producer', function() {
         producer.initTransactions(transactions_timeout_ms);
         producer.beginTransaction();
 
-        setTimeout( function () {
-          for (total = 0; total <= max; total++) {
-            producer.produce(topic, null, Buffer.from('message ' + total), null);
-          }
+        for (total = 0; total <= max; total++) {
+          producer.produce(topic, null, Buffer.from('message ' + total), null);
+        }
 
-          producer.abortTransaction(transactions_timeout_ms);
-        }, 2000);
+        producer.abortTransaction(transactions_timeout_ms)
       });
 
       var received = 0;
       consumer.on('data', function(m) {
         received++;
-        consumer.commit(m);
       });
 
       var delivery_reports = 0;
@@ -155,7 +148,7 @@ describe('Producer', function() {
     });
   });
 
-  describe('with dr_cb', function() {
+  describe('without consumer', function() {
     beforeEach(function(done) {
       producer = new Kafka.Producer({
         'client.id': 'kafka-test',
