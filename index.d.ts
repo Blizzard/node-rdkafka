@@ -263,11 +263,11 @@ export class Producer extends Client<KafkaProducerEvents> {
 
     static createWriteStream(conf: ProducerGlobalConfig, topicConf: ProducerTopicConfig, streamOptions: WriteStreamOptions): ProducerStream;
 
-    initTransactions(timeout?: NumberNullUndefined): any;
-    beginTransaction(): any;
-    commitTransaction(timeout?: NumberNullUndefined): any;
-    abortTransaction(timeout?: NumberNullUndefined): any;
-    sendOffsetsToTransaction(topicPartition: TopicPartitionOffset | TopicPartitionOffset[], consumer: KafkaConsumer, timeout?: NumberNullUndefined): any;
+    initTransactions(timeout?: NumberNullUndefined): void;
+    beginTransaction(): void;
+    commitTransaction(timeout?: NumberNullUndefined): void;
+    abortTransaction(timeout?: NumberNullUndefined): void;
+    sendOffsetsToTransaction(offsets: TopicPartitionOffset[], consumer: KafkaConsumer, timeout?: NumberNullUndefined): void;
 }
 
 export class HighLevelProducer extends Producer {
