@@ -65,7 +65,7 @@ describe('Send offsets to transaction', function() {
 
         setTimeout(function() {
           producer.produce(topic, null, Buffer.from('test message'), null)
-          producer.sendOffsetsToTransaction(test_offset, consumer.getClient(), transactions_timeout_ms)
+          producer.sendOffsetsToTransaction(test_offset, consumer, transactions_timeout_ms)
           producer.commitTransaction(transactions_timeout_ms)
         }, 1000);
       });

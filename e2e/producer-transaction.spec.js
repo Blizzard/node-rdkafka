@@ -48,7 +48,7 @@ describe('Transactional Producer', function() {
       });
     });
 
-    it('should get 100% deliverability if transaction is commited', function(done) {
+    it('should get 100% deliverability if transaction is committed', function(done) {
       this.timeout(3000);
 
       var total = 0;
@@ -69,11 +69,13 @@ describe('Transactional Producer', function() {
         producer.initTransactions(transactions_timeout_ms);
         producer.beginTransaction();
 
-        for (total = 0; total <= max; total++) {
-          producer.produce(topic, null, Buffer.from('message ' + total), null);
-        }
+        setTimeout( function () {
+          for (total = 0; total <= max; total++) {
+            producer.produce(topic, null, Buffer.from('message ' + total), null);
+          }
+          producer.commitTransaction(transactions_timeout_ms);
+        }, 1000)
 
-        producer.commitTransaction(transactions_timeout_ms);
       });
 
       var counter = 0;
@@ -115,11 +117,12 @@ describe('Transactional Producer', function() {
         producer.initTransactions(transactions_timeout_ms);
         producer.beginTransaction();
 
-        for (total = 0; total <= max; total++) {
-          producer.produce(topic, null, Buffer.from('message ' + total), null);
-        }
-
-        producer.abortTransaction(transactions_timeout_ms)
+        setTimeout( function () {
+          for (total = 0; total <= max; total++) {
+            producer.produce(topic, null, Buffer.from('message ' + total), null);
+          }
+          producer.abortTransaction(transactions_timeout_ms)
+        }, 1000)
       });
 
       var received = 0;
@@ -175,14 +178,16 @@ describe('Transactional Producer', function() {
 
       t.throws( () => {producer.beginTransaction()},
       {
-        isTxnFatal: false,
-        isTxnRetriable: false,
+        isFatal: false,
+        isRetriable: false,
         isTxnRequiresAbort: false
       });
 
       done();
-    })
+   })
+
   })
+
 
 });
 
