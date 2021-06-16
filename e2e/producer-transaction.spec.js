@@ -7,6 +7,8 @@
  * of the MIT license.  See the LICENSE.txt file for details.
  */
 
+/*jshint esversion: 6 */
+
 var Kafka = require('../');
 var t = require('assert');
 
@@ -15,11 +17,12 @@ var kafkaBrokerList = process.env.KAFKA_HOST || 'localhost:9092';
 describe('Transactional Producer', function() {
   var producer;
   var consumer;
+  const topic = "test3";
 
   describe('with consumer', function() {
     beforeEach(function(done) {
       producer = new Kafka.Producer({
-        'client.id': 'kafka-test',
+        'client.id': 'kafka-test-transactions',
         'metadata.broker.list': kafkaBrokerList,
         'dr_cb': true,
         'debug': 'all',
@@ -52,13 +55,8 @@ describe('Transactional Producer', function() {
       this.timeout(3000);
 
       var total = 0;
-      var max = 100;
-      var transactions_timeout_ms = 200;
-
-      var tt = setInterval(function() {
-        producer.poll();
-      }, 200);
-      var topic = "test";
+      const max = 100;
+      const transactions_timeout_ms = 200;
 
       consumer.on('ready', function(arg) {
         consumer.subscribe([topic]);
@@ -70,11 +68,11 @@ describe('Transactional Producer', function() {
         producer.beginTransaction();
 
         setTimeout( function () {
-          for (total = 0; total <= max; total++) {
+          for (total = 0; total < max; total++) {
             producer.produce(topic, null, Buffer.from('message ' + total), null);
           }
           producer.commitTransaction(transactions_timeout_ms);
-        }, 1000)
+        }, 1000);
 
       });
 
@@ -83,8 +81,7 @@ describe('Transactional Producer', function() {
         counter++;
 
         if (counter == max) {
-          clearInterval(tt);
-          done()
+          done();
         }
       });
 
@@ -100,13 +97,12 @@ describe('Transactional Producer', function() {
       this.timeout(3000);
 
       var total = 0;
-      var max = 100;
+      const max = 100;
       var transactions_timeout_ms = 200;
 
       var tt = setInterval(function() {
         producer.poll();
       }, 200);
-      var topic = "test";
 
       consumer.on('ready', function(arg) {
         consumer.subscribe([topic]);
@@ -118,7 +114,7 @@ describe('Transactional Producer', function() {
         producer.beginTransaction();
 
         setTimeout( function () {
-          for (total = 0; total <= max; total++) {
+          for (total = 0; total < max; total++) {
             producer.produce(topic, null, Buffer.from('message ' + total), null);
           }
           producer.abortTransaction(transactions_timeout_ms)
@@ -149,7 +145,7 @@ describe('Transactional Producer', function() {
 
       consumer.connect();
     });
-  });
+  })
 
   describe('without consumer', function() {
     beforeEach(function(done) {
@@ -185,9 +181,7 @@ describe('Transactional Producer', function() {
 
       done();
    })
-
   })
-
 
 });
 
