@@ -12,6 +12,7 @@ node_js:
   - "13"
   - "14"
   - "15"
+  - "16"
 sudo: required
 services: docker
 before_install:
