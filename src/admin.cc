@@ -568,6 +568,9 @@ NAN_METHOD(AdminClient::NodeCreatePartitions) {
   Nan::Callback *callback = new Nan::Callback(cb);
   AdminClient* client = ObjectWrap::Unwrap<AdminClient>(info.This());
 
+  // Get the timeout
+  int timeout = Nan::To<int32_t>(info[2]).FromJust();
+
   // Get the total number of desired partitions
   int partition_total_count = Nan::To<int32_t>(info[1]).FromJust();
 
