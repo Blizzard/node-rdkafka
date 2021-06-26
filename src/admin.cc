@@ -9,6 +9,7 @@
 
 #include <string>
 #include <vector>
+#include <math.h>
 
 #include "src/workers.h"
 #include "src/admin.h"
@@ -151,10 +152,16 @@ v8::Local<v8::Object> AdminClient::NewInstance(v8::Local<v8::Value> arg) {
 rd_kafka_event_t* PollForEvent(
   rd_kafka_queue_t * topic_rkqu,
   rd_kafka_event_type_t event_type,
-  int max_tries,
   int timeout_ms) {
-  // Establish what attempt we are on
-  int attempt = 0;
+  // Initiate exponential timeout
+  int attempts = 1;
+  int exp_timeout_ms = timeout_ms;
+  if (timeout_ms > 2000) {
+    // measure optimal number of attempts
+    attempts = log10(timeout_ms / 1000) / log10(2) + 1;
+    // measure initial exponential timeout based on attempts
+    exp_timeout_ms = timeout_ms / (pow(2, attempts) - 1);
+  }
 
   rd_kafka_event_t * event_response = nullptr;
 
@@ -162,12 +169,13 @@ rd_kafka_event_t* PollForEvent(
   do {
     // free previously fetched event
     rd_kafka_event_destroy(event_response);
-    // Increment attempt counter
-    attempt = attempt + 1;
-    event_response = rd_kafka_queue_poll(topic_rkqu, timeout_ms);
+    // poll and update attempts and exponential timeout
+    event_response = rd_kafka_queue_poll(topic_rkqu, exp_timeout_ms);
+    attempts = attempts - 1;
+    exp_timeout_ms = 2 * exp_timeout_ms;
   } while (
     rd_kafka_event_type(event_response) != event_type &&
-    attempt < max_tries);
+    attempts > 0);
 
   // If this isn't the type of response we want, or if we do not have a response
   // type, bail out with a null
@@ -200,18 +208,11 @@ Baton AdminClient::CreateTopic(rd_kafka_NewTopic_t* topic, int timeout_ms) {
 
     rd_kafka_CreateTopics(m_client->c_ptr(), &topic, 1, options, topic_rkqu);
 
-    // The number of tries is dependent on the timeout
-    // the user asked and the polling timeout.
-    // Timeout will be rounded down to the second.
-    const int pollingTimeout = 1000;
-    const int max_tries = timeout_ms / pollingTimeout;
-
     // Poll for an event by type in that queue
     rd_kafka_event_t * event_response = PollForEvent(
       topic_rkqu,
       RD_KAFKA_EVENT_CREATETOPICS_RESULT,
-      max_tries,
-      pollingTimeout);
+      timeout_ms);
 
     // Destroy the queue since we are done with it.
     rd_kafka_queue_destroy(topic_rkqu);
@@ -286,18 +287,11 @@ Baton AdminClient::DeleteTopic(rd_kafka_DeleteTopic_t* topic, int timeout_ms) {
 
     rd_kafka_DeleteTopics(m_client->c_ptr(), &topic, 1, options, topic_rkqu);
 
-    // The number of tries is dependent on the timeout
-    // the user asked and the polling timeout.
-    // Timeout will be rounded down to the second.
-    const int pollingTimeout = 1000;
-    const int max_tries = timeout_ms / pollingTimeout;
-
     // Poll for an event by type in that queue
     rd_kafka_event_t * event_response = PollForEvent(
       topic_rkqu,
       RD_KAFKA_EVENT_DELETETOPICS_RESULT,
-      max_tries,
-      pollingTimeout);
+      timeout_ms);
 
     // Destroy the queue since we are done with it.
     rd_kafka_queue_destroy(topic_rkqu);
@@ -368,18 +362,11 @@ Baton AdminClient::CreatePartitions(
     rd_kafka_CreatePartitions(m_client->c_ptr(),
       &partitions, 1, options, topic_rkqu);
 
-    // The number of tries is dependent on the timeout
-    // the user asked and the polling timeout.
-    // Timeout will be rounded down to the second.
-    const int pollingTimeout = 1000;
-    const int max_tries = timeout_ms / pollingTimeout;
-
     // Poll for an event by type in that queue
     rd_kafka_event_t * event_response = PollForEvent(
       topic_rkqu,
       RD_KAFKA_EVENT_CREATEPARTITIONS_RESULT,
-      max_tries,
-      pollingTimeout);
+      timeout_ms);
 
     // Destroy the queue since we are done with it.
     rd_kafka_queue_destroy(topic_rkqu);
@@ -498,7 +485,7 @@ NAN_METHOD(AdminClient::NodeCreateTopic) {
   AdminClient* client = ObjectWrap::Unwrap<AdminClient>(info.This());
 
   // Get the timeout
-  int timeout = Nan::To<int32_t>(info[2]).FromJust();
+  int timeout = Nan::To<int32_t>(info[1]).FromJust();
 
   std::string errstr;
   // Get that topic we want to create
@@ -542,7 +529,7 @@ NAN_METHOD(AdminClient::NodeDeleteTopic) {
     Nan::To<v8::String>(info[0]).ToLocalChecked());
 
   // Get the timeout
-  int timeout = Nan::To<int32_t>(info[2]).FromJust();
+  int timeout = Nan::To<int32_t>(info[1]).FromJust();
 
   // Get that topic we want to create
   rd_kafka_DeleteTopic_t* topic = rd_kafka_DeleteTopic_new(
@@ -603,7 +590,7 @@ NAN_METHOD(AdminClient::NodeCreatePartitions) {
 
   // Queue up dat work
   Nan::AsyncQueueWorker(new Workers::AdminClientCreatePartitions(
-    callback, client, new_partitions, 1000));
+    callback, client, new_partitions, timeout));
 
   return info.GetReturnValue().Set(Nan::Null());
 }
