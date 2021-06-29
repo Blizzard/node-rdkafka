@@ -73,7 +73,7 @@ void ConstantsInit(v8::Local<v8::Object> exports) {
     Nan::GetFunction(Nan::New<v8::FunctionTemplate>(NodeRdKafkaBuildInFeatures)).ToLocalChecked());  // NOLINT
 }
 
-void Init(v8::Local<v8::Object> exports, v8::Local<v8::Value> m_, void* v_) {
+void Init(v8::Local<v8::Object> exports) {
 #if NODE_MAJOR_VERSION <= 9 || (NODE_MAJOR_VERSION == 10 && NODE_MINOR_VERSION <= 15)
   AtExit(RdKafkaCleanup);
 #else
@@ -91,4 +91,4 @@ void Init(v8::Local<v8::Object> exports, v8::Local<v8::Value> m_, void* v_) {
       Nan::New(RdKafka::version_str().c_str()).ToLocalChecked());
 }
 
-NODE_MODULE(kafka, Init)
+NAN_MODULE_WORKER_ENABLED(kafka, Init)
