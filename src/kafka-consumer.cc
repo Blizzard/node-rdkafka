@@ -423,7 +423,7 @@ Baton KafkaConsumer::Consume(int timeout_ms) {
       RdKafka::Message * message = consumer->consume(timeout_ms);
       RdKafka::ErrorCode response_code = message->err();
       // we want to handle these errors at the call site
-      if (response_code != RdKafka::ERR_NO_ERROR && 
+      if (response_code != RdKafka::ERR_NO_ERROR &&
          response_code != RdKafka::ERR__PARTITION_EOF &&
          response_code != RdKafka::ERR__TIMED_OUT &&
          response_code != RdKafka::ERR__TIMED_OUT_QUEUE
@@ -465,6 +465,12 @@ Baton KafkaConsumer::RefreshAssignments() {
       return Baton(err);
     break;
   }
+}
+
+RdKafka::ConsumerGroupMetadata* KafkaConsumer::GetConsumerGroupMetadata(){
+  RdKafka::KafkaConsumer* consumer = dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
+  RdKafka::ConsumerGroupMetadata* metadata = consumer->groupMetadata();
+  return metadata;
 }
 
 std::string KafkaConsumer::Name() {
