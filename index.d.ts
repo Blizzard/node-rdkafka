@@ -18,6 +18,9 @@ export interface LibrdKafkaError {
     errno: number;
     origin: string;
     stack?: string;
+    isFatal?: boolean;
+    isRetriable?: boolean;
+    isTxnRequiresAbort?: boolean;
 }
 
 export interface ReadyInfo {
@@ -263,11 +266,15 @@ export class Producer extends Client<KafkaProducerEvents> {
 
     static createWriteStream(conf: ProducerGlobalConfig, topicConf: ProducerTopicConfig, streamOptions: WriteStreamOptions): ProducerStream;
 
-    initTransactions(timeout?: NumberNullUndefined): void;
-    beginTransaction(): void;
-    commitTransaction(timeout?: NumberNullUndefined): void;
-    abortTransaction(timeout?: NumberNullUndefined): void;
-    sendOffsetsToTransaction(offsets: TopicPartitionOffset[], consumer: KafkaConsumer, timeout?: NumberNullUndefined): void;
+    initTransactions(cb: (err: LibrdKafkaError) => void): void;
+    initTransactions(timeout: number, cb: (err: LibrdKafkaError) => void): void;
+    beginTransaction(cb: (err: LibrdKafkaError) => void): void;
+    commitTransaction(cb: (err: LibrdKafkaError) => void): void;
+    commitTransaction(timeout: number, cb: (err: LibrdKafkaError) => void): void;
+    abortTransaction(cb: (err: LibrdKafkaError) => void): void;
+    abortTransaction(timeout: number, cb: (err: LibrdKafkaError) => void): void;
+    sendOffsetsToTransaction(offsets: TopicPartitionOffset[], consumer: KafkaConsumer, cb: (err: LibrdKafkaError) => void): void;
+    sendOffsetsToTransaction(offsets: TopicPartitionOffset[], consumer: KafkaConsumer, timeout: number, cb: (err: LibrdKafkaError) => void): void;
 }
 
 export class HighLevelProducer extends Producer {

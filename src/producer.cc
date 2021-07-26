@@ -740,101 +740,110 @@ NAN_METHOD(Producer::NodeDisconnect) {
 NAN_METHOD(Producer::NodeInitTransactions) {
   Nan::HandleScope scope;
 
-  if (info.Length() != 1) {
-    return Nan::ThrowError("Need to specify a timeout for transaction initialization");
+  if (info.Length() < 2 || !info[1]->IsFunction() || !info[0]->IsNumber()) {
+    return Nan::ThrowError("Need to specify a timeout and a callback");
   }
 
   int timeout_ms = Nan::To<int>(info[0]).FromJust();
 
+  v8::Local<v8::Function> cb = info[1].As<v8::Function>();
+  Nan::Callback *callback = new Nan::Callback(cb);
+
   Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
+  Nan::AsyncQueueWorker(new Workers::ProducerInitTransactions(callback, producer, timeout_ms));
 
-  if (!producer->IsConnected()) {
-    Nan::ThrowError("Producer is disconnected");
-  }
-
-  Baton result = producer->InitTransactions(timeout_ms);
-  info.GetReturnValue().Set(result.ToTxnObject());
+  info.GetReturnValue().Set(Nan::Null());
 }
 
 NAN_METHOD(Producer::NodeBeginTransaction) {
   Nan::HandleScope scope;
 
-  Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
-
-  if (!producer->IsConnected()) {
-    Nan::ThrowError("Producer is disconnected");
+  if (info.Length() < 1 || !info[0]->IsFunction()) {
+    return Nan::ThrowError("Need to specify a callback");
   }
 
-  Baton result = producer->BeginTransaction();
-  info.GetReturnValue().Set(result.ToTxnObject());
+  v8::Local<v8::Function> cb = info[0].As<v8::Function>();
+  Nan::Callback *callback = new Nan::Callback(cb);
+
+  Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
+  Nan::AsyncQueueWorker(new Workers::ProducerBeginTransaction(callback, producer));
+
+  info.GetReturnValue().Set(Nan::Null());
 }
 
 NAN_METHOD(Producer::NodeCommitTransaction) {
   Nan::HandleScope scope;
 
-  if (info.Length() != 1) {
-    return Nan::ThrowError("Need to specify a timeout for commit transaction");
+  if (info.Length() < 2 || !info[1]->IsFunction() || !info[0]->IsNumber()) {
+    return Nan::ThrowError("Need to specify a timeout and a callback");
   }
 
   int timeout_ms = Nan::To<int>(info[0]).FromJust();
 
+  v8::Local<v8::Function> cb = info[1].As<v8::Function>();
+  Nan::Callback *callback = new Nan::Callback(cb);
+
   Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
+  Nan::AsyncQueueWorker(new Workers::ProducerCommitTransaction(callback, producer, timeout_ms));
 
-  if (!producer->IsConnected()) {
-    Nan::ThrowError("Producer is disconnected");
-  }
-
-  Baton result = producer->CommitTransaction(timeout_ms);
-  info.GetReturnValue().Set(result.ToTxnObject());
+  info.GetReturnValue().Set(Nan::Null());
 }
 
 NAN_METHOD(Producer::NodeAbortTransaction) {
   Nan::HandleScope scope;
 
-  if (info.Length() != 1) {
-    return Nan::ThrowError("Need to specify a timeout for abort transaction");
+  if (info.Length() < 2 || !info[1]->IsFunction() || !info[0]->IsNumber()) {
+    return Nan::ThrowError("Need to specify a timeout and a callback");
   }
 
   int timeout_ms = Nan::To<int>(info[0]).FromJust();
 
+  v8::Local<v8::Function> cb = info[1].As<v8::Function>();
+  Nan::Callback *callback = new Nan::Callback(cb);
+
   Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
+  Nan::AsyncQueueWorker(new Workers::ProducerAbortTransaction(callback, producer, timeout_ms));
 
-  if (!producer->IsConnected()) {
-    Nan::ThrowError("Producer is disconnected");
-  }
-
-  Baton result = producer->AbortTransaction(timeout_ms);
-  info.GetReturnValue().Set(result.ToTxnObject());
+  info.GetReturnValue().Set(Nan::Null());
 }
 
 NAN_METHOD(Producer::NodeSendOffsetsToTransaction) {
   Nan::HandleScope scope;
 
-  if (info.Length() != 3) {
-    return Nan::ThrowError("Need to specify offsets, consumer and timeout for 'send offsets to transaction'");
-  }
-  if (!info[0]->IsObject()) {
-    return Nan::ThrowError("First argument to 'send offsets to transaction' has to be a consumer object");
-  }
-  if (info[0]->IsNull() || info[0]->IsUndefined()) {
-    Nan::ThrowError("Topic partitions was not provided");
+  if (info.Length() < 4) {
+    return Nan::ThrowError("Need to specify offsets, consumer, timeout for 'send offsets to transaction', and callback");
   }
   if (!info[0]->IsArray()) {
-    Nan::ThrowError("Topic partitions must be an array");
+    return Nan::ThrowError("First argument to 'send offsets to transaction' has to be a consumer object");
+  }
+  if (!info[1]->IsObject()) {
+    Nan::ThrowError("Kafka consumer must be provided");
+  }
+  if (!info[2]->IsNumber()) {
+    Nan::ThrowError("Timeout must be provided");
+  }
+  if (!info[3]->IsFunction()) {
+    return Nan::ThrowError("Need to specify a callback");
   }
 
-  std::vector<RdKafka::TopicPartition *> toppars = Conversion::TopicPartition::FromV8Array(info[0].As<v8::Array>());
-  NodeKafka::KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info[1].As<v8::Object>());
+  std::vector<RdKafka::TopicPartition*> toppars =
+    Conversion::TopicPartition::FromV8Array(info[0].As<v8::Array>());
+  NodeKafka::KafkaConsumer* consumer =
+    ObjectWrap::Unwrap<KafkaConsumer>(info[1].As<v8::Object>());
   int timeout_ms = Nan::To<int>(info[2]).FromJust();
+  v8::Local<v8::Function> cb = info[3].As<v8::Function>();
+  Nan::Callback *callback = new Nan::Callback(cb);
 
   Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
+  Nan::AsyncQueueWorker(new Workers::ProducerSendOffsetsToTransaction(
+    callback,
+    producer,
+    toppars,
+    consumer,
+    timeout_ms
+  ));
 
-  if (!producer->IsConnected()) {
-    Nan::ThrowError("Producer is disconnected");
-  }
-
-  Baton result = producer->SendOffsetsToTransaction(toppars, consumer, timeout_ms);
-  info.GetReturnValue().Set(result.ToTxnObject());
+  info.GetReturnValue().Set(Nan::Null());
 }
 
 }  // namespace NodeKafka
