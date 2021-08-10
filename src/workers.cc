@@ -302,6 +302,245 @@ void ProducerFlush::HandleOKCallback() {
 }
 
 /**
+ * @brief Producer init transactions worker.
+ *
+ * Easy Nan::AsyncWorker for initiating transactions
+ *
+ * @sa RdKafka::Producer::init_transactions
+ * @sa NodeKafka::Producer::InitTransactions
+ */
+
+ProducerInitTransactions::ProducerInitTransactions(Nan::Callback *callback,
+  Producer* producer, const int & timeout_ms):
+  ErrorAwareWorker(callback),
+  producer(producer),
+  m_timeout_ms(timeout_ms) {}
+
+ProducerInitTransactions::~ProducerInitTransactions() {}
+
+void ProducerInitTransactions::Execute() {
+  Baton b = producer->InitTransactions(m_timeout_ms);
+
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    SetErrorBaton(b);
+  }
+}
+
+void ProducerInitTransactions::HandleOKCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc] = { Nan::Null() };
+
+  // Activate the dispatchers
+  producer->ActivateDispatchers();
+
+  callback->Call(argc, argv);
+}
+
+void ProducerInitTransactions::HandleErrorCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc] = { m_baton.ToTxnObject() };
+
+  callback->Call(argc, argv);
+}
+
+/**
+ * @brief Producer begin transaction worker.
+ *
+ * Easy Nan::AsyncWorker for begin transaction
+ *
+ * @sa RdKafka::Producer::begin_transaction
+ * @sa NodeKafka::Producer::BeginTransaction
+ */
+
+ProducerBeginTransaction::ProducerBeginTransaction(Nan::Callback *callback, Producer* producer):
+  ErrorAwareWorker(callback),
+  producer(producer) {}
+
+ProducerBeginTransaction::~ProducerBeginTransaction() {}
+
+void ProducerBeginTransaction::Execute() {
+  Baton b = producer->BeginTransaction();
+
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    SetErrorBaton(b);
+  }
+}
+
+void ProducerBeginTransaction::HandleOKCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+
+  v8::Local<v8::Value> argv[argc] = { Nan::Null() };
+
+  // Activate the dispatchers
+  producer->ActivateDispatchers();
+
+  callback->Call(argc, argv);
+}
+
+void ProducerBeginTransaction::HandleErrorCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc] = { GetErrorObject() };
+
+  callback->Call(argc, argv);
+}
+
+/**
+ * @brief Producer commit transaction worker.
+ *
+ * Easy Nan::AsyncWorker for committing transaction
+ *
+ * @sa RdKafka::Producer::commit_transaction
+ * @sa NodeKafka::Producer::CommitTransaction
+ */
+
+ProducerCommitTransaction::ProducerCommitTransaction(Nan::Callback *callback,
+  Producer* producer, const int & timeout_ms):
+  ErrorAwareWorker(callback),
+  producer(producer),
+  m_timeout_ms(timeout_ms) {}
+
+ProducerCommitTransaction::~ProducerCommitTransaction() {}
+
+void ProducerCommitTransaction::Execute() {
+  Baton b = producer->CommitTransaction(m_timeout_ms);
+
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    SetErrorBaton(b);
+  }
+}
+
+void ProducerCommitTransaction::HandleOKCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc] = { Nan::Null() };
+
+  // Activate the dispatchers
+  producer->ActivateDispatchers();
+
+  callback->Call(argc, argv);
+}
+
+void ProducerCommitTransaction::HandleErrorCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc] = { m_baton.ToTxnObject() };
+
+  callback->Call(argc, argv);
+}
+
+/**
+ * @brief Producer abort transaction worker.
+ *
+ * Easy Nan::AsyncWorker for aborting transaction
+ *
+ * @sa RdKafka::Producer::abort_transaction
+ * @sa NodeKafka::Producer::AbortTransaction
+ */
+
+ProducerAbortTransaction::ProducerAbortTransaction(Nan::Callback *callback,
+  Producer* producer, const int & timeout_ms):
+  ErrorAwareWorker(callback),
+  producer(producer),
+  m_timeout_ms(timeout_ms) {}
+
+ProducerAbortTransaction::~ProducerAbortTransaction() {}
+
+void ProducerAbortTransaction::Execute() {
+  Baton b = producer->AbortTransaction(m_timeout_ms);
+
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    SetErrorBaton(b);
+  }
+}
+
+void ProducerAbortTransaction::HandleOKCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc] = { Nan::Null() };
+
+  // Activate the dispatchers
+  producer->ActivateDispatchers();
+
+  callback->Call(argc, argv);
+}
+
+void ProducerAbortTransaction::HandleErrorCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc] = { m_baton.ToTxnObject() };
+
+  callback->Call(argc, argv);
+}
+
+/**
+ * @brief Producer SendOffsetsToTransaction worker.
+ *
+ * Easy Nan::AsyncWorker for SendOffsetsToTransaction
+ *
+ * @sa RdKafka::Producer::send_offsets_to_transaction
+ * @sa NodeKafka::Producer::SendOffsetsToTransaction
+ */
+
+ProducerSendOffsetsToTransaction::ProducerSendOffsetsToTransaction(
+    Nan::Callback *callback,
+    Producer* producer,
+    std::vector<RdKafka::TopicPartition *> & t,
+    KafkaConsumer* consumer,
+    const int & timeout_ms):
+  ErrorAwareWorker(callback),
+  producer(producer),
+  m_topic_partitions(t),
+  consumer(consumer),
+  m_timeout_ms(timeout_ms) {}
+
+ProducerSendOffsetsToTransaction::~ProducerSendOffsetsToTransaction() {}
+
+void ProducerSendOffsetsToTransaction::Execute() {
+  Baton b = producer->SendOffsetsToTransaction(
+    m_topic_partitions,
+    consumer,
+    m_timeout_ms
+  );
+
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    SetErrorBaton(b);
+  }
+}
+
+void ProducerSendOffsetsToTransaction::HandleOKCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc] = { Nan::Null() };
+
+  // Activate the dispatchers
+  producer->ActivateDispatchers();
+
+  callback->Call(argc, argv);
+}
+
+void ProducerSendOffsetsToTransaction::HandleErrorCallback() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc] = { m_baton.ToTxnObject() };
+
+  callback->Call(argc, argv);
+}
+
+/**
  * @brief KafkaConsumer connect worker.
  *
  * Easy Nan::AsyncWorker for setting up client connections

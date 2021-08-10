@@ -265,6 +265,81 @@ class ProducerFlush : public ErrorAwareWorker {
   int timeout_ms;
 };
 
+class ProducerInitTransactions : public ErrorAwareWorker {
+ public:
+  ProducerInitTransactions(Nan::Callback*, NodeKafka::Producer*, const int &);
+  ~ProducerInitTransactions();
+
+  void Execute();
+  void HandleOKCallback();
+  void HandleErrorCallback();
+
+ private:
+  NodeKafka::Producer * producer;
+  const int m_timeout_ms;
+};
+
+class ProducerBeginTransaction : public ErrorAwareWorker {
+ public:
+  ProducerBeginTransaction(Nan::Callback*, NodeKafka::Producer*);
+  ~ProducerBeginTransaction();
+
+  void Execute();
+  void HandleOKCallback();
+  void HandleErrorCallback();
+
+ private:
+  NodeKafka::Producer * producer;
+};
+
+class ProducerCommitTransaction : public ErrorAwareWorker {
+ public:
+  ProducerCommitTransaction(Nan::Callback*, NodeKafka::Producer*, const int &);
+  ~ProducerCommitTransaction();
+
+  void Execute();
+  void HandleOKCallback();
+  void HandleErrorCallback();
+
+ private:
+  NodeKafka::Producer * producer;
+  const int m_timeout_ms;
+};
+
+class ProducerAbortTransaction : public ErrorAwareWorker {
+ public:
+  ProducerAbortTransaction(Nan::Callback*, NodeKafka::Producer*, const int &);
+  ~ProducerAbortTransaction();
+
+  void Execute();
+  void HandleOKCallback();
+  void HandleErrorCallback();
+
+ private:
+  NodeKafka::Producer * producer;
+  const int m_timeout_ms;
+};
+
+class ProducerSendOffsetsToTransaction : public ErrorAwareWorker {
+ public:
+  ProducerSendOffsetsToTransaction(
+    Nan::Callback*, NodeKafka::Producer*,
+    std::vector<RdKafka::TopicPartition*> &,
+    KafkaConsumer*,
+    const int &);
+  ~ProducerSendOffsetsToTransaction();
+
+  void Execute();
+  void HandleOKCallback();
+  void HandleErrorCallback();
+
+ private:
+  NodeKafka::Producer * producer;
+  std::vector<RdKafka::TopicPartition*> m_topic_partitions;
+  NodeKafka::KafkaConsumer* consumer;
+  const int m_timeout_ms;
+};
+
 class KafkaConsumerConnect : public ErrorAwareWorker {
  public:
   KafkaConsumerConnect(Nan::Callback*, NodeKafka::KafkaConsumer*);

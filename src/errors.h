@@ -25,6 +25,8 @@ class Baton {
   explicit Baton(const RdKafka::ErrorCode &);
   explicit Baton(void* data);
   explicit Baton(const RdKafka::ErrorCode &, std::string);
+  explicit Baton(const RdKafka::ErrorCode &, std::string, bool isFatal,
+                 bool isRetriable, bool isTxnRequiresAbort);
 
   template<typename T> T data() {
     return static_cast<T>(m_data);
@@ -34,11 +36,15 @@ class Baton {
   std::string errstr();
 
   v8::Local<v8::Object> ToObject();
+  v8::Local<v8::Object> ToTxnObject();
 
  private:
   void* m_data;
   std::string m_errstr;
   RdKafka::ErrorCode m_err;
+  bool m_isFatal;
+  bool m_isRetriable;
+  bool m_isTxnRequiresAbort;
 };
 
 v8::Local<v8::Object> RdKafkaError(const RdKafka::ErrorCode &);

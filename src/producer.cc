@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "src/producer.h"
+#include "src/kafka-consumer.h"
 #include "src/workers.h"
 
 namespace NodeKafka {
@@ -77,6 +78,16 @@ void Producer::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(tpl, "produce", NodeProduce);
 
   Nan::SetPrototypeMethod(tpl, "flush", NodeFlush);
+
+  /*
+   * @brief Methods exposed to do with transactions
+   */
+
+  Nan::SetPrototypeMethod(tpl, "initTransactions", NodeInitTransactions);
+  Nan::SetPrototypeMethod(tpl, "beginTransaction", NodeBeginTransaction);
+  Nan::SetPrototypeMethod(tpl, "commitTransaction", NodeCommitTransaction);
+  Nan::SetPrototypeMethod(tpl, "abortTransaction", NodeAbortTransaction);
+  Nan::SetPrototypeMethod(tpl, "sendOffsetsToTransaction", NodeSendOffsetsToTransaction);
 
     // connect. disconnect. resume. pause. get meta data
   constructor.Reset((tpl->GetFunction(Nan::GetCurrentContext()))
@@ -339,6 +350,79 @@ void Producer::ConfigureCallback(const std::string &string_key, const v8::Local<
   }
 }
 
+Baton rdkafkaErrorToBaton(RdKafka::Error* error) {
+  if ( NULL == error) {
+    return Baton(RdKafka::ERR_NO_ERROR);
+  }
+  else {
+    Baton result(error->code(), error->str(), error->is_fatal(),
+                 error->is_retriable(), error->txn_requires_abort());
+    delete error;
+    return result;
+  }
+}
+
+Baton Producer::InitTransactions(int32_t timeout_ms) {
+  if (!IsConnected()) {
+    return Baton(RdKafka::ERR__STATE);
+  }
+
+  RdKafka::Producer* producer = dynamic_cast<RdKafka::Producer*>(m_client);
+  RdKafka::Error* error = producer->init_transactions(timeout_ms);
+
+  return rdkafkaErrorToBaton( error);
+}
+
+Baton Producer::BeginTransaction() {
+  if (!IsConnected()) {
+    return Baton(RdKafka::ERR__STATE);
+  }
+
+  RdKafka::Producer* producer = dynamic_cast<RdKafka::Producer*>(m_client);
+  RdKafka::Error* error = producer->begin_transaction();
+
+  return rdkafkaErrorToBaton( error);
+}
+
+Baton Producer::CommitTransaction(int32_t timeout_ms) {
+  if (!IsConnected()) {
+    return Baton(RdKafka::ERR__STATE);
+  }
+
+  RdKafka::Producer* producer = dynamic_cast<RdKafka::Producer*>(m_client);
+  RdKafka::Error* error = producer->commit_transaction(timeout_ms);
+
+  return rdkafkaErrorToBaton( error);
+}
+
+Baton Producer::AbortTransaction(int32_t timeout_ms) {
+  if (!IsConnected()) {
+    return Baton(RdKafka::ERR__STATE);
+  }
+
+  RdKafka::Producer* producer = dynamic_cast<RdKafka::Producer*>(m_client);
+  RdKafka::Error* error = producer->abort_transaction(timeout_ms);
+
+  return rdkafkaErrorToBaton( error);
+}
+
+Baton Producer::SendOffsetsToTransaction(
+  std::vector<RdKafka::TopicPartition*> &offsets,
+  NodeKafka::KafkaConsumer* consumer,
+  int timeout_ms) {
+  if (!IsConnected()) {
+    return Baton(RdKafka::ERR__STATE);
+  }
+
+  RdKafka::ConsumerGroupMetadata* group_metadata = dynamic_cast<RdKafka::KafkaConsumer*>(consumer->m_client)->groupMetadata();
+
+  RdKafka::Producer* producer = dynamic_cast<RdKafka::Producer*>(m_client);
+  RdKafka::Error* error = producer->send_offsets_to_transaction(offsets, group_metadata, timeout_ms);
+  delete group_metadata;
+
+  return rdkafkaErrorToBaton( error);
+}
+
 /* Node exposed methods */
 
 /**
@@ -499,7 +583,7 @@ NAN_METHOD(Producer::NodeProduce) {
           RdKafka::Headers::Header(key, value.c_str(), value.size()));
       }
     }
-}
+  }
 
   Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
 
@@ -649,6 +733,115 @@ NAN_METHOD(Producer::NodeDisconnect) {
 
   Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
   Nan::AsyncQueueWorker(new Workers::ProducerDisconnect(callback, producer));
+
+  info.GetReturnValue().Set(Nan::Null());
+}
+
+NAN_METHOD(Producer::NodeInitTransactions) {
+  Nan::HandleScope scope;
+
+  if (info.Length() < 2 || !info[1]->IsFunction() || !info[0]->IsNumber()) {
+    return Nan::ThrowError("Need to specify a timeout and a callback");
+  }
+
+  int timeout_ms = Nan::To<int>(info[0]).FromJust();
+
+  v8::Local<v8::Function> cb = info[1].As<v8::Function>();
+  Nan::Callback *callback = new Nan::Callback(cb);
+
+  Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
+  Nan::AsyncQueueWorker(new Workers::ProducerInitTransactions(callback, producer, timeout_ms));
+
+  info.GetReturnValue().Set(Nan::Null());
+}
+
+NAN_METHOD(Producer::NodeBeginTransaction) {
+  Nan::HandleScope scope;
+
+  if (info.Length() < 1 || !info[0]->IsFunction()) {
+    return Nan::ThrowError("Need to specify a callback");
+  }
+
+  v8::Local<v8::Function> cb = info[0].As<v8::Function>();
+  Nan::Callback *callback = new Nan::Callback(cb);
+
+  Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
+  Nan::AsyncQueueWorker(new Workers::ProducerBeginTransaction(callback, producer));
+
+  info.GetReturnValue().Set(Nan::Null());
+}
+
+NAN_METHOD(Producer::NodeCommitTransaction) {
+  Nan::HandleScope scope;
+
+  if (info.Length() < 2 || !info[1]->IsFunction() || !info[0]->IsNumber()) {
+    return Nan::ThrowError("Need to specify a timeout and a callback");
+  }
+
+  int timeout_ms = Nan::To<int>(info[0]).FromJust();
+
+  v8::Local<v8::Function> cb = info[1].As<v8::Function>();
+  Nan::Callback *callback = new Nan::Callback(cb);
+
+  Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
+  Nan::AsyncQueueWorker(new Workers::ProducerCommitTransaction(callback, producer, timeout_ms));
+
+  info.GetReturnValue().Set(Nan::Null());
+}
+
+NAN_METHOD(Producer::NodeAbortTransaction) {
+  Nan::HandleScope scope;
+
+  if (info.Length() < 2 || !info[1]->IsFunction() || !info[0]->IsNumber()) {
+    return Nan::ThrowError("Need to specify a timeout and a callback");
+  }
+
+  int timeout_ms = Nan::To<int>(info[0]).FromJust();
+
+  v8::Local<v8::Function> cb = info[1].As<v8::Function>();
+  Nan::Callback *callback = new Nan::Callback(cb);
+
+  Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
+  Nan::AsyncQueueWorker(new Workers::ProducerAbortTransaction(callback, producer, timeout_ms));
+
+  info.GetReturnValue().Set(Nan::Null());
+}
+
+NAN_METHOD(Producer::NodeSendOffsetsToTransaction) {
+  Nan::HandleScope scope;
+
+  if (info.Length() < 4) {
+    return Nan::ThrowError("Need to specify offsets, consumer, timeout for 'send offsets to transaction', and callback");
+  }
+  if (!info[0]->IsArray()) {
+    return Nan::ThrowError("First argument to 'send offsets to transaction' has to be a consumer object");
+  }
+  if (!info[1]->IsObject()) {
+    Nan::ThrowError("Kafka consumer must be provided");
+  }
+  if (!info[2]->IsNumber()) {
+    Nan::ThrowError("Timeout must be provided");
+  }
+  if (!info[3]->IsFunction()) {
+    return Nan::ThrowError("Need to specify a callback");
+  }
+
+  std::vector<RdKafka::TopicPartition*> toppars =
+    Conversion::TopicPartition::FromV8Array(info[0].As<v8::Array>());
+  NodeKafka::KafkaConsumer* consumer =
+    ObjectWrap::Unwrap<KafkaConsumer>(info[1].As<v8::Object>());
+  int timeout_ms = Nan::To<int>(info[2]).FromJust();
+  v8::Local<v8::Function> cb = info[3].As<v8::Function>();
+  Nan::Callback *callback = new Nan::Callback(cb);
+
+  Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
+  Nan::AsyncQueueWorker(new Workers::ProducerSendOffsetsToTransaction(
+    callback,
+    producer,
+    toppars,
+    consumer,
+    timeout_ms
+  ));
 
   info.GetReturnValue().Set(Nan::Null());
 }

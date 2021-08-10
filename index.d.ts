@@ -18,6 +18,9 @@ export interface LibrdKafkaError {
     errno: number;
     origin: string;
     stack?: string;
+    isFatal?: boolean;
+    isRetriable?: boolean;
+    isTxnRequiresAbort?: boolean;
 }
 
 export interface ReadyInfo {
@@ -147,7 +150,7 @@ type EventListenerMap = {
     'disconnected': (metrics: ClientMetrics) => void,
     'ready': (info: ReadyInfo, metadata: Metadata) => void,
     'connection.failure': (error: LibrdKafkaError, metrics: ClientMetrics) => void,
-    // event messages 
+    // event messages
     'event.error': (error: LibrdKafkaError) => void,
     'event.stats': (eventData: any) => void,
     'event.log': (eventData: any) => void,
@@ -262,6 +265,16 @@ export class Producer extends Client<KafkaProducerEvents> {
     setPollInterval(interval: number): this;
 
     static createWriteStream(conf: ProducerGlobalConfig, topicConf: ProducerTopicConfig, streamOptions: WriteStreamOptions): ProducerStream;
+
+    initTransactions(cb: (err: LibrdKafkaError) => void): void;
+    initTransactions(timeout: number, cb: (err: LibrdKafkaError) => void): void;
+    beginTransaction(cb: (err: LibrdKafkaError) => void): void;
+    commitTransaction(cb: (err: LibrdKafkaError) => void): void;
+    commitTransaction(timeout: number, cb: (err: LibrdKafkaError) => void): void;
+    abortTransaction(cb: (err: LibrdKafkaError) => void): void;
+    abortTransaction(timeout: number, cb: (err: LibrdKafkaError) => void): void;
+    sendOffsetsToTransaction(offsets: TopicPartitionOffset[], consumer: KafkaConsumer, cb: (err: LibrdKafkaError) => void): void;
+    sendOffsetsToTransaction(offsets: TopicPartitionOffset[], consumer: KafkaConsumer, timeout: number, cb: (err: LibrdKafkaError) => void): void;
 }
 
 export class HighLevelProducer extends Producer {

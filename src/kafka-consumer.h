@@ -35,6 +35,7 @@ namespace NodeKafka {
  */
 
 class KafkaConsumer : public Connection {
+  friend class Producer;
  public:
   static void Init(v8::Local<v8::Object>);
   static v8::Local<v8::Object> NewInstance(v8::Local<v8::Value>);
