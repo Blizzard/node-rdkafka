@@ -262,6 +262,11 @@ To see the configuration options available to you, see the [Configuration](#conf
 |`producer.setPollInterval(interval)` | Polls the producer on this interval, handling disconnections and reconnection. Set it to 0 to turn it off. |
 |`producer.produce(topic, partition, msg, key, timestamp, opaque)`| Sends a message. <br><br>The `produce()` method throws when produce would return an error. Ordinarily, this is just if the queue is full. |
 |`producer.flush(timeout, callback)`| Flush the librdkafka internal queue, sending all messages. Default timeout is 500ms |
+|`producer.initTransactions(timeout, callback)`| Initializes the transactional producer. |
+|`producer.beginTransaction(callback)`| Starts a new transaction. |
+|`producer.sendOffsetsToTransaction(offsets, consumer, timeout, callback)`| Sends consumed topic-partition-offsets to the broker, which will get committed along with the transaction. |
+|`producer.abortTransaction(timeout, callback)`| Aborts the ongoing transaction. |
+|`producer.commitTransaction(timeout, callback)`| Commits the ongoing transaction. | 
 
 ##### Events
 
