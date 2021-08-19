@@ -32,7 +32,7 @@
               {
                 'action_name': 'nuget_librdkafka_download',
                 'inputs': [
-                  'deps/windows-install.py'
+                  '<(module_root_dir)/deps/windows-install.py'
                 ],
                 'outputs': [
                   'deps/precompiled/librdkafka.lib',
