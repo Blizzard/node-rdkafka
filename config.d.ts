@@ -1,4 +1,4 @@
-// ====== Generated from librdkafka 1.6.1 file CONFIGURATION.md ======
+// ====== Generated from librdkafka 1.7.0 file CONFIGURATION.md ======
 // Code that generated this is a derivative work of the code from Nam Nguyen
 // https://gist.github.com/ntgn81/066c2c8ec5b4238f85d1e9168a04e3fb
 
@@ -61,13 +61,6 @@ export interface GlobalConfig {
      * @default 1000000
      */
     "max.in.flight"?: number;
-
-    /**
-     * Non-topic request timeout in milliseconds. This is for metadata requests, etc.
-     *
-     * @default 60000
-     */
-    "metadata.request.timeout.ms"?: number;
 
     /**
      * Period of time in milliseconds at which topic and broker metadata is refreshed in order to proactively discover any new brokers, topics, partitions or partition leader changes. Use -1 to disable the intervalled refresh (not recommended). If there are no locally referenced topics (no topic objects created, no messages produced, no subscription or no assignment) then only the broker list will be refreshed every interval but no more often than every 10s.
@@ -183,6 +176,13 @@ export interface GlobalConfig {
      * @default any
      */
     "broker.address.family"?: 'any' | 'v4' | 'v6';
+
+    /**
+     * Close broker connections after the specified time of inactivity. Disable with 0. If this property is left at its default value some heuristics are performed to determine a suitable default value, this is currently limited to identifying brokers on Azure (see librdkafka issue #3109 for more info).
+     *
+     * @default 0
+     */
+    "connections.max.idle.ms"?: number;
 
     /**
      * **DEPRECATED** No longer used. See `reconnect.backoff.ms` and `reconnect.backoff.max.ms`.
@@ -403,8 +403,6 @@ export interface GlobalConfig {
 
     /**
      * File or directory path to CA certificate(s) for verifying the broker's key. Defaults: On Windows the system's CA certificates are automatically looked up in the Windows Root certificate store. On Mac OSX this configuration defaults to `probe`. It is recommended to install openssl using Homebrew, to provide CA certificates. On Linux install the distribution's ca-certificates package. If OpenSSL is statically linked or `ssl.ca.location` is set to `probe` a list of standard paths will be probed and the first one found will be used as the default CA certificate location path. If OpenSSL is dynamically linked the OpenSSL library's default path will be used (see `OPENSSLDIR` in `openssl version -a`).
-     *
-     * @default probe
      */
     "ssl.ca.location"?: string;
 
@@ -434,6 +432,23 @@ export interface GlobalConfig {
      * Client's keystore (PKCS#12) password.
      */
     "ssl.keystore.password"?: string;
+
+    /**
+     * Path to OpenSSL engine library. OpenSSL >= 1.1.0 required.
+     */
+    "ssl.engine.location"?: string;
+
+    /**
+     * OpenSSL engine id is the name used for loading engine.
+     *
+     * @default dynamic
+     */
+    "ssl.engine.id"?: string;
+
+    /**
+     * OpenSSL engine callback data (set with rd_kafka_conf_set_engine_callback_data()).
+     */
+    "ssl_engine_callback_data"?: any;
 
     /**
      * Enable OpenSSL's builtin broker (server) certificate verification. This verification can be extended by the application by implementing a certificate_verify_cb.
@@ -708,7 +723,7 @@ export interface ConsumerGlobalConfig extends GlobalConfig {
     /**
      * Client group session and failure detection timeout. The consumer sends periodic heartbeats (heartbeat.interval.ms) to indicate its liveness to the broker. If no hearts are received by the broker for a group member within the session timeout, the broker will remove the consumer from the group and trigger a rebalance. The allowed range is configured with the **broker** configuration properties `group.min.session.timeout.ms` and `group.max.session.timeout.ms`. Also see `max.poll.interval.ms`.
      *
-     * @default 10000
+     * @default 45000
      */
     "session.timeout.ms"?: number;
 
@@ -966,14 +981,14 @@ export interface ProducerTopicConfig extends TopicConfig {
 
 export interface ConsumerTopicConfig extends TopicConfig {
     /**
-     * **DEPRECATED** [**LEGACY PROPERTY:** This property is used by the simple legacy consumer only. When using the high-level KafkaConsumer, the global `enable.auto.commit` property must be used instead]. If true, periodically commit offset of the last message handed to the application. This committed offset will be used when the process restarts to pick up where it left off. If false, the application will have to call `rd_kafka_offset_store()` to store an offset (optional). **NOTE:** There is currently no zookeeper integration, offsets will be written to broker or local file according to offset.store.method.
+     * **DEPRECATED** [**LEGACY PROPERTY:** This property is used by the simple legacy consumer only. When using the high-level KafkaConsumer, the global `enable.auto.commit` property must be used instead]. If true, periodically commit offset of the last message handed to the application. This committed offset will be used when the process restarts to pick up where it left off. If false, the application will have to call `rd_kafka_offset_store()` to store an offset (optional). Offsets will be written to broker or local file according to offset.store.method.
      *
      * @default true
      */
     "auto.commit.enable"?: boolean;
 
     /**
-     * **DEPRECATED** Alias for `auto.commit.enable`: [**LEGACY PROPERTY:** This property is used by the simple legacy consumer only. When using the high-level KafkaConsumer, the global `enable.auto.commit` property must be used instead]. If true, periodically commit offset of the last message handed to the application. This committed offset will be used when the process restarts to pick up where it left off. If false, the application will have to call `rd_kafka_offset_store()` to store an offset (optional). **NOTE:** There is currently no zookeeper integration, offsets will be written to broker or local file according to offset.store.method.
+     * **DEPRECATED** Alias for `auto.commit.enable`: [**LEGACY PROPERTY:** This property is used by the simple legacy consumer only. When using the high-level KafkaConsumer, the global `enable.auto.commit` property must be used instead]. If true, periodically commit offset of the last message handed to the application. This committed offset will be used when the process restarts to pick up where it left off. If false, the application will have to call `rd_kafka_offset_store()` to store an offset (optional). Offsets will be written to broker or local file according to offset.store.method.
      *
      * @default true
      */
