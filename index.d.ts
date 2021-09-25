@@ -31,6 +31,10 @@ export interface ClientMetrics {
     connectionOpened: number;
 }
 
+export interface HighLevelProducerOptions {
+    cb_topicPartitionOffset?: boolean;
+}
+
 export interface MetadataOptions {
     topic?: string;
     allTopics?: boolean;
@@ -75,6 +79,8 @@ export interface TopicPartition {
 export interface TopicPartitionOffset extends TopicPartition{
     offset: number;
 }
+
+type HighLevelProducerCallback = (err: any, offset?: NumberNullUndefined | TopicPartitionOffset) => void
 
 export type TopicPartitionTime = TopicPartitionOffset;
 
@@ -278,8 +284,10 @@ export class Producer extends Client<KafkaProducerEvents> {
 }
 
 export class HighLevelProducer extends Producer {
-  produce(topic: string, partition: NumberNullUndefined, message: any, key: any, timestamp: NumberNullUndefined, callback: (err: any, offset?: NumberNullUndefined) => void): any;
-  produce(topic: string, partition: NumberNullUndefined, message: any, key: any, timestamp: NumberNullUndefined, headers: MessageHeader[], callback: (err: any, offset?: NumberNullUndefined) => void): any;
+  constructor(conf: ProducerGlobalConfig, topicConf?: ProducerTopicConfig, highLevelConf?: HighLevelProducerOptions);
+
+  produce(topic: string, partition: NumberNullUndefined, message: any, key: any, timestamp: NumberNullUndefined, callback: HighLevelProducerCallback): any;
+  produce(topic: string, partition: NumberNullUndefined, message: any, key: any, timestamp: NumberNullUndefined, headers: MessageHeader[], callback: HighLevelProducerCallback): any;
 
   setKeySerializer(serializer: (key: any, cb: (err: any, key: MessageKey) => void) => void): void;
   setKeySerializer(serializer: (key: any) => MessageKey | Promise<MessageKey>): void;
