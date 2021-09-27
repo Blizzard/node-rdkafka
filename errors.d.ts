@@ -1,4 +1,4 @@
-// ====== Generated from librdkafka 1.6.1 file src-cpp/rdkafkacpp.h ======
+// ====== Generated from librdkafka 1.7.0 file src-cpp/rdkafkacpp.h ======
 export const CODES: { ERRORS: {
   /* Internal errors to rdkafka: */
   /** Begin internal error codes (**-200**) */
@@ -126,8 +126,10 @@ export const CODES: { ERRORS: {
   ERR__NOOP: number,
   /** No offset to automatically reset to (**-140**) */
   ERR__AUTO_OFFSET_RESET: number,
+
   /** End internal error codes (**-100**) */
   ERR__END: number,
+
   /* Kafka broker errors: */
   /** Unknown broker error (**-1**) */
   ERR_UNKNOWN: number,
