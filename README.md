@@ -632,31 +632,3 @@ The following table lists important methods for this API.
 |`client.createPartitions(topicName, desiredPartitions, timeout, cb)` | Create partitions until the topic has the desired number of partitions. |
 
 Check the tests for an example of how to use this API!
-
-# Updating librdkafka version
-
-The librdkafka should be periodically updated to the latest release in https://github.com/edenhill/librdkafka/releases
-
-Steps to update:
-1. Update the `librdkafka` property in `package.json` to the desired version.
-
-1. Update the librdkafka git submodule to that versions release commit (example below)
-
-    ```bash
-    cd deps/librdkafka
-    git checkout 77a013b7a2611f7bdc091afa1e56b1a46d1c52f5 # for version 1.70
-    ```
-
-1. Update `config.d.ts` and `errors.d.ts` TypeScript definitions by running:
-    ```bash
-    node ci/librdkafka-defs-generator.js
-    ```
-    Note: This is ran automatically during CI flows but it's good to run it during the version upgrade pull request.
-
-1. Run `npm install` to build with the new version and fix any build errors that occur.
-
-1. Run unit tests: `npm run test`
-
-1. Run end to end tests: `npm run test:e2e`. This requires running kafka & zookeeper locally.
-
-1. Update the version numbers referenced in this readme file to the new version.
