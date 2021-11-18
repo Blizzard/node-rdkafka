@@ -59,8 +59,6 @@ describe('Producer', function() {
     });
 
     it('should produce a message with a null payload and null key', function(done) {
-      this.timeout(3000);
-
       var tt = setInterval(function() {
         producer.poll();
       }, 200);
@@ -80,8 +78,6 @@ describe('Producer', function() {
     });
 
     it('should produce a message with a payload and key', function(done) {
-      this.timeout(3000);
-
       var tt = setInterval(function() {
         producer.poll();
       }, 200);
@@ -102,8 +98,6 @@ describe('Producer', function() {
     });
 
     it('should produce a message with a payload and key buffer', function(done) {
-      this.timeout(3000);
-
       var tt = setInterval(function() {
         producer.poll();
       }, 200);
@@ -124,8 +118,6 @@ describe('Producer', function() {
     });
 
     it('should produce a message with an opaque', function(done) {
-      this.timeout(3000);
-
       var tt = setInterval(function() {
         producer.poll();
       }, 200);
@@ -146,8 +138,6 @@ describe('Producer', function() {
 
 
     it('should get 100% deliverability', function(done) {
-      this.timeout(3000);
-
       var total = 0;
       var max = 10000;
       var verified_received = 0;
@@ -202,8 +192,6 @@ describe('Producer', function() {
     });
 
     it('should produce a message with a payload and key', function(done) {
-      this.timeout(3000);
-
       var tt = setInterval(function() {
         producer.poll();
       }, 200);
@@ -224,8 +212,6 @@ describe('Producer', function() {
     });
 
     it('should produce a message with an empty payload and empty key (https://github.com/Blizzard/node-rdkafka/issues/117)', function(done) {
-      this.timeout(3000);
-
       var tt = setInterval(function() {
         producer.poll();
       }, 200);
@@ -247,8 +233,6 @@ describe('Producer', function() {
     });
 
     it('should produce a message with a null payload and null key  (https://github.com/Blizzard/node-rdkafka/issues/117)', function(done) {
-      this.timeout(3000);
-
       producer.setPollInterval(10);
 
       producer.once('delivery-report', function(err, report) {
@@ -292,7 +276,6 @@ describe('Producer', function() {
 
       producer.produce('test', null, null, Buffer.from(arr.buffer));
 
-      this.timeout(3000);
     });
 
   });
