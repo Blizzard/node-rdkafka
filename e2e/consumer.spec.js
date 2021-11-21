@@ -110,7 +110,6 @@ describe('Consumer', function() {
     });
 
     it('after assign and commit, should get committed offsets', function(done) {
-      this.timeout(6000);
       consumer.assign([{topic:topic, partition:0}]);
       consumer.commitSync({topic:topic, partition:0, offset:1000});
       consumer.committed(null, 1000, function(err, committed) {
@@ -301,8 +300,6 @@ describe('Consumer', function() {
     });
 
     it('should happen without issue after consuming', function(cb) {
-      this.timeout(11000);
-
       var consumer = new KafkaConsumer(gcfg, tcfg);
       consumer.setDefaultConsumeTimeout(10000);
 

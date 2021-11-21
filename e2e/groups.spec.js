@@ -68,7 +68,6 @@ describe('Consumer group/Producer', function() {
   });
 
   it('should be able to commit, read committed and restart from the committed offset', function(done) {
-    this.timeout(30000);
     var topic = 'test';
     var key = 'key';
     var payload = Buffer.from('value');
