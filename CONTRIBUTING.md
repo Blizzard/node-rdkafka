@@ -198,7 +198,7 @@ You can add breakpoints and so on after that.
 The librdkafka should be periodically updated to the latest release in https://github.com/edenhill/librdkafka/releases
 
 Steps to update:
-1. Update the `librdkafka` property in `package.json` to the desired version.
+1. Update the `librdkafka` property in [`package.json`](https://github.com/Blizzard/node-rdkafka/blob/master/package.json) to the desired version.
 
 1. Update the librdkafka git submodule to that versions release commit (example below)
 
@@ -207,7 +207,7 @@ Steps to update:
     git checkout 77a013b7a2611f7bdc091afa1e56b1a46d1c52f5 # for version 1.70
     ```
 
-1. Update `config.d.ts` and `errors.d.ts` TypeScript definitions by running:
+1. Update [`config.d.ts`](https://github.com/Blizzard/node-rdkafka/blob/master/config.d.ts) and [`errors.d.ts`](https://github.com/Blizzard/node-rdkafka/blob/master/errors.d.ts) TypeScript definitions by running:
     ```bash
     node ci/librdkafka-defs-generator.js
     ```
@@ -219,4 +219,4 @@ Steps to update:
 
 1. Run end to end tests: `npm run test:e2e`. This requires running kafka & zookeeper locally.
 
-1. Update the version numbers referenced in this readme file to the new version.
+1. Update the version numbers referenced in the [`README.md`](https://github.com/Blizzard/node-rdkafka/blob/master/README.md) file to the new version.
