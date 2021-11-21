@@ -27,6 +27,8 @@ so if you feel something is missing feel free to send a pull request.
 [Debugging](#debugging)
   * [Debugging C++](#debugging-c)
 
+[Updating librdkafka version](#updating-librdkafka-version)
+
 ## What should I know before I get started?
 
 ### Contributor Agreement
@@ -190,3 +192,31 @@ gdb node
 ```
 
 You can add breakpoints and so on after that.
+
+## Updating librdkafka version
+
+The librdkafka should be periodically updated to the latest release in https://github.com/edenhill/librdkafka/releases
+
+Steps to update:
+1. Update the `librdkafka` property in [`package.json`](https://github.com/Blizzard/node-rdkafka/blob/master/package.json) to the desired version.
+
+1. Update the librdkafka git submodule to that versions release commit (example below)
+
+    ```bash
+    cd deps/librdkafka
+    git checkout 77a013b7a2611f7bdc091afa1e56b1a46d1c52f5 # for version 1.70
+    ```
+
+1. Update [`config.d.ts`](https://github.com/Blizzard/node-rdkafka/blob/master/config.d.ts) and [`errors.d.ts`](https://github.com/Blizzard/node-rdkafka/blob/master/errors.d.ts) TypeScript definitions by running:
+    ```bash
+    node ci/librdkafka-defs-generator.js
+    ```
+    Note: This is ran automatically during CI flows but it's good to run it during the version upgrade pull request.
+
+1. Run `npm install` to build with the new version and fix any build errors that occur.
+
+1. Run unit tests: `npm run test`
+
+1. Run end to end tests: `npm run test:e2e`. This requires running kafka & zookeeper locally.
+
+1. Update the version numbers referenced in the [`README.md`](https://github.com/Blizzard/node-rdkafka/blob/master/README.md) file to the new version.

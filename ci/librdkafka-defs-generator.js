@@ -172,7 +172,7 @@ function updateErrorDefinitions(file) {
   // validate body
   const emptyCheck = body
     .replace(/((  \/\*)|(   ?\*)).*/g, '')
-    .replace(/  ERR_\w+: -?\d+,?\n/g, '')
+    .replace(/  ERR_\w+: -?\d+,?\r?\n/g, '')
     .trim()
   if (emptyCheck !== '') {
     throw new Error(`Fail to parse ${file}. It contains these extra details:\n${emptyCheck}`);
@@ -184,7 +184,7 @@ function updateErrorDefinitions(file) {
     .replace(/(\/\/.*\n)?LibrdKafkaError.codes = {[^}]+/g, `${getHeader(file)}\nLibrdKafkaError.codes = {\n${body}`)
 
   fs.writeFileSync(error_js_file, error_js);
-  fs.writeFileSync(path.resolve(__dirname, '../errors.d.ts'), `${getHeader(file)}\nexport const CODES: { ERRORS: {${body.replace(/[ \.]*(\*\/\n  \w+: )(-?\d+),?/g, ' (**$2**) $1number,')}}}`)
+  fs.writeFileSync(path.resolve(__dirname, '../errors.d.ts'), `${getHeader(file)}\nexport const CODES: { ERRORS: {${body.replace(/[ \.]*(\*\/\r?\n  \w+: )(-?\d+),?/g, ' (**$2**) $1number,')}}}`)
 }
 
 (async function updateTypeDefs() {
