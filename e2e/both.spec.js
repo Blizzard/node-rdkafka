@@ -85,7 +85,6 @@ describe('Consumer/Producer', function() {
   });
 
   afterEach(function(done) {
-    this.timeout(6000);
     var finished = 0;
     var called = false;
 
@@ -115,7 +114,6 @@ describe('Consumer/Producer', function() {
   });
 
   it('should be able to produce, consume messages, read position: subscribe/consumeOnce', function(done) {
-    this.timeout(8000);
     crypto.randomBytes(4096, function(ex, buffer) {
       producer.setPollInterval(10);
 
@@ -167,7 +165,6 @@ describe('Consumer/Producer', function() {
   });
   
   it('should return ready messages on partition EOF', function(done) {
-    this.timeout(8000);
     crypto.randomBytes(4096, function(ex, buffer) {
       producer.setPollInterval(10);
 
@@ -210,7 +207,6 @@ describe('Consumer/Producer', function() {
   });
 
   it('should emit partition.eof event when reaching end of partition', function(done) {
-    this.timeout(8000);
     crypto.randomBytes(4096, function(ex, buffer) {
       producer.setPollInterval(10);
 
@@ -244,7 +240,6 @@ describe('Consumer/Producer', function() {
   });
 
   it('should emit partition.eof when already at end of partition', function(done) {
-    this.timeout(8000);
     crypto.randomBytes(4096, function(ex, buffer) {
       producer.setPollInterval(10);
 
@@ -280,8 +275,6 @@ describe('Consumer/Producer', function() {
   it('should be able to produce and consume messages: consumeLoop', function(done) {
     var key = 'key';
 
-    this.timeout(5000);
-
     crypto.randomBytes(4096, function(ex, buffer) {
 
       producer.setPollInterval(10);
@@ -313,7 +306,6 @@ describe('Consumer/Producer', function() {
   });
 
   it('should emit \'partition.eof\' events in consumeLoop', function(done) {
-    this.timeout(7000);
 
     crypto.randomBytes(4096, function(ex, buffer) {
       producer.setPollInterval(10);
@@ -384,7 +376,6 @@ describe('Consumer/Producer', function() {
     var headers = [
       { key: "value" }
     ];
-    this.timeout(5000);
     run_headers_test(done, headers);
   });
 
@@ -392,7 +383,6 @@ describe('Consumer/Producer', function() {
     var headers = [
       { key: Buffer.from('value') }
     ];
-    this.timeout(5000);
     run_headers_test(done, headers);
   });
 
@@ -400,7 +390,6 @@ describe('Consumer/Producer', function() {
     var headers = [
       { key: 10 }
     ];
-    this.timeout(5000);
     run_headers_test(done, headers);
   });
 
@@ -408,7 +397,6 @@ describe('Consumer/Producer', function() {
     var headers = [
       { key: 1.11 }
     ];
-    this.timeout(5000);
     run_headers_test(done, headers);
   });
 
@@ -419,7 +407,6 @@ describe('Consumer/Producer', function() {
       { key3: Buffer.from('value3') },
       { key4: Buffer.from('value4') },
     ];
-    this.timeout(5000);
     run_headers_test(done, headers);
   });
   
@@ -430,7 +417,6 @@ describe('Consumer/Producer', function() {
       { key3: 'value3' },
       { key4: 'value4' },
     ];
-    this.timeout(5000);
     run_headers_test(done, headers);
   });
 
@@ -441,12 +427,10 @@ describe('Consumer/Producer', function() {
       { key3: 100 },
       { key4: 10.1 },
     ];
-    this.timeout(5000);
     run_headers_test(done, headers);
   });
 
   it('should be able to produce and consume messages: empty buffer key and empty value', function(done) {
-    this.timeout(20000);
     var emptyString = '';
     var key = Buffer.from(emptyString);
     var value = Buffer.from('');
@@ -469,7 +453,6 @@ describe('Consumer/Producer', function() {
   });
 
   it('should be able to produce and consume messages: empty key and empty value', function(done) {
-    this.timeout(20000);
     var key = '';
     var value = Buffer.from('');
 
@@ -491,7 +474,6 @@ describe('Consumer/Producer', function() {
   });
 
   it('should be able to produce and consume messages: null key and null value', function(done) {
-    this.timeout(20000);
     var key = null;
     var value = null;
 
@@ -538,14 +520,12 @@ describe('Consumer/Producer', function() {
     });
 
     afterEach(function(done) {
-      this.timeout(10000);
       consumer.disconnect(function() {
         done();
       });
     });
 
     it('should async commit after consuming', function(done) {
-      this.timeout(25000);
       var key = '';
       var value = Buffer.from('');
 
@@ -596,15 +576,12 @@ describe('Consumer/Producer', function() {
     var grp = 'kafka-mocha-grp-' + crypto.randomBytes(20).toString('hex');
 
     afterEach(function(done) {
-      this.timeout(10000);
       consumer.disconnect(function() {
         done();
       });
     });
 
     it('should callback offset_commit_cb after commit', function(done) {
-      this.timeout(20000);
-
       var consumerOpts = {
           'metadata.broker.list': kafkaBrokerList,
           'group.id': grp,

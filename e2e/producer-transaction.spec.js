@@ -12,7 +12,6 @@ var Kafka = require('../');
 var kafkaBrokerList = process.env.KAFKA_HOST || 'localhost:9092';
 
 describe('Transactional Producer', function () {
-  this.timeout(5000);
   var TRANSACTIONS_TIMEOUT_MS = 30000;
   var r = Date.now() + '_' + Math.round(Math.random() * 1000);
   var topicIn = 'transaction_input_' + r;

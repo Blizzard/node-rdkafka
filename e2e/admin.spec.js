@@ -90,7 +90,6 @@ describe('Admin', function() {
   });
 
   beforeEach(function() {
-    this.timeout(10000);
     client = Kafka.AdminClient.create({
       'client.id': 'kafka-test',
       'metadata.broker.list': kafkaBrokerList
@@ -100,7 +99,6 @@ describe('Admin', function() {
   describe('createTopic', function() {
     it('should create topic sucessfully', function(done) {
       var topicName = 'admin-test-topic-' + time;
-      this.timeout(30000);
       client.createTopic({
         topic: topicName,
         num_partitions: 1,
@@ -115,7 +113,6 @@ describe('Admin', function() {
 
     it('should raise an error when replication_factor is larger than number of brokers', function(done) {
       var topicName = 'admin-test-topic-bad-' + time;
-      this.timeout(30000);
       client.createTopic({
         topic: topicName,
         num_partitions: 9999,
@@ -130,7 +127,6 @@ describe('Admin', function() {
   describe('deleteTopic', function() {
     it('should be able to delete a topic after creation', function(done) {
       var topicName = 'admin-test-topic-2bdeleted-' + time;
-      this.timeout(30000);
       client.createTopic({
         topic: topicName,
         num_partitions: 1,
@@ -151,7 +147,6 @@ describe('Admin', function() {
   describe('createPartitions', function() {
     it('should be able to add partitions to a topic after creation', function(done) {
       var topicName = 'admin-test-topic-newparts-' + time;
-      this.timeout(30000);
       client.createTopic({
         topic: topicName,
         num_partitions: 1,
@@ -173,7 +168,6 @@ describe('Admin', function() {
 
     it('should NOT be able to reduce partitions to a topic after creation', function(done) {
       var topicName = 'admin-test-topic-newparts2-' + time;
-      this.timeout(30000);
       client.createTopic({
         topic: topicName,
         num_partitions: 4,
