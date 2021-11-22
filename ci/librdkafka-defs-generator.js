@@ -181,7 +181,7 @@ function updateErrorDefinitions(file) {
   const error_js_file = path.resolve(__dirname, '../lib/error.js');
   const error_js = fs.readFileSync(error_js_file)
     .toString()
-    .replace(/(\/\/.*\n)?LibrdKafkaError.codes = {[^}]+/g, `${getHeader(file)}\nLibrdKafkaError.codes = {\n${body}`)
+    .replace(/(\/\/.*\r?\n)?LibrdKafkaError.codes = {[^}]+/g, `${getHeader(file)}\nLibrdKafkaError.codes = {\n${body}`)
 
   fs.writeFileSync(error_js_file, error_js);
   fs.writeFileSync(path.resolve(__dirname, '../errors.d.ts'), `${getHeader(file)}\nexport const CODES: { ERRORS: {${body.replace(/[ \.]*(\*\/\r?\n  \w+: )(-?\d+),?/g, ' (**$2**) $1number,')}}}`)
