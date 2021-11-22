@@ -62,8 +62,14 @@ shutil.copy2(libPath + '/librdkafkacpp.lib', depsPrecompiledDir)
 shutil.copy2(includePath + '/rdkafka.h', depsIncludeDir)
 shutil.copy2(includePath + '/rdkafkacpp.h', depsIncludeDir)
 
+shutil.copy2(dllPath + '/libcrypto-1_1-x64.dll', buildReleaseDir)
 shutil.copy2(dllPath + '/librdkafka.dll', buildReleaseDir)
 shutil.copy2(dllPath + '/librdkafkacpp.dll', buildReleaseDir)
+shutil.copy2(dllPath + '/libssl-1_1-x64.dll', buildReleaseDir)
+shutil.copy2(dllPath + '/msvcp140.dll', buildReleaseDir)
+shutil.copy2(dllPath + '/vcruntime140.dll', buildReleaseDir)
+shutil.copy2(dllPath + '/zlib1.dll', buildReleaseDir)
+shutil.copy2(dllPath + '/zstd.dll', buildReleaseDir)
 
 # clean up
 os.remove(outputFile)
