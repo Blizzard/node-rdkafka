@@ -17,6 +17,36 @@ describe('Transactional Producer', function () {
   var topicIn = 'transaction_input_' + r;
   var topicOut = 'transaction_output_' + r;
 
+  var replicationFactor = process.env.KAFKA_REPLICATION_FACTOR || 1;
+  var minInSyncReplicas = process.env.KAFKA_MIN_IN_SYNC_REPLICAS || '1';
+
+  var client = Kafka.AdminClient.create({
+    'metadata.broker.list': kafkaBrokerList,
+    'client.id': 'kafka-test'
+  });
+
+  client.createTopic({
+    topic: topicIn,
+    num_partitions: 1,
+    replication_factor: parseInt(replicationFactor),
+    config: {'min.insync.replicas': minInSyncReplicas}
+  }, function(err) {
+    if (err) {
+      console.error(err);
+    }
+  });
+
+  client.createTopic({
+    topic: topicOut,
+    num_partitions: 1,
+    replication_factor: parseInt(replicationFactor),
+    config: {'min.insync.replicas': minInSyncReplicas}
+  }, function(err) {
+    if (err) {
+      console.error(err);
+    }
+  });
+
   var producerTras;
   var consumerTrans;
 
