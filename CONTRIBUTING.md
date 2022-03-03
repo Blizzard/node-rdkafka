@@ -204,7 +204,7 @@ Steps to update:
 
     ```bash
     cd deps/librdkafka
-    git checkout 77a013b7a2611f7bdc091afa1e56b1a46d1c52f5 # for version 1.70
+    git checkout 063a9ae7a65cebdf1cc128da9815c05f91a2a996 # for version 1.8.2
     ```
 
 1. Update [`config.d.ts`](https://github.com/Blizzard/node-rdkafka/blob/master/config.d.ts) and [`errors.d.ts`](https://github.com/Blizzard/node-rdkafka/blob/master/errors.d.ts) TypeScript definitions by running:

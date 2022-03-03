@@ -18,7 +18,7 @@ print('download librdkafka form ' + librdkafkaNugetUrl)
 outputDir = 'librdkafka.redist'
 outputFile = outputDir + '.zip'
 dllPath = outputDir + '/runtimes/win{}-x64/native'.format(librdkafkaWinSufix)
-libPath = outputDir + '/build/native/lib/win{}/x64/win{}-x64-Release/v120'.format(librdkafkaWinSufix, librdkafkaWinSufix)
+libPath = outputDir + '/build/native/lib/win{}/x64/win{}-x64-Release/v140'.format(librdkafkaWinSufix, librdkafkaWinSufix)
 includePath = outputDir + '/build/native/include/librdkafka'
 
 # download librdkafka from nuget
@@ -62,13 +62,14 @@ shutil.copy2(libPath + '/librdkafkacpp.lib', depsPrecompiledDir)
 shutil.copy2(includePath + '/rdkafka.h', depsIncludeDir)
 shutil.copy2(includePath + '/rdkafkacpp.h', depsIncludeDir)
 
-shutil.copy2(dllPath + '/zlib.dll', buildReleaseDir)
-shutil.copy2(dllPath + '/msvcr120.dll', buildReleaseDir)
+shutil.copy2(dllPath + '/libcrypto-1_1-x64.dll', buildReleaseDir)
 shutil.copy2(dllPath + '/librdkafka.dll', buildReleaseDir)
 shutil.copy2(dllPath + '/librdkafkacpp.dll', buildReleaseDir)
-if not librdkafkaVersion.startswith('0.'):
-    shutil.copy2(dllPath + '/libzstd.dll', buildReleaseDir)
-    shutil.copy2(dllPath + '/msvcp120.dll', buildReleaseDir)
+shutil.copy2(dllPath + '/libssl-1_1-x64.dll', buildReleaseDir)
+shutil.copy2(dllPath + '/msvcp140.dll', buildReleaseDir)
+shutil.copy2(dllPath + '/vcruntime140.dll', buildReleaseDir)
+shutil.copy2(dllPath + '/zlib1.dll', buildReleaseDir)
+shutil.copy2(dllPath + '/zstd.dll', buildReleaseDir)
 
 # clean up
 os.remove(outputFile)

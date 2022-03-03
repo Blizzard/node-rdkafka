@@ -1,4 +1,4 @@
-// ====== Generated from librdkafka 1.7.0 file CONFIGURATION.md ======
+// ====== Generated from librdkafka 1.8.2 file CONFIGURATION.md ======
 // Code that generated this is a derivative work of the code from Nam Nguyen
 // https://gist.github.com/ntgn81/066c2c8ec5b4238f85d1e9168a04e3fb
 
@@ -405,6 +405,11 @@ export interface GlobalConfig {
      * File or directory path to CA certificate(s) for verifying the broker's key. Defaults: On Windows the system's CA certificates are automatically looked up in the Windows Root certificate store. On Mac OSX this configuration defaults to `probe`. It is recommended to install openssl using Homebrew, to provide CA certificates. On Linux install the distribution's ca-certificates package. If OpenSSL is statically linked or `ssl.ca.location` is set to `probe` a list of standard paths will be probed and the first one found will be used as the default CA certificate location path. If OpenSSL is dynamically linked the OpenSSL library's default path will be used (see `OPENSSLDIR` in `openssl version -a`).
      */
     "ssl.ca.location"?: string;
+
+    /**
+     * CA certificate string (PEM format) for verifying the broker's key.
+     */
+    "ssl.ca.pem"?: string;
 
     /**
      * CA certificate as set by rd_kafka_conf_set_ssl_cert()
