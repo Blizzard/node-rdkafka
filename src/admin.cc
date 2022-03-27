@@ -6,10 +6,10 @@
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE.txt file for details.
  */
-
+#include <math.h>
 #include <string>
 #include <vector>
-#include <math.h>
+
 
 #include "src/workers.h"
 #include "src/admin.h"

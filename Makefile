@@ -23,8 +23,9 @@ CONFIG_OUTPUTS = \
   build/binding.Makefile build/config.gypi
 
 CPPLINT_FILES = $(wildcard src/*.cc src/*.h)
-CPPLINT_FILTER = -legal/copyright
+CPPLINT_FILTER = -legal/copyright,-runtime/references
 JSLINT_FILES = lib/*.js test/*.js e2e/*.js
+CPPLINT_LINE_LENGTH=130
 
 PACKAGE = $(shell node -pe 'require("./package.json").name.split("/")[1]')
 VERSION = $(shell node -pe 'require("./package.json").version')
@@ -41,7 +42,7 @@ all: lint lib test e2e
 lint: cpplint jslint
 
 cpplint:
-	@$(PYTHON) $(CPPLINT) --filter=$(CPPLINT_FILTER) $(CPPLINT_FILES)
+	@$(PYTHON) $(CPPLINT) --filter=$(CPPLINT_FILTER) --linelength=$(CPPLINT_LINE_LENGTH) $(CPPLINT_FILES)
 
 jslint: node_modules/.dirstamp
 	@./node_modules/.bin/jshint --verbose $(JSLINT_FILES)

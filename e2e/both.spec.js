@@ -163,7 +163,7 @@ describe('Consumer/Producer', function() {
 
     });
   });
-  
+
   it('should return ready messages on partition EOF', function(done) {
     crypto.randomBytes(4096, function(ex, buffer) {
       producer.setPollInterval(10);
@@ -221,14 +221,14 @@ describe('Consumer/Producer', function() {
       consumer.once('data', function(msg) {
         events.push("data");
       });
-      
+
       consumer.once('partition.eof', function(eof) {
         events.push("partition.eof");
       });
 
       setTimeout(function() {
         producer.produce(topic, null, buffer, null);
-      }, 500)
+      }, 500);
       consumer.setDefaultConsumeTimeout(2000);
       consumer.consume(1000, function(err, messages) {
         t.ifError(err);
@@ -261,7 +261,7 @@ describe('Consumer/Producer', function() {
 
       setTimeout(function() {
         producer.produce(topic, null, buffer, null);
-      }, 2000)
+      }, 2000);
       consumer.setDefaultConsumeTimeout(3000);
       consumer.consume(1000, function(err, messages) {
         t.ifError(err);
@@ -409,7 +409,7 @@ describe('Consumer/Producer', function() {
     ];
     run_headers_test(done, headers);
   });
-  
+
   it('should be able to produce and consume messages with multiple headers value as string: consumeLoop', function(done) {
     var headers = [
       { key1: 'value1' },

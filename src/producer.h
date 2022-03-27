@@ -14,7 +14,7 @@
 #include <node.h>
 #include <node_buffer.h>
 #include <string>
-
+#include <vector>
 #include "rdkafkacpp.h"
 
 #include "src/common.h"
@@ -89,8 +89,8 @@ class Producer : public Connection {
   Baton SendOffsetsToTransaction(
     std::vector<RdKafka::TopicPartition*> &offsets,
     NodeKafka::KafkaConsumer* consumer,
-    int timeout_ms
-  );
+    int timeout_ms);
+
 
  protected:
   static Nan::Persistent<v8::Function> constructor;

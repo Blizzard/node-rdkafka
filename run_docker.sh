@@ -27,8 +27,8 @@ topics=(
 for topic in "${topics[@]}"
 do
   echo "Making topic $topic"
-  until docker-compose exec kafka \
-    kafka-topics --create --topic $topic --partitions 1 --replication-factor 1 --if-not-exists --zookeeper zookeeper:2181
+  until docker-compose exec -T kafka \
+    kafka-topics --create --topic $topic --partitions 1 --replication-factor 1 --if-not-exists --bootstrap-server localhost:9092
   do
     topic_result="$?"
     if [ "$topic_result" == "1" ]; then

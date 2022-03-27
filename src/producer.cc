@@ -351,10 +351,9 @@ void Producer::ConfigureCallback(const std::string &string_key, const v8::Local<
 }
 
 Baton rdkafkaErrorToBaton(RdKafka::Error* error) {
-  if ( NULL == error) {
+  if (NULL == error) {
     return Baton(RdKafka::ERR_NO_ERROR);
-  }
-  else {
+  } else {
     Baton result(error->code(), error->str(), error->is_fatal(),
                  error->is_retriable(), error->txn_requires_abort());
     delete error;
@@ -840,8 +839,8 @@ NAN_METHOD(Producer::NodeSendOffsetsToTransaction) {
     producer,
     toppars,
     consumer,
-    timeout_ms
-  ));
+    timeout_ms));
+
 
   info.GetReturnValue().Set(Nan::Null());
 }

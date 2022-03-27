@@ -22,7 +22,7 @@ describe('Transactional Producer', function () {
 
   before(function (done) {
     /*
-    prepare: 
+    prepare:
     transactional consumer (read from input topic)
     transactional producer (write to output topic)
     write 3 messages to input topic: A, B, C
@@ -43,7 +43,7 @@ describe('Transactional Producer', function () {
         producerInput.disconnect(function (err) {
           consumerTrans.subscribe([topicIn]);
           done(err);
-        })
+        });
       }
     }
     producerInput = Kafka.Producer({
@@ -76,7 +76,7 @@ describe('Transactional Producer', function () {
   });
 
   after(function (done) {
-    let connected = 2;
+    var connected = 2;
     function execDisconnect(client) {
       if (!client.isConnected) {
         connected--;
@@ -225,7 +225,7 @@ describe('Transactional Producer', function () {
               return;
             }
             done();
-          })
+          });
         }
       });
     });
@@ -261,7 +261,7 @@ describe('Transactional Producer', function () {
               return;
             }
             done();
-          })
+          });
         } else {
           done('Expected only B');
           return;
