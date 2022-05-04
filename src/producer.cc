@@ -629,6 +629,17 @@ NAN_METHOD(Producer::NodeProduce) {
     error_code = static_cast<int>(b.err());
   }
 
+  if (error_code != 0 && opaque) {
+    // If there was an error enqueing this message, there will never
+    // be a delivery report for it, so we have to clean up the opaque
+    // data now, if there was any.
+
+    Nan::Persistent<v8::Value> *persistent =
+      static_cast<Nan::Persistent<v8::Value> *>(opaque);
+    persistent->Reset();
+    delete persistent;
+  }
+
   if (key != NULL) {
     delete key;
   }
