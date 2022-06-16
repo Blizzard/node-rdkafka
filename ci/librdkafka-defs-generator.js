@@ -171,7 +171,7 @@ function updateErrorDefinitions(file) {
 
   // validate body
   const emptyCheck = body
-    .replace(/((  \/\*)|(   ?\*)).*/g, '')
+    .replace(/((\s+\/\*)|(   ?\*)).*/g, '')
     .replace(/  ERR_\w+: -?\d+,?\r?\n/g, '')
     .trim()
   if (emptyCheck !== '') {

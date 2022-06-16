@@ -18,7 +18,7 @@ print('download librdkafka form ' + librdkafkaNugetUrl)
 outputDir = 'librdkafka.redist'
 outputFile = outputDir + '.zip'
 dllPath = outputDir + '/runtimes/win{}-x64/native'.format(librdkafkaWinSufix)
-libPath = outputDir + '/build/native/lib/win{}/x64/win{}-x64-Release/v140'.format(librdkafkaWinSufix, librdkafkaWinSufix)
+libPath = outputDir + '/build/native/lib/win{}/x64/win{}-x64-Release/v142'.format(librdkafkaWinSufix, librdkafkaWinSufix)
 includePath = outputDir + '/build/native/include/librdkafka'
 
 # download librdkafka from nuget

@@ -1,4 +1,4 @@
-// ====== Generated from librdkafka 1.8.2 file src-cpp/rdkafkacpp.h ======
+// ====== Generated from librdkafka 1.9.0 file src-cpp/rdkafkacpp.h ======
 export const CODES: { ERRORS: {
   /* Internal errors to rdkafka: */
   /** Begin internal error codes (**-200**) */
@@ -20,15 +20,15 @@ export const CODES: { ERRORS: {
   /** Produced message timed out (**-192**) */
   ERR__MSG_TIMED_OUT: number,
   /** Reached the end of the topic+partition queue on
-   *  the broker. Not really an error.
-   *  This event is disabled by default,
-   *  see the `enable.partition.eof` configuration property (**-191**) */
+  *  the broker. Not really an error.
+  *  This event is disabled by default,
+  *  see the `enable.partition.eof` configuration property (**-191**) */
   ERR__PARTITION_EOF: number,
   /** Permanent: Partition does not exist in cluster (**-190**) */
   ERR__UNKNOWN_PARTITION: number,
   /** File or filesystem error (**-189**) */
   ERR__FS: number,
-   /** Permanent: Topic does not exist in cluster (**-188**) */
+  /** Permanent: Topic does not exist in cluster (**-188**) */
   ERR__UNKNOWN_TOPIC: number,
   /** All broker connections are down (**-187**) */
   ERR__ALL_BROKERS_DOWN: number,
@@ -50,9 +50,9 @@ export const CODES: { ERRORS: {
   ERR__UNKNOWN_GROUP: number,
   /** Operation in progress (**-178**) */
   ERR__IN_PROGRESS: number,
-   /** Previous operation in progress, wait for it to finish (**-177**) */
+  /** Previous operation in progress, wait for it to finish (**-177**) */
   ERR__PREV_IN_PROGRESS: number,
-   /** This operation would interfere with an existing subscription (**-176**) */
+  /** This operation would interfere with an existing subscription (**-176**) */
   ERR__EXISTING_SUBSCRIPTION: number,
   /** Assigned partitions (rebalance_cb) (**-175**) */
   ERR__ASSIGN_PARTITIONS: number,
@@ -163,15 +163,15 @@ export const CODES: { ERRORS: {
   ERR_NETWORK_EXCEPTION: number,
   /** Coordinator load in progress (**14**) */
   ERR_COORDINATOR_LOAD_IN_PROGRESS: number,
-  /** Group coordinator load in progress (**14**) */
+/** Group coordinator load in progress (**14**) */
   ERR_GROUP_LOAD_IN_PROGRESS: number,
   /** Coordinator not available (**15**) */
   ERR_COORDINATOR_NOT_AVAILABLE: number,
-  /** Group coordinator not available (**15**) */
+/** Group coordinator not available (**15**) */
   ERR_GROUP_COORDINATOR_NOT_AVAILABLE: number,
   /** Not coordinator (**16**) */
   ERR_NOT_COORDINATOR: number,
-  /** Not coordinator for group (**16**) */
+/** Not coordinator for group (**16**) */
   ERR_NOT_COORDINATOR_FOR_GROUP: number,
   /** Invalid topic (**17**) */
   ERR_TOPIC_EXCEPTION: number,
