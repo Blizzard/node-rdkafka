@@ -9,6 +9,7 @@ jobs:
   npm_test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         node: [ 14, 16, 18 ]
     name: npm test on ${{ matrix.node }}
