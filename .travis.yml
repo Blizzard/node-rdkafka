@@ -13,7 +13,7 @@ node_js:
   - "14"
   - "15"
   - "16"
-sudo: required
+  - "18"
 services: docker
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_BUILD_STAGE_NAME" =~ Test.* ]]; then ./run_docker.sh; fi
@@ -59,7 +59,7 @@ jobs:
         provider: npm
         skip_cleanup: true
         email: webmakersteve@gmail.com
-        api_key:
+        api_token:
           secure: "GUI9X1TnemXIMj5nZDqjrB3zBdMVxhAVKz18BN8TzsQBBne7BOrZ7L9yM3nOwxydm53NAPHFnEjYhYhvM+qhzLnik+XFQ7O3i9rS0hAvzQOBXfup5daib5A8VPMEdTRCXPS3hZ+p5n3ZBruSCQnyTu+HL1SGH//L+j52T5hiOZ3HauhCx9Q0myTBhB6CU5L8yscUUMg12qL7Uw4jsJLfgBRq6hAxphKXfvKt+NJMOWMSmQMbC1FxgfEgIkjFUtasWcUqCmfqx+983XdhhGhC64CYkusSZynNxnsTAosZGJiIZTPYXXL+imBgsEpsMCnW/id/qwaDzRueh2vWlBq2Lk9XSU3VOlKf8nMCJafc3CVjdOZvekyk+WU23gFd4Tpmwk0OtOOM2CKMoNxeMfNvA7ovQ96PP+LDdnRvdoFZV/oX3v3jaXR6DXFd8jnqRTpK4qj7qFO9eWgy1vXdfpwwS2gGVkFvSlWa3niBWzfLSL49Lm7UBwPKJYq0V5taO2dXz8nniTBAQJDcIEKaJkG6IYw5qnLpDLHB3jIw4NwYWw6f/cB5KZXCSeoGBOb9/61XD6Uq0QoQLIhj/vTKmOjNtZHlBzHUoKGYrP+SQRk9BgYh/Cr0azVhSpm2Zjz1fTJ1kYWKzHU8JPyWf6/isKQM4FLhFvWihy/kxkVTkZGR0b4="
         on:
           tags: true
