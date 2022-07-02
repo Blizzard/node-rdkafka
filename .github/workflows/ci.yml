@@ -43,6 +43,9 @@ jobs:
       - name: Install Windows packages
         if: runner.os == 'Windows'
         run: ./win_install.ps1
+      - name: Fix node-gyp on node 8
+        if: ${{ matrix.node == '8' }}
+        run: npm explore npm/node_modules/npm-lifecycle -g -- npm install node-gyp@6.1.0
       - name: Install Dependencies
         run: |
           npm install
