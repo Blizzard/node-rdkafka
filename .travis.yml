@@ -41,7 +41,7 @@ jobs:
     - stage: test_on_win
       os: windows
       node_js:
-        - "18"
+        - "16"  # 18 fails
     # - stage: create_doc
     #   provider: script
     #   before_deploy:
@@ -55,7 +55,7 @@ jobs:
     - stage: deploy
       os: linux
       node_js:
-        - "10"
+        - "18"
       script: skip
       if: (tag =~ ^v)
       before_deploy:
