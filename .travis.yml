@@ -41,7 +41,7 @@ jobs:
     - stage: test_on_win
       os: windows
       node_js:
-        - "16"  # 18 fails
+        - "14"  # 16 and 18 fail
     # - stage: create_doc
     #   provider: script
     #   before_deploy:
