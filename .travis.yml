@@ -20,7 +20,7 @@ services: docker
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_BUILD_STAGE_NAME" =~ test_on_* ]]; then ./run_docker.sh; fi
   # - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install openssl; fi
-  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then ./win_install.bat; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install python; ./win_install.bat; fi
 install:
   - if [[ "$TRAVIS_BUILD_STAGE_NAME" =~ test_on_* ]]; then npm install; fi
 
@@ -42,8 +42,6 @@ jobs:
       os: windows
       node_js:
         - "18"
-      python:
-        - "3.9"
     # - stage: create_doc
     #   provider: script
     #   before_deploy:
