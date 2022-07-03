@@ -34,14 +34,14 @@ jobs:
   include:
     - stage: test_on_mac
       os: osx
-      osx_image: xcode10
+      osx_image: xcode13.4
       env: CPPFLAGS=-I/usr/local/opt/openssl/include LDFLAGS=-L/usr/local/opt/openssl/lib
       node_js:
-        - "10"
+        - "18"
     - stage: test_on_win
       os: windows
       node_js:
-        - "10"
+        - "18"
     # - stage: create_doc
     #   provider: script
     #   before_deploy:
