@@ -21,14 +21,16 @@ topics=(
   "test4"
   "test5"
   "test6"
+  "test7"
 )
 
 # Run docker-compose exec to make them
 for topic in "${topics[@]}"
 do
   echo "Making topic $topic"
+  [[ "$topic" != "test7" ]] && partitions=1 || partitions=2
   until docker-compose exec kafka \
-    kafka-topics --create --topic $topic --partitions 1 --replication-factor 1 --if-not-exists --zookeeper zookeeper:2181
+    kafka-topics --create --topic $topic --partitions $partitions --replication-factor 1 --if-not-exists --bootstrap-server localhost:9092
   do
     topic_result="$?"
     if [ "$topic_result" == "1" ]; then
