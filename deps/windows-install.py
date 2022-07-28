@@ -63,6 +63,7 @@ shutil.copy2(includePath + '/rdkafka.h', depsIncludeDir)
 shutil.copy2(includePath + '/rdkafkacpp.h', depsIncludeDir)
 
 shutil.copy2(dllPath + '/libcrypto-1_1-x64.dll', buildReleaseDir)
+shutil.copy2(dllPath + '/libcurl.dll', buildReleaseDir)
 shutil.copy2(dllPath + '/librdkafka.dll', buildReleaseDir)
 shutil.copy2(dllPath + '/librdkafkacpp.dll', buildReleaseDir)
 shutil.copy2(dllPath + '/libssl-1_1-x64.dll', buildReleaseDir)
