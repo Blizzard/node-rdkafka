@@ -16,7 +16,7 @@ I am looking for *your* help to make this project even better! If you're interes
 
 The `node-rdkafka` library is a high-performance NodeJS client for [Apache Kafka](http://kafka.apache.org/) that wraps the native  [librdkafka](https://github.com/edenhill/librdkafka) library.  All the complexity of balancing writes across partitions and managing (possibly ever-changing) brokers should be encapsulated in the library.
 
-__This library currently uses `librdkafka` version `1.9.1`.__
+__This library currently uses `librdkafka` version `1.9.2`.__
 
 ## Reference Docs
 
@@ -59,7 +59,7 @@ Using Alpine Linux? Check out the [docs](https://github.com/Blizzard/node-rdkafk
 
 ### Windows
 
-Windows build **is not** compiled from `librdkafka` source but it is rather linked against the appropriate version of [NuGet librdkafka.redist](https://www.nuget.org/packages/librdkafka.redist/) static binary that gets downloaded from `https://globalcdn.nuget.org/packages/librdkafka.redist.1.9.1.nupkg` during installation. This download link can be changed using the environment variable `NODE_RDKAFKA_NUGET_BASE_URL` that defaults to `https://globalcdn.nuget.org/packages/` when it's no set.
+Windows build **is not** compiled from `librdkafka` source but it is rather linked against the appropriate version of [NuGet librdkafka.redist](https://www.nuget.org/packages/librdkafka.redist/) static binary that gets downloaded from `https://globalcdn.nuget.org/packages/librdkafka.redist.1.9.2.nupkg` during installation. This download link can be changed using the environment variable `NODE_RDKAFKA_NUGET_BASE_URL` that defaults to `https://globalcdn.nuget.org/packages/` when it's no set.
 
 Requirements:
  * [node-gyp for Windows](https://github.com/nodejs/node-gyp#on-windows)  (the easies way to get it: `npm install --global --production windows-build-tools`, if your node version is 6.x or below, pleasse use `npm install --global --production windows-build-tools@3.1.0`)
@@ -131,7 +131,7 @@ You can also get the version of `librdkafka`
 const Kafka = require('node-rdkafka');
 console.log(Kafka.librdkafkaVersion);
 
-// #=> 1.9.1
+// #=> 1.9.2
 ```
 
 ## Sending Messages
