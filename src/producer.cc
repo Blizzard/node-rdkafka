@@ -560,6 +560,9 @@ NAN_METHOD(Producer::NodeProduce) {
     v8::Local<v8::Array> v8Headers = v8::Local<v8::Array>::Cast(info[6]);
 
     if (v8Headers->Length() >= 1) {
+      const void* header_buffer_data;
+      size_t header_buffer_size;
+
       for (unsigned int i = 0; i < v8Headers->Length(); i++) {
         v8::Local<v8::Object> header = Nan::Get(v8Headers, i).ToLocalChecked()
           ->ToObject(Nan::GetCurrentContext()).ToLocalChecked();
@@ -571,16 +574,32 @@ NAN_METHOD(Producer::NodeProduce) {
           Nan::GetCurrentContext()).ToLocalChecked();
         Nan::MaybeLocal<v8::String> v8Key = Nan::To<v8::String>(
             Nan::Get(props, 0).ToLocalChecked());
-        Nan::MaybeLocal<v8::String> v8Value = Nan::To<v8::String>(
-            Nan::Get(header, v8Key.ToLocalChecked()).ToLocalChecked());
+
+        v8::Local<v8::Value> v8Value =
+          Nan::Get(header, v8Key.ToLocalChecked()).ToLocalChecked();
+
+        if (node::Buffer::HasInstance(v8Value)) {
+          v8::Local<v8::Object> key_buffer_object =
+            (v8Value->ToObject(Nan::GetCurrentContext())).ToLocalChecked();
+
+          header_buffer_data = node::Buffer::Data(v8Value);
+          header_buffer_size = node::Buffer::Length(v8Value);
+        } else {
+          v8::Local<v8::String> v8String =
+            Nan::To<v8::String>(v8Value).ToLocalChecked();
+
+          Nan::Utf8String uValue(v8String);
+          std::string value(*uValue, uValue.length());
+
+          header_buffer_data = value.data();
+          header_buffer_size = value.length();
+        }
 
         Nan::Utf8String uKey(v8Key.ToLocalChecked());
         std::string key(*uKey);
 
-        Nan::Utf8String uValue(v8Value.ToLocalChecked());
-        std::string value(*uValue);
         headers.push_back(
-          RdKafka::Headers::Header(key, value.c_str(), value.size()));
+          RdKafka::Headers::Header(key, header_buffer_data, header_buffer_size));
       }
     }
   }
