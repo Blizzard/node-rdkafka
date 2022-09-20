@@ -84,6 +84,9 @@ class KafkaConsumer : public Connection {
   void ActivateDispatchers();
   void DeactivateDispatchers();
 
+  static void ConsumeLoop(void *arg);
+  static void ConsumeMessage(uv_async_t* handle);
+
  protected:
   static Nan::Persistent<v8::Function> constructor;
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
@@ -98,6 +101,16 @@ class KafkaConsumer : public Connection {
   int m_partition_cnt;
   bool m_is_subscribed = false;
 
+  uv_thread_t consume_event_loop;
+  int consume_timeout_ms;
+  int consume_retry_read_ms;
+  Nan::Callback *consume_callback;
+  Nan::Persistent<v8::Object> consume_context;
+
+  uv_async_t consume_async;
+  uv_mutex_t consume_messages_lock;
+  std::vector<RdKafka::Message*> consume_messages;
+  
   // Node methods
   static NAN_METHOD(NodeConnect);
   static NAN_METHOD(NodeSubscribe);
