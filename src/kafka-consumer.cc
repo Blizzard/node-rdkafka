@@ -37,6 +37,9 @@ KafkaConsumer::KafkaConsumer(Conf* gconfig, Conf* tconfig):
 
     consume_callback = nullptr;
 
+    uv_async_init(Nan::GetCurrentEventLoop(), &consume_async, ConsumeMessage);
+    consume_async.data = this;
+
     uv_mutex_init(&consume_messages_lock);
   }
 
@@ -50,6 +53,8 @@ KafkaConsumer::~KafkaConsumer() {
   }
   
   uv_mutex_destroy(&consume_messages_lock);
+
+  uv_close((uv_handle_t*) &consume_async, NULL);
 }
 
 Baton KafkaConsumer::Connect() {
@@ -497,7 +502,7 @@ void KafkaConsumer::ConsumeLoop(void *arg) {
     RdKafka::ErrorCode ec = b.err();
     if (ec == RdKafka::ERR_NO_ERROR) {
       RdKafka::Message *message = b.data<RdKafka::Message*>();
-      switch (message->err()) {       
+      switch (message->err()) {
 
         case RdKafka::ERR_NO_ERROR: {
           // message is deleted after it's passed to the main event loop
@@ -538,8 +543,6 @@ void KafkaConsumer::ConsumeLoop(void *arg) {
       looping = false;
     }
   }
-
-  uv_close((uv_handle_t*) &consumer->consume_async, NULL);
 }
 
 void KafkaConsumer::ConsumeMessage(uv_async_t* handle) {
@@ -675,9 +678,6 @@ void KafkaConsumer::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
 
   v8::Local<v8::Object> context = v8::Local<v8::Object>::Cast(info[0]);
   consumer->consume_context.Reset(context);
-
-  uv_async_init(Nan::GetCurrentEventLoop(), &consumer->consume_async, ConsumeMessage);
-  consumer->consume_async.data = consumer;
 
   // Wrap it
   consumer->Wrap(info.This());
