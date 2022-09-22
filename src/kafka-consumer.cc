@@ -1078,14 +1078,15 @@ NAN_METHOD(KafkaConsumer::NodeConsumeLoop) {
   } else {
     timeout_ms = static_cast<int>(maybeTimeout.FromJust());
   }
-  int retry_read_ms;
+
+  int timeout_sleep_delay_ms;
   Nan::Maybe<uint32_t> maybeSleep =
     Nan::To<uint32_t>(info[1].As<v8::Number>());
 
   if (maybeSleep.IsNothing()) {
-    retry_read_ms = 500;
+    timeout_sleep_delay_ms = 500;
   } else {
-    retry_read_ms = static_cast<int>(maybeSleep.FromJust());
+    timeout_sleep_delay_ms = static_cast<int>(maybeSleep.FromJust());
   }
 
   KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
@@ -1102,7 +1103,7 @@ NAN_METHOD(KafkaConsumer::NodeConsumeLoop) {
 
   Nan::Callback *callback = new Nan::Callback(cb);
 
-  consumer->m_consume_loop = new Workers::KafkaConsumerConsumeLoop(callback, consumer, timeout_ms, retry_read_ms);
+  consumer->m_consume_loop = new Workers::KafkaConsumerConsumeLoop(callback, consumer, timeout_ms, timeout_sleep_delay_ms);
 
   info.GetReturnValue().Set(Nan::Null());
 }
