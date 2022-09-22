@@ -7,8 +7,6 @@
  * of the MIT license.  See the LICENSE.txt file for details.
  */
 
-#define THREADED_CONSUME
-
 #include <string>
 #include <vector>
 
@@ -35,26 +33,12 @@ KafkaConsumer::KafkaConsumer(Conf* gconfig, Conf* tconfig):
 
     m_gconfig->set("default_topic_conf", m_tconfig, errstr);
 
-    consume_callback = nullptr;
-
-    uv_async_init(Nan::GetCurrentEventLoop(), &consume_async, ConsumeMessage);
-    consume_async.data = this;
-
-    uv_mutex_init(&consume_messages_lock);
+    m_consume_loop = nullptr;
   }
 
 KafkaConsumer::~KafkaConsumer() {
   // We only want to run this if it hasn't been run already
   Disconnect();
-
-  if (consume_callback != nullptr) {
-    consume_callback->Reset();
-    consume_callback = nullptr;
-  }
-  
-  uv_mutex_destroy(&consume_messages_lock);
-
-  uv_close((uv_handle_t*) &consume_async, NULL);
 }
 
 Baton KafkaConsumer::Connect() {
@@ -106,6 +90,11 @@ Baton KafkaConsumer::Disconnect() {
       delete m_client;
       m_client = NULL;
     }
+  }
+
+  if (m_consume_loop != nullptr) {
+    delete m_consume_loop;
+    m_consume_loop = nullptr;
   }
 
   m_is_closing = false;
@@ -492,88 +481,6 @@ std::string KafkaConsumer::Name() {
   return std::string(m_client->name());
 }
 
-void KafkaConsumer::ConsumeLoop(void *arg) {
-  KafkaConsumer* consumer = (KafkaConsumer*)arg;
-
-  bool looping = true;
-
-  while (consumer->IsConnected() && looping) {
-    Baton b = consumer->Consume(consumer->consume_timeout_ms);
-    RdKafka::ErrorCode ec = b.err();
-    if (ec == RdKafka::ERR_NO_ERROR) {
-      RdKafka::Message *message = b.data<RdKafka::Message*>();
-      switch (message->err()) {
-
-        case RdKafka::ERR_NO_ERROR: {
-          // message is deleted after it's passed to the main event loop
-
-          scoped_mutex_lock lock(consumer->consume_messages_lock);
-          consumer->consume_messages.push_back(message);
-
-          uv_async_send(&consumer->consume_async);
-
-          break;
-        }
-
-        case RdKafka::ERR__TIMED_OUT:
-        case RdKafka::ERR__TIMED_OUT_QUEUE:
-        case RdKafka::ERR__PARTITION_EOF: {
-          delete message;
-
-          // no need to wait here because the next Consume() call will handle the timeout?
-
-          break;
-        }
-
-        default:
-          // Unknown error. We need to break out of this
-          // SetErrorBaton(b);
-          // TODO: pass error along?
-
-          looping = false;
-          break;
-        }
-
-    } else if (ec == RdKafka::ERR_UNKNOWN_TOPIC_OR_PART || ec == RdKafka::ERR_TOPIC_AUTHORIZATION_FAILED) {
-      // bus.SendWarning(ec);
-      
-    } else {
-      // Unknown error. We need to break out of this
-      // SetErrorBaton(b);
-      looping = false;
-    }
-  }
-}
-
-void KafkaConsumer::ConsumeMessage(uv_async_t* handle) {
-  Nan::HandleScope scope;
-
-  KafkaConsumer* consumer = (KafkaConsumer*)handle->data;
-
-  std::vector<RdKafka::Message*> message_queue;
-  // std::vector<RdKafka::ErrorCode> warning_queue;
-
-  {
-    scoped_mutex_lock lock(consumer->consume_messages_lock);
-    // Copy the vector and empty it
-    consumer->consume_messages.swap(message_queue);
-    // m_asyncwarning.swap(warning_queue);
-  }
-
-  for (unsigned int i = 0; i < message_queue.size(); i++) {
-    RdKafka::Message* message = message_queue[i];
-    v8::Local<v8::Value> argv[] = { 
-      Nan::Null(),
-      Conversion::Message::ToV8Object(message),
-      Nan::Null(),
-    };
-
-    delete message;
-
-    consumer->consume_callback->Call(3, argv);
-  }
-}
-
 Nan::Persistent<v8::Function> KafkaConsumer::constructor;
 
 void KafkaConsumer::Init(v8::Local<v8::Object> exports) {
@@ -675,9 +582,6 @@ void KafkaConsumer::New(const Nan::FunctionCallbackInfo<v8::Value>& info) {
   }
 
   KafkaConsumer* consumer = new KafkaConsumer(gconfig, tconfig);
-
-  v8::Local<v8::Object> context = v8::Local<v8::Object>::Cast(info[0]);
-  consumer->consume_context.Reset(context);
 
   // Wrap it
   consumer->Wrap(info.This());
@@ -1186,25 +1090,19 @@ NAN_METHOD(KafkaConsumer::NodeConsumeLoop) {
 
   KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
+  if (consumer->m_consume_loop != nullptr) {
+    return Nan::ThrowError("Consume was already called");
+  }
+
+  if (!consumer->IsConnected()) {
+    return Nan::ThrowError("Connect before calling consume");    
+  }
+
   v8::Local<v8::Function> cb = info[2].As<v8::Function>();
 
   Nan::Callback *callback = new Nan::Callback(cb);
 
-#ifdef THREADED_CONSUME
-  if (consumer->consume_callback != nullptr) {
-    return Nan::ThrowError("Consume was already called once");
-  }
-
-  consumer->consume_timeout_ms = timeout_ms;
-  consumer->consume_retry_read_ms = retry_read_ms;
-  consumer->consume_callback = callback;
-
-  uv_thread_create(&consumer->consume_event_loop, KafkaConsumer::ConsumeLoop, (void*)consumer);
-  
-#else
-  Nan::AsyncQueueWorker(
-    new Workers::KafkaConsumerConsumeLoop(callback, consumer, timeout_ms, retry_read_ms));
-#endif
+  consumer->m_consume_loop = new Workers::KafkaConsumerConsumeLoop(callback, consumer, timeout_ms, retry_read_ms);
 
   info.GetReturnValue().Set(Nan::Null());
 }
@@ -1259,8 +1157,8 @@ NAN_METHOD(KafkaConsumer::NodeConsume) {
     v8::Local<v8::Function> cb = info[1].As<v8::Function>();
     Nan::Callback *callback = new Nan::Callback(cb);
 
-  Nan::AsyncQueueWorker(
-    new Workers::KafkaConsumerConsume(callback, consumer, timeout_ms));
+    Nan::AsyncQueueWorker(
+      new Workers::KafkaConsumerConsume(callback, consumer, timeout_ms));
   }
 
   info.GetReturnValue().Set(Nan::Null());
