@@ -1095,7 +1095,7 @@ NAN_METHOD(KafkaConsumer::NodeConsumeLoop) {
   }
 
   if (!consumer->IsConnected()) {
-    return Nan::ThrowError("Connect before calling consume");    
+    return Nan::ThrowError("Connect must be called before consume");
   }
 
   v8::Local<v8::Function> cb = info[2].As<v8::Function>();
