@@ -1156,7 +1156,6 @@ NAN_METHOD(KafkaConsumer::NodeConsume) {
 
     v8::Local<v8::Function> cb = info[1].As<v8::Function>();
     Nan::Callback *callback = new Nan::Callback(cb);
-
     Nan::AsyncQueueWorker(
       new Workers::KafkaConsumerConsume(callback, consumer, timeout_ms));
   }
