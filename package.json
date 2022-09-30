@@ -37,6 +37,7 @@
     "jshint": "^2.10.1",
     "mocha": "^5.2.0",
     "node-gyp": "^9.1.0",
+    "semver": "7.3.7",
     "toolkit-jsdoc": "^1.0.0"
   },
   "dependencies": {
