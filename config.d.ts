@@ -1,4 +1,4 @@
-// ====== Generated from librdkafka 1.8.2 file CONFIGURATION.md ======
+// ====== Generated from librdkafka 1.9.2 file CONFIGURATION.md ======
 // Code that generated this is a derivative work of the code from Nam Nguyen
 // https://gist.github.com/ntgn81/066c2c8ec5b4238f85d1e9168a04e3fb
 
@@ -6,7 +6,7 @@ export interface GlobalConfig {
     /**
      * Indicates the builtin features for this build of librdkafka. An application can either query this value or attempt to set it with its list of required features to check for library support.
      *
-     * @default gzip, snappy, ssl, sasl, regex, lz4, sasl_gssapi, sasl_plain, sasl_scram, plugins, zstd, sasl_oauthbearer
+     * @default gzip, snappy, ssl, sasl, regex, lz4, sasl_gssapi, sasl_plain, sasl_scram, plugins, zstd, sasl_oauthbearer, http, oidc
      */
     "builtin.features"?: string;
 
@@ -178,6 +178,13 @@ export interface GlobalConfig {
     "broker.address.family"?: 'any' | 'v4' | 'v6';
 
     /**
+     * Maximum time allowed for broker connection setup (TCP connection setup as well SSL and SASL handshake). If the connection to the broker is not fully functional after this the connection will be closed and retried.
+     *
+     * @default 30000
+     */
+    "socket.connection.setup.timeout.ms"?: number;
+
+    /**
      * Close broker connections after the specified time of inactivity. Disable with 0. If this property is left at its default value some heuristics are performed to determine a suitable default value, this is currently limited to identifying brokers on Azure (see librdkafka issue #3109 for more info).
      *
      * @default 0
@@ -268,7 +275,7 @@ export interface GlobalConfig {
     "enable.random.seed"?: boolean;
 
     /**
-     * Log broker disconnects. It might be useful to turn this off when interacting with 0.9 brokers with an aggressive `connection.max.idle.ms` value.
+     * Log broker disconnects. It might be useful to turn this off when interacting with 0.9 brokers with an aggressive `connections.max.idle.ms` value.
      *
      * @default true
      */
@@ -544,9 +551,41 @@ export interface GlobalConfig {
     "enable.sasl.oauthbearer.unsecure.jwt"?: boolean;
 
     /**
-     * SASL/OAUTHBEARER token refresh callback (set with rd_kafka_conf_set_oauthbearer_token_refresh_cb(), triggered by rd_kafka_poll(), et.al. This callback will be triggered when it is time to refresh the client's OAUTHBEARER token.
+     * SASL/OAUTHBEARER token refresh callback (set with rd_kafka_conf_set_oauthbearer_token_refresh_cb(), triggered by rd_kafka_poll(), et.al. This callback will be triggered when it is time to refresh the client's OAUTHBEARER token. Also see `rd_kafka_conf_enable_sasl_queue()`.
      */
     "oauthbearer_token_refresh_cb"?: any;
+
+    /**
+     * Set to "default" or "oidc" to control which login method to be used. If set to "oidc", the following properties must also be be specified: `sasl.oauthbearer.client.id`, `sasl.oauthbearer.client.secret`, and `sasl.oauthbearer.token.endpoint.url`.
+     *
+     * @default default
+     */
+    "sasl.oauthbearer.method"?: 'default' | 'oidc';
+
+    /**
+     * Public identifier for the application. Must be unique across all clients that the authorization server handles. Only used when `sasl.oauthbearer.method` is set to "oidc".
+     */
+    "sasl.oauthbearer.client.id"?: string;
+
+    /**
+     * Client secret only known to the application and the authorization server. This should be a sufficiently random string that is not guessable. Only used when `sasl.oauthbearer.method` is set to "oidc".
+     */
+    "sasl.oauthbearer.client.secret"?: string;
+
+    /**
+     * Client use this to specify the scope of the access request to the broker. Only used when `sasl.oauthbearer.method` is set to "oidc".
+     */
+    "sasl.oauthbearer.scope"?: string;
+
+    /**
+     * Allow additional information to be provided to the broker. Comma-separated list of key=value pairs. E.g., "supportFeatureX=true,organizationId=sales-emea".Only used when `sasl.oauthbearer.method` is set to "oidc".
+     */
+    "sasl.oauthbearer.extensions"?: string;
+
+    /**
+     * OAuth/OIDC issuer token endpoint HTTP(S) URI used to retrieve token. Only used when `sasl.oauthbearer.method` is set to "oidc".
+     */
+    "sasl.oauthbearer.token.endpoint.url"?: string;
 
     /**
      * List of plugin libraries to load (; separated). The library search path is platform dependent (see dlopen(3) for Unix and LoadLibrary() for Windows). If no filename extension is specified the platform-specific extension (such as .dll or .so) will be appended automatically.

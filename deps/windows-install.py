@@ -18,7 +18,7 @@ print('download librdkafka form ' + librdkafkaNugetUrl)
 outputDir = 'librdkafka.redist'
 outputFile = outputDir + '.zip'
 dllPath = outputDir + '/runtimes/win{}-x64/native'.format(librdkafkaWinSufix)
-libPath = outputDir + '/build/native/lib/win{}/x64/win{}-x64-Release/v140'.format(librdkafkaWinSufix, librdkafkaWinSufix)
+libPath = outputDir + '/build/native/lib/win{}/x64/win{}-x64-Release/v142'.format(librdkafkaWinSufix, librdkafkaWinSufix)
 includePath = outputDir + '/build/native/include/librdkafka'
 
 # download librdkafka from nuget
@@ -63,6 +63,7 @@ shutil.copy2(includePath + '/rdkafka.h', depsIncludeDir)
 shutil.copy2(includePath + '/rdkafkacpp.h', depsIncludeDir)
 
 shutil.copy2(dllPath + '/libcrypto-1_1-x64.dll', buildReleaseDir)
+shutil.copy2(dllPath + '/libcurl.dll', buildReleaseDir)
 shutil.copy2(dllPath + '/librdkafka.dll', buildReleaseDir)
 shutil.copy2(dllPath + '/librdkafkacpp.dll', buildReleaseDir)
 shutil.copy2(dllPath + '/libssl-1_1-x64.dll', buildReleaseDir)
