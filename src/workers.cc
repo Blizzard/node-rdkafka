@@ -836,14 +836,14 @@ void KafkaConsumerConsumeNum::Execute() {
         default:
           // Set the error for any other errors and break
           delete message;
-          if (m_messages.size() == 0) {
+          if (m_messages.size() == eof_event_count) {
             SetErrorBaton(Baton(errorCode));
           }
           looping = false;
           break;
       }
     } else {
-      if (m_messages.size() == 0) {
+      if (m_messages.size() == eof_event_count) {
         SetErrorBaton(b);
       }
       looping = false;
