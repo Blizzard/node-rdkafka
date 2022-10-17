@@ -45,6 +45,8 @@ jobs:
           path: node_modules
           # An explicit key for restoring and saving the cache
           key: ${{ runner.os }}-${{ hashFiles('package.json') }}-${{ hashFiles('npm-shrinkwrap.json') }}
+      - run: npm run configure --if-present
+      - run: npm run build --if-present
       - run: npm ci
       - run: npm publish
         env:
