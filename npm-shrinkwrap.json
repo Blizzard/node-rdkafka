@@ -1,0 +1,29 @@
+{
+  "name": "node-rdkafka",
+  "version": "v2.14.0",
+  "lockfileVersion": 2,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "node-rdkafka",
+      "version": "v2.14.0",
+      "hasInstallScript": true,
+      "license": "MIT",
+      "dependencies": {
+        "bindings": "^1.3.1",
+        "nan": "^2.14.0"
+      },
+      "devDependencies": {
+        "bluebird": "^3.5.3",
+        "jsdoc": "^3.4.0",
+        "jshint": "^2.10.1",
+        "mocha": "^5.2.0",
+        "node-gyp": "^8.4.1",
+        "toolkit-jsdoc": "^1.0.0"
+      },
+      "engines": {
+        "node": ">=6.0.0"
+      }
+    }
+  }
+}

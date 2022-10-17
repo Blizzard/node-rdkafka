@@ -26,7 +26,7 @@ jobs:
           # A list of files, directories, and wildcard patterns to cache and restore
           path: node_modules
           # An explicit key for restoring and saving the cache
-          key: ${{ runner.os }}-${{ hashFiles('**/package.json') }}
+          key: ${{ runner.os }}-${{ hashFiles('package.json') }}-${{ hashFiles('npm-shrinkwrap.json') }}
       - run: npm ci
       - run: npm run build --if-present
       - run: npm test
