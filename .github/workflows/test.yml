@@ -18,18 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: recursive
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.version }}
-      - name: cache
-        uses: actions/cache@v3.0.11
-        with:
-          # A list of files, directories, and wildcard patterns to cache and restore
-          path: node_modules
-          # An explicit key for restoring and saving the cache
-          key: ${{ runner.os }}-${{ hashFiles('package.json') }}-${{ hashFiles('npm-shrinkwrap.json') }}
+          cache: 'npm'
       - run: npm ci
-      - run: npm run configure --if-present
-      - run: npm run build --if-present
       - run: npm test
         name: test

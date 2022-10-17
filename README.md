@@ -5,7 +5,8 @@ Copyright (c) 2016 Blizzard Entertainment.
 
 [https://github.com/blizzard/node-rdkafka](https://github.com/blizzard/node-rdkafka)
 
-[![Build Status](https://app.travis-ci.com/Blizzard/node-rdkafka.svg?branch=master)](https://app.travis-ci.com/github/Blizzard/node-rdkafka)
+[![Build Status](https://github.com/Blizzard/node-rdkafka/actions/workflows/test.yml/badge.svg)](https://github.com/Blizzard/node-rdkafka/actions/workflows/test.yml)
+
 [![npm version](https://badge.fury.io/js/node-rdkafka.svg)](https://badge.fury.io/js/node-rdkafka)
 
 # Looking for Collaborators!
