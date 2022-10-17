@@ -3,7 +3,7 @@ When using docker to install `node-rdkafka`, you need to make sure you install a
 You can see some of the differences here: https://linuxacademy.com/blog/cloud/alpine-linux-and-docker/
 
 ```dockerfile
-FROM node:8-alpine
+FROM node:14-alpine
 
 RUN apk --no-cache add \
       bash \
@@ -14,7 +14,7 @@ RUN apk --no-cache add \
       cyrus-sasl-dev \
       openssl-dev \
       make \
-      python
+      python3
 
 RUN apk add --no-cache --virtual .build-deps gcc zlib-dev libc-dev bsd-compat-headers py-setuptools bash
 

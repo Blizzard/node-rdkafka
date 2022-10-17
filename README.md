@@ -5,7 +5,8 @@ Copyright (c) 2016 Blizzard Entertainment.
 
 [https://github.com/blizzard/node-rdkafka](https://github.com/blizzard/node-rdkafka)
 
-[![Build Status](https://app.travis-ci.com/Blizzard/node-rdkafka.svg?branch=master)](https://app.travis-ci.com/github/Blizzard/node-rdkafka)
+[![Build Status](https://github.com/Blizzard/node-rdkafka/actions/workflows/test.yml/badge.svg)](https://github.com/Blizzard/node-rdkafka/actions/workflows/test.yml)
+
 [![npm version](https://badge.fury.io/js/node-rdkafka.svg)](https://badge.fury.io/js/node-rdkafka)
 
 # Looking for Collaborators!
@@ -62,7 +63,7 @@ Using Alpine Linux? Check out the [docs](https://github.com/Blizzard/node-rdkafk
 Windows build **is not** compiled from `librdkafka` source but it is rather linked against the appropriate version of [NuGet librdkafka.redist](https://www.nuget.org/packages/librdkafka.redist/) static binary that gets downloaded from `https://globalcdn.nuget.org/packages/librdkafka.redist.1.9.2.nupkg` during installation. This download link can be changed using the environment variable `NODE_RDKAFKA_NUGET_BASE_URL` that defaults to `https://globalcdn.nuget.org/packages/` when it's no set.
 
 Requirements:
- * [node-gyp for Windows](https://github.com/nodejs/node-gyp#on-windows)  (the easies way to get it: `npm install --global --production windows-build-tools`, if your node version is 6.x or below, pleasse use `npm install --global --production windows-build-tools@3.1.0`)
+ * [node-gyp for Windows](https://github.com/nodejs/node-gyp#on-windows)  (the easies way to get it: `npm install --global --production windows-build-tools`, if your node version is 6.x or below, please use `npm install --global --production windows-build-tools@3.1.0`)
 
 **Note:** I _still_ do not recommend using `node-rdkafka` in production on Windows. This feature was in high demand and is provided to help develop, but we do not test against Windows, and windows support may lag behind Linux/Mac support because those platforms are the ones used to develop this library. Contributors are welcome if any Windows issues are found :)
 
