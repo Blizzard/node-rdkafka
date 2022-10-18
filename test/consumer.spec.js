@@ -77,7 +77,7 @@ module.exports = {
       });
     },
     'has necessary bindings for librdkafka 1:1 binding': function() {
-      var methods = ['assign', 'unassign', 'subscribe'];
+      var methods = ['assign', 'unassign', 'subscribe', 'incrementalAssign', 'incrementalUnassign', 'assignmentLost'];
       methods.forEach(function(m) {
         t.equal(typeof(client[m]), 'function', 'Client is missing ' + m + ' method');
       });

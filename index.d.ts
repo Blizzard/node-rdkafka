@@ -223,6 +223,12 @@ export class KafkaConsumer extends Client<KafkaConsumerEvents> {
     consume(cb: (err: LibrdKafkaError, messages: Message[]) => void): void;
     consume(): void;
 
+    incrementalAssign(assigments: Assignment[]): this;
+
+    incrementalUnassign(assignments: Assignment[]): this;
+
+    assignmentLost(): boolean;
+
     getWatermarkOffsets(topic: string, partition: number): WatermarkOffsets;
 
     offsetsStore(topicPartitions: TopicPartitionOffset[]): any;

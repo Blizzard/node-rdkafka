@@ -11,10 +11,12 @@ var crypto = require('crypto');
 
 var eventListener = require('./listener');
 
+var cooperativeRebalanceCallback = require('../lib/kafka-consumer').cooperativeRebalanceCallback;
 var KafkaConsumer = require('../').KafkaConsumer;
+var AdminClient = require('../').AdminClient;
+var LibrdKafkaError = require('../lib/error');
 
 var kafkaBrokerList = process.env.KAFKA_HOST || 'localhost:9092';
-var topic = 'test';
 
 describe('Consumer', function() {
   var gcfg;
@@ -31,6 +33,7 @@ describe('Consumer', function() {
   });
 
   describe('commit', function() {
+    var topic = 'test';
     var consumer;
     beforeEach(function(done) {
       consumer = new KafkaConsumer(gcfg, {});
@@ -61,6 +64,7 @@ describe('Consumer', function() {
   });
 
   describe('committed and position', function() {
+    var topic = 'test';
     var consumer;
     beforeEach(function(done) {
       consumer = new KafkaConsumer(gcfg, {});
@@ -95,6 +99,7 @@ describe('Consumer', function() {
     });
 
     it('after assign, should get committed array without offsets ', function(done) {
+      var topic = 'test';
       consumer.assign([{topic:topic, partition:0}]);
       // Defer this for a second
       setTimeout(function() {
@@ -110,6 +115,7 @@ describe('Consumer', function() {
     });
 
     it('after assign and commit, should get committed offsets', function(done) {
+      var topic = 'test';
       consumer.assign([{topic:topic, partition:0}]);
       consumer.commitSync({topic:topic, partition:0, offset:1000});
       consumer.committed(null, 1000, function(err, committed) {
@@ -123,6 +129,7 @@ describe('Consumer', function() {
     });
 
     it('after assign, before consume, position should return an array without offsets', function(done) {
+      var topic = 'test';
       consumer.assign([{topic:topic, partition:0}]);
       var position = consumer.position();
       t.equal(Array.isArray(position), true, 'Position should be an array');
@@ -147,6 +154,7 @@ describe('Consumer', function() {
   });
 
   describe('seek and positioning', function() {
+    var topic = 'test';
     var consumer;
     beforeEach(function(done) {
       consumer = new KafkaConsumer(gcfg, {});
@@ -195,6 +203,7 @@ describe('Consumer', function() {
 
   describe('subscribe', function() {
 
+    var topic = 'test';
     var consumer;
     beforeEach(function(done) {
       consumer = new KafkaConsumer(gcfg, {});
@@ -232,6 +241,7 @@ describe('Consumer', function() {
 
   describe('assign', function() {
 
+    var topic = 'test';
     var consumer;
     beforeEach(function(done) {
       consumer = new KafkaConsumer(gcfg, {});
@@ -266,7 +276,346 @@ describe('Consumer', function() {
     });
   });
 
+  describe('assignmentLost', function() {
+    function pollForTopic(client, topicName, maxTries, tryDelay, cb, customCondition) {
+      var tries = 0;
+
+      function getTopicIfExists(innerCb) {
+        client.getMetadata({
+          topic: topicName,
+        }, function(metadataErr, metadata) {
+          if (metadataErr) {
+            cb(metadataErr);
+            return;
+          }
+
+          var topicFound = metadata.topics.filter(function(topicObj) {
+            var foundTopic = topicObj.name === topicName;
+
+            // If we have a custom condition for "foundedness", do it here after
+            // we make sure we are operating on the correct topic
+            if (foundTopic && customCondition) {
+              return customCondition(topicObj);
+            }
+            return foundTopic;
+          });
+
+          if (topicFound.length >= 1) {
+            innerCb(null, topicFound[0]);
+            return;
+          }
+
+          innerCb(new Error('Could not find topic ' + topicName));
+        });
+      }
+
+      function maybeFinish(err, obj) {
+        if (err) {
+          queueNextTry();
+          return;
+        }
+
+        cb(null, obj);
+      }
+
+      function queueNextTry() {
+        tries += 1;
+        if (tries < maxTries) {
+          setTimeout(function() {
+            getTopicIfExists(maybeFinish);
+          }, tryDelay);
+        } else {
+          cb(new Error('Exceeded max tries of ' + maxTries));
+        }
+      }
+
+      queueNextTry();
+    }
+
+    var client = AdminClient.create({
+      'client.id': 'kafka-test',
+      'metadata.broker.list': kafkaBrokerList
+    });
+    var consumer1;
+    var consumer2;
+    var assignmentLostCount = 0;
+    var grp = 'kafka-mocha-grp-' + crypto.randomBytes(20).toString('hex');
+    var assignment_lost_gcfg = {
+      'bootstrap.servers': kafkaBrokerList,
+      'group.id': grp,
+      'debug': 'all',
+      'enable.auto.commit': false,
+      'session.timeout.ms': 10000,
+      'heartbeat.interval.ms': 1000,
+      'auto.offset.reset': 'earliest',
+      'topic.metadata.refresh.interval.ms': 3000,
+      'partition.assignment.strategy': 'cooperative-sticky',
+      'rebalance_cb': function(err, assignment) {
+        if (
+          err.code === LibrdKafkaError.codes.ERR__REVOKE_PARTITIONS &&
+          this.assignmentLost()
+        ) {
+          assignmentLostCount++;
+        }
+        cooperativeRebalanceCallback.call(this, err, assignment);
+      }
+    };
+
+    beforeEach(function(done) {
+      assignment_lost_gcfg['client.id'] = 1;
+      consumer1 = new KafkaConsumer(assignment_lost_gcfg, {});
+      eventListener(consumer1);
+      consumer1.connect({ timeout: 2000 }, function(err, info) {
+        t.ifError(err);
+      });
+      assignment_lost_gcfg['client.id'] = 2;
+      consumer2 = new KafkaConsumer(assignment_lost_gcfg, {});
+      eventListener(consumer2);
+      consumer2.connect({ timeout: 2000 }, function(err, info) {
+        t.ifError(err);
+        done();
+      });
+    });
+
+    afterEach(function(done) {
+      consumer1.disconnect(function() {
+        consumer2.disconnect(function() {
+          done();
+        });
+      });
+    });
+
+    it('should return false if not lost', function() {
+      t.equal(false, consumer1.assignmentLost());
+    });
+
+    it('should be lost if topic gets deleted', function(cb) {
+      this.timeout(100000);
+
+      var time = Date.now();
+      var topicName = 'consumer-assignment-lost-test-topic-' + time;
+      var topicName2 = 'consumer-assignment-lost-test-topic2-' + time;
+      var deleting = false;
+
+      client.createTopic({
+        topic: topicName,
+        num_partitions: 2,
+        replication_factor: 1
+      }, function(err) {
+        pollForTopic(consumer1, topicName, 10, 1000, function(err) {
+          t.ifError(err);
+          client.createTopic({
+            topic: topicName2,
+            num_partitions: 2,
+            replication_factor: 1
+          }, function(err) {
+            pollForTopic(consumer1, topicName2, 10, 1000, function(err) {
+              t.ifError(err);
+              consumer1.subscribe([topicName, topicName2]);
+              consumer2.subscribe([topicName, topicName2]);
+              consumer1.consume();
+              consumer2.consume();
+              var tryDelete = function() {
+                setTimeout(function() {
+                  if(consumer1.assignments().length === 2 &&
+                    consumer2.assignments().length === 2
+                    ) {
+                    client.deleteTopic(topicName, function(deleteErr) {
+                      t.ifError(deleteErr);
+                    });
+                  } else {
+                    tryDelete();
+                  }
+                }, 2000);
+              };
+              tryDelete();
+            });
+          });
+        });
+      });
+
+      var checking = false;
+      setInterval(function() {
+        if (assignmentLostCount >= 2 && !checking) {
+          checking = true;
+          t.equal(assignmentLostCount, 2);
+          client.deleteTopic(topicName2, function(deleteErr) {
+            // Cleanup topics
+            t.ifError(deleteErr);
+            cb();
+          });
+        }
+      }, 2000);
+    });
+
+  });
+
+  describe('incrementalAssign and incrementUnassign', function() {
+
+    var topic = 'test7';
+    var consumer;
+    beforeEach(function(done) {
+      consumer = new KafkaConsumer(gcfg, {});
+
+      consumer.connect({ timeout: 2000 }, function(err, info) {
+        t.ifError(err);
+        done();
+      });
+
+      eventListener(consumer);
+    });
+
+    afterEach(function(done) {
+      consumer.disconnect(function() {
+        done();
+      });
+    });
+
+    it('should be able to assign an assignment', function() {
+      t.equal(0, consumer.assignments().length);
+      var assignments = [{ topic:topic, partition:0 }];
+      consumer.assign(assignments);
+      t.equal(1, consumer.assignments().length);
+      t.equal(0, consumer.assignments()[0].partition);
+      t.equal(0, consumer.subscription().length);
+
+      var additionalAssignment = [{ topic:topic, partition:1 }];
+      consumer.incrementalAssign(additionalAssignment);
+      t.equal(2, consumer.assignments().length);
+      t.equal(0, consumer.assignments()[0].partition);
+      t.equal(1, consumer.assignments()[1].partition);
+      t.equal(0, consumer.subscription().length);
+    });
+
+    it('should be able to revoke an assignment', function() {
+      t.equal(0, consumer.assignments().length);
+      var assignments = [{ topic:topic, partition:0 }, { topic:topic, partition:1 }, { topic:topic, partition:2 }];
+      consumer.assign(assignments);
+      t.equal(3, consumer.assignments().length);
+      t.equal(0, consumer.assignments()[0].partition);
+      t.equal(1, consumer.assignments()[1].partition);
+      t.equal(2, consumer.assignments()[2].partition);
+      t.equal(0, consumer.subscription().length);
+
+      var revokedAssignments = [{ topic:topic, partition:2 }];
+      consumer.incrementalUnassign(revokedAssignments);
+      t.equal(2, consumer.assignments().length);
+      t.equal(0, consumer.assignments()[0].partition);
+      t.equal(1, consumer.assignments()[1].partition);
+      t.equal(0, consumer.subscription().length);
+    });
+
+  });
+
+  describe('rebalance', function() {
+
+    var topic = 'test7';
+    var grp = 'kafka-mocha-grp-' + crypto.randomBytes(20).toString('hex');
+    var consumer1;
+    var consumer2;
+    var counter = 0;
+    var reblance_gcfg = {
+      'bootstrap.servers': kafkaBrokerList,
+      'group.id': grp,
+      'debug': 'all',
+      'enable.auto.commit': false,
+      'heartbeat.interval.ms': 200,
+      'rebalance_cb': true
+    };
+
+    it('should be able reblance using the eager strategy', function(done) {
+      this.timeout(20000);
+
+      var isStarted = false;
+      reblance_gcfg['partition.assignment.strategy'] = 'range,roundrobin';
+
+      reblance_gcfg['client.id'] = '1';
+      consumer1 = new KafkaConsumer(reblance_gcfg, {});
+      reblance_gcfg['client.id'] = '2';
+      consumer2 = new KafkaConsumer(reblance_gcfg, {});
+
+      eventListener(consumer1);
+      eventListener(consumer2);
+
+      consumer1.connect({ timeout: 2000 }, function(err, info) {
+        t.ifError(err);
+        consumer1.subscribe([topic]);
+        consumer1.on('rebalance', function(err, assignment) {
+          counter++;
+          if (!isStarted) {
+            isStarted = true;
+            consumer2.connect({ timeout: 2000 }, function(err, info) {
+              consumer2.subscribe([topic]);
+              consumer2.consume();
+              consumer2.on('rebalance', function(err, assignment) {
+                counter++;
+              });
+            });
+          }
+        });
+        consumer1.consume();
+      });
+
+      setTimeout(function() {
+        t.deepStrictEqual(consumer1.assignments(), [ { topic: topic, partition: 0, offset: -1000 } ]);
+        t.deepStrictEqual(consumer2.assignments(), [ { topic: topic, partition: 1, offset: -1000 } ]);
+        t.equal(counter, 4);
+        consumer1.disconnect(function() {
+          consumer2.disconnect(function() {
+            done();
+          });
+        });
+      }, 9000);
+    });
+
+    it('should be able reblance using the cooperative incremental strategy', function(cb) {
+      this.timeout(20000);
+      var isStarted = false;
+      reblance_gcfg['partition.assignment.strategy'] = 'cooperative-sticky';
+      reblance_gcfg['client.id'] = '1';
+      consumer1 = new KafkaConsumer(reblance_gcfg, {});
+      reblance_gcfg['client.id'] = '2';
+      consumer2 = new KafkaConsumer(reblance_gcfg, {});
+
+      eventListener(consumer1);
+      eventListener(consumer2);
+
+      consumer1.connect({ timeout: 2000 }, function(err, info) {
+        t.ifError(err);
+        consumer1.subscribe([topic]);
+        consumer1.on('rebalance', function(err, assignment) {
+          if (!isStarted) {
+            isStarted = true;
+            consumer2.connect({ timeout: 2000 }, function(err, info) {
+              consumer2.subscribe([topic]);
+              consumer2.consume();
+              consumer2.on('rebalance', function(err, assignment) {
+                counter++;
+              });
+            });
+          }
+        });
+        consumer1.consume();
+      });
+
+      setTimeout(function() {
+        t.equal(consumer1.assignments().length, 1);
+        t.equal(consumer2.assignments().length, 1);
+        t.equal(counter, 8);
+
+        consumer1.disconnect(function() {
+          consumer2.disconnect(function() {
+            cb();
+          });
+        });
+      }, 9000);
+    });
+
+  });
+
   describe('disconnect', function() {
+
+    var topic = 'test';
     var tcfg = { 'auto.offset.reset': 'earliest' };
 
     it('should happen gracefully', function(cb) {

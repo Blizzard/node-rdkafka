@@ -7,7 +7,8 @@
  * of the MIT license.  See the LICENSE.txt file for details.
  */
 
-var KafkaConsumer = require('../lib/kafka-consumer');
+var KafkaConsumer = require('../lib/kafka-consumer').KafkaConsumer;
+
 var t = require('assert');
 
 var client;

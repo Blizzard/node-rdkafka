@@ -72,7 +72,10 @@ class KafkaConsumer : public Connection {
   int AssignedPartitionCount();
 
   Baton Assign(std::vector<RdKafka::TopicPartition*>);
+  Baton IncrementalAssign(std::vector<RdKafka::TopicPartition*>);
   Baton Unassign();
+  Baton IncrementalUnassign(std::vector<RdKafka::TopicPartition*>);
+  bool AssignmentLost();
 
   Baton Seek(const RdKafka::TopicPartition &partition, int timeout_ms);
 
@@ -103,8 +106,11 @@ class KafkaConsumer : public Connection {
   static NAN_METHOD(NodeSubscribe);
   static NAN_METHOD(NodeDisconnect);
   static NAN_METHOD(NodeAssign);
+  static NAN_METHOD(NodeIncrementalAssign);
   static NAN_METHOD(NodeUnassign);
-  static NAN_METHOD(NodeAssignments);
+  static NAN_METHOD(NodeIncrementalUnassign);
+  static NAN_METHOD(NodeAssignmentLost);
+  static NAN_METHOD(NodeAssignment);
   static NAN_METHOD(NodeUnsubscribe);
   static NAN_METHOD(NodeCommit);
   static NAN_METHOD(NodeCommitSync);

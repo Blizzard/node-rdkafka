@@ -228,7 +228,7 @@ describe('Consumer/Producer', function() {
 
       setTimeout(function() {
         producer.produce(topic, null, buffer, null);
-      }, 500)
+      }, 500);
       consumer.setDefaultConsumeTimeout(2000);
       consumer.consume(1000, function(err, messages) {
         t.ifError(err);
@@ -261,7 +261,7 @@ describe('Consumer/Producer', function() {
 
       setTimeout(function() {
         producer.produce(topic, null, buffer, null);
-      }, 2000)
+      }, 2000);
       consumer.setDefaultConsumeTimeout(3000);
       consumer.consume(1000, function(err, messages) {
         t.ifError(err);
