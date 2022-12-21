@@ -34,7 +34,7 @@
     "bluebird": "^3.5.3",
     "jsdoc": "^3.4.0",
     "jshint": "^2.10.1",
-    "mocha": "^5.2.0",
+    "mocha": "^10.2.0",
     "node-gyp": "^8.4.1",
     "toolkit-jsdoc": "^1.0.0"
   },
