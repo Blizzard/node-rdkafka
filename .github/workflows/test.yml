@@ -1,20 +1,16 @@
-# This workflow will run tests using node and then publish a package to GitHub Packages when a release is created
-# For more information see: https://help.github.com/actions/language-and-framework-guides/publishing-nodejs-packages
-
 name: Test node-rdkafka
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ["master"]
   pull_request:
-    branches: [ "master" ]
+    branches: ["master"]
 
 jobs:
   build:
     strategy:
       matrix:
-        #  8, 10, 12, 14, 15, 16
-        version: [12]
+        version: [14, 16, 18]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -23,7 +19,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.version }}
-          cache: 'npm'
+          cache: "npm"
       - run: npm ci
       - run: npm test
         name: test
