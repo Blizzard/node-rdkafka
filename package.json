@@ -1,6 +1,6 @@
 {
   "name": "node-rdkafka",
-  "version": "v2.14.5",
+  "version": "v2.15.0",
   "description": "Node.js bindings for librdkafka",
   "librdkafka": "2.0.2",
   "main": "lib/index.js",
