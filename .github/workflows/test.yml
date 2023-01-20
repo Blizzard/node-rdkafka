@@ -10,16 +10,19 @@ jobs:
   build:
     strategy:
       matrix:
-        version: [14, 16, 18, 19]
-    runs-on: ubuntu-latest
+        node: [14, 16, 18, 19]
+        os: [ubuntu-22.04, windows-2022, macos-12]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: recursive
-      - uses: actions/setup-node@v3
+      - name: Install Node ${{ matrix.node }} in ${{ runner.os }}
+        uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.version }}
+          node-version: ${{ matrix.node }}
           cache: "npm"
-      - run: npm ci
-      - run: npm test
-        name: test
+      - name: Build
+        run: npm ci
+      - name: Test
+        run: npm test
