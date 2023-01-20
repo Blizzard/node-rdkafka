@@ -664,51 +664,53 @@ KafkaConsumerConsumeLoop::KafkaConsumerConsumeLoop(Nan::Callback *callback,
   MessageWorker(callback),
   consumer(consumer),
   m_timeout_ms(timeout_ms),
-  m_timeout_sleep_delay_ms(timeout_sleep_delay_ms),
-  m_rand_seed(time(NULL)) {}
+  m_timeout_sleep_delay_ms(timeout_sleep_delay_ms) {
+  uv_thread_create(&thread_event_loop, KafkaConsumerConsumeLoop::ConsumeLoop, (void*)this);
+}
 
 KafkaConsumerConsumeLoop::~KafkaConsumerConsumeLoop() {}
 
 void KafkaConsumerConsumeLoop::Execute(const ExecutionMessageBus& bus) {
+  // ConsumeLoop is used instead
+}
+
+void KafkaConsumerConsumeLoop::ConsumeLoop(void *arg) {
+  KafkaConsumerConsumeLoop* consumerLoop = (KafkaConsumerConsumeLoop*)arg;
+  ExecutionMessageBus bus(consumerLoop);
+  KafkaConsumer* consumer = consumerLoop->consumer;
+
   // Do one check here before we move forward
   bool looping = true;
   while (consumer->IsConnected() && looping) {
-    Baton b = consumer->Consume(m_timeout_ms);
+    Baton b = consumer->Consume(consumerLoop->m_timeout_ms);
     RdKafka::ErrorCode ec = b.err();
     if (ec == RdKafka::ERR_NO_ERROR) {
       RdKafka::Message *message = b.data<RdKafka::Message*>();
       switch (message->err()) {
         case RdKafka::ERR__PARTITION_EOF:
           bus.Send(message);
-          // EOF means there are no more messages to read.
-          // We should wait a little bit for more messages to come in
-          // when in consume loop mode
-          // Randomise the wait time to avoid contention on different
-          // slow topics
-          #ifndef _WIN32
-          usleep(static_cast<int>(rand_r(&m_rand_seed) * 1000 * 1000 / RAND_MAX));
-          #else
-          _sleep(1000);
-          #endif
           break;
+
         case RdKafka::ERR__TIMED_OUT:
         case RdKafka::ERR__TIMED_OUT_QUEUE:
           delete message;
-          // If it is timed out this could just mean there were no
-          // new messages fetched quickly enough. This isn't really
-          // an error that should kill us.
-          #ifndef _WIN32
-          usleep(m_timeout_sleep_delay_ms*1000);
-          #else
-          _sleep(m_timeout_sleep_delay_ms);
-          #endif
+          if (consumerLoop->m_timeout_sleep_delay_ms > 0) {
+            // If it is timed out this could just mean there were no
+            // new messages fetched quickly enough. This isn't really
+            // an error that should kill us.
+            #ifndef _WIN32
+            usleep(consumerLoop->m_timeout_sleep_delay_ms*1000);
+            #else
+            _sleep(consumerLoop->m_timeout_sleep_delay_ms);
+            #endif
+          }
           break;
         case RdKafka::ERR_NO_ERROR:
           bus.Send(message);
           break;
         default:
           // Unknown error. We need to break out of this
-          SetErrorBaton(b);
+          consumerLoop->SetErrorBaton(b);
           looping = false;
           break;
         }
@@ -716,7 +718,7 @@ void KafkaConsumerConsumeLoop::Execute(const ExecutionMessageBus& bus) {
       bus.SendWarning(ec);
     } else {
       // Unknown error. We need to break out of this
-      SetErrorBaton(b);
+      consumerLoop->SetErrorBaton(b);
       looping = false;
     }
   }
@@ -769,7 +771,6 @@ void KafkaConsumerConsumeLoop::HandleOKCallback() {
 
 void KafkaConsumerConsumeLoop::HandleErrorCallback() {
   Nan::HandleScope scope;
-
 
   const unsigned int argc = 1;
   v8::Local<v8::Value> argv[argc] = { Nan::Error(ErrorMessage()) };

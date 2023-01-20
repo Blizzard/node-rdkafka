@@ -11,7 +11,7 @@ function parseVersion(tag) {
   const { major, minor, prerelease, patch } = semver.parse(tag);
 
   // Describe will give is commits since last tag
-  const [ commitsSinceTag, hash ] = prerelease[0] ? prerelease[0].split('-') : [
+  const [commitsSinceTag, hash] = prerelease[0] ? prerelease[0].split('-') : [
     1,
     process.env.TRAVIS_COMMIT || ''
   ];
@@ -84,19 +84,23 @@ function getBranch(cb) {
 }
 
 function getPackageVersion(tag, branch) {
-  let baseVersion = `v${tag.major}.${tag.minor}.${tag.patch}`;
+  const baseVersion = `v${tag.major}.${tag.minor}.${tag.patch}`;
 
-  if (tag.commit === 0 && branch === 'master') {
-    return baseVersion;
-  }
+  console.log(`Package version is "${baseVersion}"`);
 
-  baseVersion += '-';
+  // never publish with an suffix
+  // fixes https://github.com/Blizzard/node-rdkafka/issues/981
+  // baseVersion += '-';
 
-  if (branch !== 'master') {
-    baseVersion += (tag.commit + 1 + '.' + branch);
-  } else {
-    baseVersion += (tag.commit + 1);
-  }
+  // if (tag.commit === 0 && branch === 'master') {
+  //   return baseVersion;
+  // }
+
+  // if (branch !== 'master') {
+  //   baseVersion += (tag.commit + 1 + '.' + branch);
+  // } else {
+  //   baseVersion += (tag.commit + 1);
+  // }
 
   return baseVersion;
 }

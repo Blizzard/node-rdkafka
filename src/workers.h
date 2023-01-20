@@ -121,8 +121,8 @@ class MessageWorker : public ErrorAwareWorker {
      void SendWarning(RdKafka::ErrorCode c) const {
        that_->ProduceWarning_(c);
      }
-   private:
     explicit ExecutionMessageBus(MessageWorker* that) : that_(that) {}
+   private:
     MessageWorker* const that_;
   };
 
@@ -372,12 +372,14 @@ class KafkaConsumerConsumeLoop : public MessageWorker {
     NodeKafka::KafkaConsumer*, const int &, const int &);
   ~KafkaConsumerConsumeLoop();
 
+  static void ConsumeLoop(void *arg);
   void Execute(const ExecutionMessageBus&);
   void HandleOKCallback();
   void HandleErrorCallback();
   void HandleMessageCallback(RdKafka::Message*, RdKafka::ErrorCode);
  private:
-  NodeKafka::KafkaConsumer * consumer;
+  uv_thread_t thread_event_loop;
+  NodeKafka::KafkaConsumer* consumer;
   const int m_timeout_ms;
   unsigned int m_rand_seed;
   const int m_timeout_sleep_delay_ms;

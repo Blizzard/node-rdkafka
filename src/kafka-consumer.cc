@@ -32,6 +32,8 @@ KafkaConsumer::KafkaConsumer(Conf* gconfig, Conf* tconfig):
     std::string errstr;
 
     m_gconfig->set("default_topic_conf", m_tconfig, errstr);
+
+    m_consume_loop = nullptr;
   }
 
 KafkaConsumer::~KafkaConsumer() {
@@ -88,6 +90,11 @@ Baton KafkaConsumer::Disconnect() {
       delete m_client;
       m_client = NULL;
     }
+  }
+
+  if (m_consume_loop != nullptr) {
+    delete m_consume_loop;
+    m_consume_loop = nullptr;
   }
 
   m_is_closing = false;
@@ -1071,23 +1078,32 @@ NAN_METHOD(KafkaConsumer::NodeConsumeLoop) {
   } else {
     timeout_ms = static_cast<int>(maybeTimeout.FromJust());
   }
-  int retry_read_ms;
+
+  int timeout_sleep_delay_ms;
   Nan::Maybe<uint32_t> maybeSleep =
     Nan::To<uint32_t>(info[1].As<v8::Number>());
 
   if (maybeSleep.IsNothing()) {
-    retry_read_ms = 500;
+    timeout_sleep_delay_ms = 500;
   } else {
-    retry_read_ms = static_cast<int>(maybeSleep.FromJust());
+    timeout_sleep_delay_ms = static_cast<int>(maybeSleep.FromJust());
   }
 
   KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
+  if (consumer->m_consume_loop != nullptr) {
+    return Nan::ThrowError("Consume was already called");
+  }
+
+  if (!consumer->IsConnected()) {
+    return Nan::ThrowError("Connect must be called before consume");
+  }
+
   v8::Local<v8::Function> cb = info[2].As<v8::Function>();
 
   Nan::Callback *callback = new Nan::Callback(cb);
-  Nan::AsyncQueueWorker(
-    new Workers::KafkaConsumerConsumeLoop(callback, consumer, timeout_ms, retry_read_ms));
+
+  consumer->m_consume_loop = new Workers::KafkaConsumerConsumeLoop(callback, consumer, timeout_ms, timeout_sleep_delay_ms);
 
   info.GetReturnValue().Set(Nan::Null());
 }

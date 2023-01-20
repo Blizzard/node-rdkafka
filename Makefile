@@ -57,13 +57,13 @@ $(CONFIG_OUTPUTS): node_modules/.dirstamp binding.gyp
 	@$(NODE-GYP) configure
 
 test: node_modules/.dirstamp
-	@./node_modules/.bin/mocha $(TEST_REPORTER) $(TESTS) $(TEST_OUTPUT)
+	@./node_modules/.bin/mocha --ui exports $(TEST_REPORTER) $(TESTS) $(TEST_OUTPUT)
 
 check: node_modules/.dirstamp
 	@$(NODE) util/test-compile.js
 
 e2e: $(E2E_TESTS)
-	@./node_modules/.bin/mocha --exit --timeout 120000 $(TEST_REPORTER) $(E2E_TESTS) $(TEST_OUTPUT)
+	@./node_modules/.bin/mocha --exit --timeout 120000 --ui exports $(TEST_REPORTER) $(E2E_TESTS) $(TEST_OUTPUT)
 
 define release
 	NEXT_VERSION=$(shell node -pe 'require("semver").inc("$(VERSION)", "$(1)")')
