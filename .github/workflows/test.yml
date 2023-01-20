@@ -10,7 +10,8 @@ jobs:
   build:
     strategy:
       matrix:
-        node: [14, 16, 18, 19]
+        # node: [14, 16, 18, 19] temp
+        node: [18]
         os: [ubuntu-22.04, windows-2022, macos-12]
     runs-on: ${{ matrix.os }}
     steps:
@@ -22,6 +23,11 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: "npm"
+      - name: Install Windows packages
+        if: runner.os == 'Windows'
+        run: ./win_install.ps1
+      - name: Update node-gyp
+        run: npm install --global node-gyp@latest
       - name: Build
         run: npm ci
       - name: Test
