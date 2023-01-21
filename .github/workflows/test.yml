@@ -11,12 +11,15 @@ jobs:
     strategy:
       matrix:
         node: [14, 16, 18, 19]
-        os: [ubuntu-22.04, windows-2022]
-        # single mac test due to minute multipliers
-        # https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions
+        os: [ubuntu-22.04]
         include:
+          # single mac test due to minute multipliers
+          # https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions
           - node: 18
             os: macos-12
+          # single windows test due to node.js 14 node-gyp / vs 2022 issues
+          - node: 18
+            os: windows-2022
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -30,8 +33,6 @@ jobs:
       - name: Install Windows packages
         if: runner.os == 'Windows'
         run: ./win_install.ps1
-      - name: Update node-gyp
-        run: npm install --global node-gyp@latest
       - name: Build
         run: npm ci
       # skipping on windows for now due to Make / mocha exit code issues
