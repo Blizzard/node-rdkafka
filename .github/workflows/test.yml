@@ -1,4 +1,4 @@
-name: Test node-rdkafka
+name: Build & Test
 
 on:
   push:
@@ -10,9 +10,13 @@ jobs:
   build:
     strategy:
       matrix:
-        # node: [14, 16, 18, 19] temp
-        node: [18]
-        os: [ubuntu-22.04, windows-2022, macos-12]
+        node: [14, 16, 18, 19]
+        os: [ubuntu-22.04, windows-2022]
+        # single mac test due to minute multipliers
+        # https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions
+        include:
+          - node: 18
+            os: macos-12
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -30,7 +34,7 @@ jobs:
         run: npm install --global node-gyp@latest
       - name: Build
         run: npm ci
-      # skipping for now on windows due to Make / mocha exit code issues
+      # skipping on windows for now due to Make / mocha exit code issues
       - name: Test
         if: runner.os != 'Windows'
         run: npm test
