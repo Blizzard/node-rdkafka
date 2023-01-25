@@ -39,5 +39,5 @@ jobs:
         run: npm ci
       # skipping on windows for now due to Make / mocha exit code issues
       - name: Test
-        if: runner.os != 'Windows' && runner.node != 10
+        if: runner.os != 'Windows' && matrix.node != 10
         run: npm test
