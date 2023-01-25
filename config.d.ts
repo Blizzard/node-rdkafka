@@ -1,4 +1,4 @@
-// ====== Generated from librdkafka 1.9.2 file CONFIGURATION.md ======
+// ====== Generated from librdkafka 2.0.2 file CONFIGURATION.md ======
 // Code that generated this is a derivative work of the code from Nam Nguyen
 // https://gist.github.com/ntgn81/066c2c8ec5b4238f85d1e9168a04e3fb
 
@@ -307,6 +307,11 @@ export interface GlobalConfig {
     "open_cb"?: any;
 
     /**
+     * Address resolution callback (set with rd_kafka_conf_set_resolve_cb()).
+     */
+    "resolve_cb"?: any;
+
+    /**
      * Application opaque (set with rd_kafka_conf_set_opaque())
      */
     "opaque"?: any;
@@ -350,6 +355,13 @@ export interface GlobalConfig {
      * @default 0.10.0
      */
     "broker.version.fallback"?: string;
+
+    /**
+     * Allow automatic topic creation on the broker when subscribing to or assigning non-existent topics. The broker must also be configured with `auto.create.topics.enable=true` for this configuration to take effect. Note: the default value (true) for the producer is different from the default value (false) for the consumer. Further, the consumer default value is different from the Java consumer (true), and this property is not supported by the Java producer. Requires broker version >= 0.11.0.0, for older broker versions only the broker configuration applies.
+     *
+     * @default false
+     */
+    "allow.auto.create.topics"?: boolean;
 
     /**
      * Protocol used to communicate with brokers.
@@ -446,7 +458,12 @@ export interface GlobalConfig {
     "ssl.keystore.password"?: string;
 
     /**
-     * Path to OpenSSL engine library. OpenSSL >= 1.1.0 required.
+     * Comma-separated list of OpenSSL 3.0.x implementation providers. E.g., "default,legacy".
+     */
+    "ssl.providers"?: string;
+
+    /**
+     * **DEPRECATED** Path to OpenSSL engine library. OpenSSL >= 1.1.x required. DEPRECATED: OpenSSL engine support is deprecated and should be replaced by OpenSSL 3 providers.
      */
     "ssl.engine.location"?: string;
 
@@ -472,7 +489,7 @@ export interface GlobalConfig {
     /**
      * Endpoint identification algorithm to validate broker hostname using broker certificate. https - Server (broker) hostname verification as specified in RFC2818. none - No endpoint verification. OpenSSL >= 1.0.2 required.
      *
-     * @default none
+     * @default https
      */
     "ssl.endpoint.identification.algorithm"?: 'none' | 'https';
 
@@ -638,7 +655,7 @@ export interface ProducerGlobalConfig extends GlobalConfig {
     "enable.gapless.guarantee"?: boolean;
 
     /**
-     * Maximum number of messages allowed on the producer queue. This queue is shared by all topics and partitions.
+     * Maximum number of messages allowed on the producer queue. This queue is shared by all topics and partitions. A value of 0 disables this limit.
      *
      * @default 100000
      */
@@ -918,13 +935,6 @@ export interface ConsumerGlobalConfig extends GlobalConfig {
      * @default false
      */
     "check.crcs"?: boolean;
-
-    /**
-     * Allow automatic topic creation on the broker when subscribing to or assigning non-existent topics. The broker must also be configured with `auto.create.topics.enable=true` for this configuraiton to take effect. Note: The default value (false) is different from the Java consumer (true). Requires broker version >= 0.11.0.0, for older broker versions only the broker configuration applies.
-     *
-     * @default false
-     */
-    "allow.auto.create.topics"?: boolean;
 }
 
 export interface TopicConfig {
