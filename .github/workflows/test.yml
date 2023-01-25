@@ -10,7 +10,7 @@ jobs:
   build:
     strategy:
       matrix:
-        node: [14, 16, 18, 19]
+        node: [10, 12, 14, 16, 18, 19]
         os: [ubuntu-22.04]
         include:
           # single mac test due to minute multipliers
@@ -30,6 +30,8 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: "npm"
+      - name: Update node-gyp
+        run: npm install --global node-gyp@latest
       - name: Install Windows packages
         if: runner.os == 'Windows'
         run: ./win_install.ps1
@@ -37,5 +39,5 @@ jobs:
         run: npm ci
       # skipping on windows for now due to Make / mocha exit code issues
       - name: Test
-        if: runner.os != 'Windows'
+        if: runner.os != 'Windows' && matrix.node != 10
         run: npm test
