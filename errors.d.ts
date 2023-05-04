@@ -1,4 +1,4 @@
-// ====== Generated from librdkafka 2.0.2 file src-cpp/rdkafkacpp.h ======
+// ====== Generated from librdkafka 2.1.1 file src-cpp/rdkafkacpp.h ======
 export const CODES: { ERRORS: {
   /* Internal errors to rdkafka: */
   /** Begin internal error codes (**-200**) */
@@ -126,6 +126,8 @@ export const CODES: { ERRORS: {
   ERR__NOOP: number,
   /** No offset to automatically reset to (**-140**) */
   ERR__AUTO_OFFSET_RESET: number,
+  /** Partition log truncation detected (**-139**) */
+  ERR__LOG_TRUNCATION: number,
 
   /** End internal error codes (**-100**) */
   ERR__END: number,
