@@ -386,6 +386,20 @@ Baton KafkaConsumer::Position(std::vector<RdKafka::TopicPartition*> &toppars) {
   return Baton(err);
 }
 
+
+Baton KafkaConsumer::AssigmentLost() {
+  if (!IsConnected()) {
+    return Baton(RdKafka::ERR__STATE, "KafkaConsumer is not connected");
+  }
+
+  RdKafka::KafkaConsumer* consumer =
+    dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
+
+  // XXX: Returning a bool by casting it to a pointer,
+  return Baton(reinterpret_cast<void*>(
+        static_cast<uintptr_t>(consumer->assignment_lost() ? true : false)));
+}
+
 Baton KafkaConsumer::Subscription() {
   if (!IsConnected()) {
     return Baton(RdKafka::ERR__STATE, "Consumer is not connected");
@@ -585,6 +599,7 @@ void KafkaConsumer::Init(v8::Local<v8::Object> exports) {
 
   Nan::SetPrototypeMethod(tpl, "committed", NodeCommitted);
   Nan::SetPrototypeMethod(tpl, "position", NodePosition);
+  Nan::SetPrototypeMethod(tpl, "assignemntLost", NodeAssignmentLost);
   Nan::SetPrototypeMethod(tpl, "assign", NodeAssign);
   Nan::SetPrototypeMethod(tpl, "incrementalAssign", NodeIncrementalAssign);
   Nan::SetPrototypeMethod(tpl, "unassign", NodeUnassign);
@@ -743,6 +758,20 @@ NAN_METHOD(KafkaConsumer::NodePosition) {
 
   // Delete the underlying topic partitions
   RdKafka::TopicPartition::destroy(toppars);
+}
+
+NAN_METHOD(KafkaConsumer::NodeAssignmentLost) {
+
+  Nan::HandleScope scope;
+
+  KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
+
+  Baton b = consumer->AssigmentLost();
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    Nan::ThrowError(RdKafka::err2str(b.err()).c_str());
+  }
+  bool result = static_cast<bool>(reinterpret_cast<uintptr_t>(b.data<void*>()));
+  info.GetReturnValue().Set(Nan::New<v8::Boolean>(result));
 }
 
 NAN_METHOD(KafkaConsumer::NodeAssignments) {
