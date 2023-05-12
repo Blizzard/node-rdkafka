@@ -65,6 +65,7 @@ class KafkaConsumer : public Connection {
 
   Baton Committed(std::vector<RdKafka::TopicPartition*> &, int timeout_ms);
   Baton Position(std::vector<RdKafka::TopicPartition*> &);
+  Baton AssigmentLost();
 
   Baton RefreshAssignments();
 
@@ -72,7 +73,9 @@ class KafkaConsumer : public Connection {
   int AssignedPartitionCount();
 
   Baton Assign(std::vector<RdKafka::TopicPartition*>);
+  Baton IncrementalAssign(std::vector<RdKafka::TopicPartition*>);
   Baton Unassign();
+  Baton IncrementalUnassign(std::vector<RdKafka::TopicPartition*>);
 
   Baton Seek(const RdKafka::TopicPartition &partition, int timeout_ms);
 
@@ -99,13 +102,15 @@ class KafkaConsumer : public Connection {
   bool m_is_subscribed = false;
 
   void* m_consume_loop;
-  
+
   // Node methods
   static NAN_METHOD(NodeConnect);
   static NAN_METHOD(NodeSubscribe);
   static NAN_METHOD(NodeDisconnect);
   static NAN_METHOD(NodeAssign);
+  static NAN_METHOD(NodeIncrementalAssign);
   static NAN_METHOD(NodeUnassign);
+  static NAN_METHOD(NodeIncrementalUnassign);
   static NAN_METHOD(NodeAssignments);
   static NAN_METHOD(NodeUnsubscribe);
   static NAN_METHOD(NodeCommit);
@@ -113,6 +118,7 @@ class KafkaConsumer : public Connection {
   static NAN_METHOD(NodeOffsetsStore);
   static NAN_METHOD(NodeCommitted);
   static NAN_METHOD(NodePosition);
+  static NAN_METHOD(NodeAssignmentLost);
   static NAN_METHOD(NodeSubscription);
   static NAN_METHOD(NodeSeek);
   static NAN_METHOD(NodeGetWatermarkOffsets);
