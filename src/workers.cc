@@ -663,12 +663,18 @@ KafkaConsumerConsumeLoop::KafkaConsumerConsumeLoop(Nan::Callback *callback,
                                      const int & timeout_sleep_delay_ms) :
   MessageWorker(callback),
   consumer(consumer),
+  m_looping(true),
   m_timeout_ms(timeout_ms),
   m_timeout_sleep_delay_ms(timeout_sleep_delay_ms) {
   uv_thread_create(&thread_event_loop, KafkaConsumerConsumeLoop::ConsumeLoop, (void*)this);
 }
 
 KafkaConsumerConsumeLoop::~KafkaConsumerConsumeLoop() {}
+
+void KafkaConsumerConsumeLoop::Close() {
+  m_looping = false;
+  uv_thread_join(&thread_event_loop);
+}
 
 void KafkaConsumerConsumeLoop::Execute(const ExecutionMessageBus& bus) {
   // ConsumeLoop is used instead
@@ -680,8 +686,7 @@ void KafkaConsumerConsumeLoop::ConsumeLoop(void *arg) {
   KafkaConsumer* consumer = consumerLoop->consumer;
 
   // Do one check here before we move forward
-  bool looping = true;
-  while (consumer->IsConnected() && looping) {
+  while (consumerLoop->m_looping && consumer->IsConnected()) {
     Baton b = consumer->Consume(consumerLoop->m_timeout_ms);
     RdKafka::ErrorCode ec = b.err();
     if (ec == RdKafka::ERR_NO_ERROR) {
@@ -711,7 +716,7 @@ void KafkaConsumerConsumeLoop::ConsumeLoop(void *arg) {
         default:
           // Unknown error. We need to break out of this
           consumerLoop->SetErrorBaton(b);
-          looping = false;
+          consumerLoop->m_looping = false;
           break;
         }
     } else if (ec == RdKafka::ERR_UNKNOWN_TOPIC_OR_PART || ec == RdKafka::ERR_TOPIC_AUTHORIZATION_FAILED) {
@@ -719,7 +724,7 @@ void KafkaConsumerConsumeLoop::ConsumeLoop(void *arg) {
     } else {
       // Unknown error. We need to break out of this
       consumerLoop->SetErrorBaton(b);
-      looping = false;
+      consumerLoop->m_looping = false;
     }
   }
 }

@@ -373,6 +373,7 @@ class KafkaConsumerConsumeLoop : public MessageWorker {
   ~KafkaConsumerConsumeLoop();
 
   static void ConsumeLoop(void *arg);
+  void Close();
   void Execute(const ExecutionMessageBus&);
   void HandleOKCallback();
   void HandleErrorCallback();
@@ -383,6 +384,7 @@ class KafkaConsumerConsumeLoop : public MessageWorker {
   const int m_timeout_ms;
   unsigned int m_rand_seed;
   const int m_timeout_sleep_delay_ms;
+  bool m_looping;
 };
 
 class KafkaConsumerConsume : public ErrorAwareWorker {
