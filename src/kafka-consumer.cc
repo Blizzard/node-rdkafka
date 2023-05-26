@@ -1192,7 +1192,7 @@ NAN_METHOD(KafkaConsumer::NodeDisconnect) {
     // stop the consume loop
     consumeLoop->Close();
 
-    // clenaup the async worker
+    // cleanup the async worker
     consumeLoop->WorkComplete();
     consumeLoop->Destroy();
   
