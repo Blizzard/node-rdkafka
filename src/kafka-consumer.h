@@ -98,7 +98,7 @@ class KafkaConsumer : public Connection {
   int m_partition_cnt;
   bool m_is_subscribed = false;
 
-  void* m_consume_loop;
+  void* m_consume_loop = nullptr;
   
   // Node methods
   static NAN_METHOD(NodeConnect);

@@ -92,11 +92,6 @@ Baton KafkaConsumer::Disconnect() {
     }
   }
 
-  if (m_consume_loop != nullptr) {
-    delete m_consume_loop;
-    m_consume_loop = nullptr;
-  }
-
   m_is_closing = false;
 
   return Baton(err);
@@ -1191,6 +1186,18 @@ NAN_METHOD(KafkaConsumer::NodeDisconnect) {
   v8::Local<v8::Function> cb = info[0].As<v8::Function>();
   Nan::Callback *callback = new Nan::Callback(cb);
   KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
+
+  Workers::KafkaConsumerConsumeLoop* consumeLoop = (Workers::KafkaConsumerConsumeLoop*)consumer->m_consume_loop;
+  if (consumeLoop != nullptr) {
+    // stop the consume loop
+    consumeLoop->Close();
+
+    // cleanup the async worker
+    consumeLoop->WorkComplete();
+    consumeLoop->Destroy();
+  
+    consumer->m_consume_loop = nullptr;
+  }
 
   Nan::AsyncQueueWorker(
     new Workers::KafkaConsumerDisconnect(callback, consumer));
