@@ -92,7 +92,7 @@ npm install node-rdkafka
 To use the module, you must `require` it.
 
 ```js
-var Kafka = require('node-rdkafka');
+const Kafka = require('node-rdkafka');
 ```
 
 ## Configuration
@@ -140,7 +140,7 @@ console.log(Kafka.librdkafkaVersion);
 A `Producer` sends messages to Kafka.  The `Producer` constructor takes a configuration object, as shown in the following example:
 
 ```js
-var producer = new Kafka.Producer({
+const producer = new Kafka.Producer({
   'metadata.broker.list': 'kafka-host1:9092,kafka-host2:9092'
 });
 ```
@@ -150,7 +150,7 @@ A `Producer` requires only `metadata.broker.list` (the Kafka brokers) to be crea
 The following example illustrates a list with several `librdkafka` options set.
 
 ```js
-var producer = new Kafka.Producer({
+const producer = new Kafka.Producer({
   'client.id': 'kafka',
   'metadata.broker.list': 'localhost:9092',
   'compression.codec': 'gzip',
@@ -171,14 +171,14 @@ You can easily use the `Producer` as a writable stream immediately after creatio
 ```js
 // Our producer with its Kafka brokers
 // This call returns a new writable stream to our topic 'topic-name'
-var stream = Kafka.Producer.createWriteStream({
+const stream = Kafka.Producer.createWriteStream({
   'metadata.broker.list': 'kafka-host1:9092,kafka-host2:9092'
 }, {}, {
   topic: 'topic-name'
 });
 
 // Writes a message to the stream
-var queuedSuccess = stream.write(Buffer.from('Awesome message'));
+const queuedSuccess = stream.write(Buffer.from('Awesome message'));
 
 if (queuedSuccess) {
   console.log('We queued our message!');
@@ -190,7 +190,7 @@ if (queuedSuccess) {
 
 // NOTE: MAKE SURE TO LISTEN TO THIS IF YOU WANT THE STREAM TO BE DURABLE
 // Otherwise, any error will bubble up as an uncaught exception.
-stream.on('error', function (err) {
+stream.on('error', (err) => {
   // Here's where we'll know if something went wrong sending to Kafka
   console.error('Error in our kafka stream');
   console.error(err);
@@ -205,7 +205,7 @@ The Standard API is more performant, particularly when handling high volumes of 
 However, it requires more manual setup to use. The following example illustrates its use:
 
 ```js
-var producer = new Kafka.Producer({
+const producer = new Kafka.Producer({
   'metadata.broker.list': 'localhost:9092',
   'dr_cb': true
 });
@@ -214,7 +214,7 @@ var producer = new Kafka.Producer({
 producer.connect();
 
 // Wait for the ready event before proceeding
-producer.on('ready', function() {
+producer.on('ready', () => {
   try {
     producer.produce(
       // Topic to send the message to
@@ -239,7 +239,7 @@ producer.on('ready', function() {
 });
 
 // Any errors we encounter, including connection errors
-producer.on('event.error', function(err) {
+producer.on('event.error', (err) => {
   console.error('Error from producer');
   console.error(err);
 })
@@ -279,7 +279,7 @@ Some configuration properties that end in `_cb` indicate that an event should be
 The following example illustrates an event:
 
 ```js
-var producer = new Kafka.Producer({
+const producer = new Kafka.Producer({
   'client.id': 'my-client', // Specifies an identifier to use to help trace activity in Kafka
   'metadata.broker.list': 'localhost:9092', // Connect to a Kafka instance on localhost
   'dr_cb': true // Specifies that we want a delivery-report event to be generated
@@ -288,7 +288,7 @@ var producer = new Kafka.Producer({
 // Poll for events every 100 ms
 producer.setPollInterval(100);
 
-producer.on('delivery-report', function(err, report) {
+producer.on('delivery-report', (err, report) => {
   // Report of delivery statistics here:
   //
   console.log(report);
@@ -313,7 +313,7 @@ The following table describes types of events.
 The higher level producer is a variant of the producer which can propagate callbacks to you upon message delivery.
 
 ```js
-var producer = new Kafka.HighLevelProducer({
+const producer = new Kafka.HighLevelProducer({
   'metadata.broker.list': 'localhost:9092',
 });
 ```
@@ -330,7 +330,7 @@ producer.produce(topicName, null, Buffer.from('alliance4ever'), null, Date.now()
 Additionally you can add serializers to modify the value of a produce for a key or value before it is sent over to Kafka.
 
 ```js
-producer.setValueSerializer(function(value) {
+producer.setValueSerializer((value) => {
   return Buffer.from(JSON.stringify(value));
 });
 ```
@@ -342,7 +342,7 @@ Otherwise the behavior of the class should be exactly the same.
 To read messages from Kafka, you use a `KafkaConsumer`.  You instantiate a `KafkaConsumer` object as follows:
 
 ```js
-var consumer = new Kafka.KafkaConsumer({
+const consumer = new Kafka.KafkaConsumer({
   'group.id': 'kafka',
   'metadata.broker.list': 'localhost:9092',
 }, {});
@@ -357,10 +357,10 @@ The `group.id` and `metadata.broker.list` properties are required for a consumer
 Rebalancing is managed internally by `librdkafka` by default. If you would like to override this functionality, you may provide your own logic as a rebalance callback.
 
 ```js
-var consumer = new Kafka.KafkaConsumer({
+const consumer = new Kafka.KafkaConsumer({
   'group.id': 'kafka',
   'metadata.broker.list': 'localhost:9092',
-  'rebalance_cb': function(err, assignment) {
+  'rebalance_cb': (err, assignment) => {
 
     if (err.code === Kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS) {
       // Note: this can throw when you are disconnected. Take care and wrap it in
@@ -385,10 +385,10 @@ var consumer = new Kafka.KafkaConsumer({
 When you commit in `node-rdkafka`, the standard way is to queue the commit request up with the next `librdkafka` request to the broker. When doing this, there isn't a way to know the result of the commit. Luckily there is another callback you can listen to to get this information
 
 ```js
-var consumer = new Kafka.KafkaConsumer({
+const consumer = new Kafka.KafkaConsumer({
   'group.id': 'kafka',
   'metadata.broker.list': 'localhost:9092',
-  'offset_commit_cb': function(err, topicPartitions) {
+  'offset_commit_cb': (err, topicPartitions) => {
 
     if (err) {
       // There was an error committing
@@ -426,11 +426,11 @@ The stream API is the easiest way to consume messages. The following example ill
 
 ```js
 // Read from the librdtesting-01 topic... note that this creates a new stream on each call!
-var stream = KafkaConsumer.createReadStream(globalConfig, topicConfig, {
+const stream = KafkaConsumer.createReadStream(globalConfig, topicConfig, {
   topics: ['librdtesting-01']
 });
 
-stream.on('data', function(message) {
+stream.on('data', (message) => {
   console.log('Got message');
   console.log(message.value.toString());
 });
@@ -455,7 +455,7 @@ The following example illustrates flowing mode:
 consumer.connect();
 
 consumer
-  .on('ready', function() {
+  .on('ready', () => {
     consumer.subscribe(['librdtesting-01']);
 
     // Consume from the librdtesting-01 topic. This is what determines
@@ -463,7 +463,7 @@ consumer
     // only a callback) we get messages as soon as they are available.
     consumer.consume();
   })
-  .on('data', function(data) {
+  .on('data', (data) => {
     // Output the actual message contents
     console.log(data.value.toString());
   });
@@ -474,17 +474,17 @@ The following example illustrates non-flowing mode:
 consumer.connect();
 
 consumer
-  .on('ready', function() {
+  .on('ready', () => {
     // Subscribe to the librdtesting-01 topic
     // This makes subsequent consumes read from that topic.
     consumer.subscribe(['librdtesting-01']);
 
     // Read one message every 1000 milliseconds
-    setInterval(function() {
+    setInterval(() => {
       consumer.consume(1);
     }, 1000);
   })
-  .on('data', function(data) {
+  .on('data', (data) => {
     console.log('Message found!  Contents below.');
     console.log(data.value.toString());
   });
@@ -524,15 +524,15 @@ The following table lists events for this API.
 Some times you find yourself in the situation where you need to know the latest (and earliest) offset for one of your topics. Connected producers and consumers both allow you to query for these through `queryWaterMarkOffsets` like follows:
 
 ```js
-var timeout = 5000, partition = 0;
-consumer.queryWatermarkOffsets('my-topic', partition, timeout, function(err, offsets) {
-  var high = offsets.highOffset;
-  var low = offsets.lowOffset;
+const timeout = 5000, partition = 0;
+consumer.queryWatermarkOffsets('my-topic', partition, timeout, (err, offsets) => {
+  const high = offsets.highOffset;
+  const low = offsets.lowOffset;
 });
 
-producer.queryWatermarkOffsets('my-topic', partition, timeout, function(err, offsets) {
-  var high = offsets.highOffset;
-  var low = offsets.lowOffset;
+producer.queryWatermarkOffsets('my-topic', partition, timeout, (err, offsets) => {
+  const high = offsets.highOffset;
+  const low = offsets.lowOffset;
 });
 
 An error will be returned if the client was not connected or the request timed out within the specified interval.
@@ -578,12 +578,12 @@ When fetching metadata for a specific topic, if a topic reference does not exist
 Please see the documentation on `Client.getMetadata` if you want to set configuration parameters, e.g. `acks`, on a topic to produce messages to.
 
 ```js
-var opts = {
+const opts = {
   topic: 'librdtesting-01',
   timeout: 10000
 };
 
-producer.getMetadata(opts, function(err, metadata) {
+producer.getMetadata(opts, (err, metadata) => {
   if (err) {
     console.error('Error getting metadata');
     console.error(err);
@@ -616,7 +616,7 @@ client.createTopic({
   topic: topicName,
   num_partitions: 1,
   replication_factor: 1
-}, function(err) {
+}, (err) => {
   // Done!
 });
 ```
