@@ -15,20 +15,7 @@ using NodeKafka::KafkaConsumer;
 using NodeKafka::AdminClient;
 using NodeKafka::Topic;
 
-using node::AtExit;
 using RdKafka::ErrorCode;
-
-static void RdKafkaCleanup(void*) {  // NOLINT
-  /*
-   * Wait for RdKafka to decommission.
-   * This is not strictly needed but
-   * allows RdKafka to clean up all its resources before the application
-   * exits so that memory profilers such as valgrind wont complain about
-   * memory leaks.
-   */
-
-  RdKafka::wait_destroyed(5000);
-}
 
 NAN_METHOD(NodeRdKafkaErr2Str) {
   int points = Nan::To<int>(info[0]).FromJust();
@@ -74,13 +61,6 @@ void ConstantsInit(v8::Local<v8::Object> exports) {
 }
 
 void Init(v8::Local<v8::Object> exports, v8::Local<v8::Value> m_, void* v_) {
-#if NODE_MAJOR_VERSION <= 9 || (NODE_MAJOR_VERSION == 10 && NODE_MINOR_VERSION <= 15)
-  AtExit(RdKafkaCleanup);
-#else
-  v8::Local<v8::Context> context = Nan::GetCurrentContext();
-  node::Environment* env = node::GetCurrentEnvironment(context);
-  AtExit(env, RdKafkaCleanup, NULL);
-#endif
   KafkaConsumer::Init(exports);
   Producer::Init(exports);
   AdminClient::Init(exports);
