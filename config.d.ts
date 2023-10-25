@@ -1,4 +1,4 @@
-// ====== Generated from librdkafka 2.2.0 file CONFIGURATION.md ======
+// ====== Generated from librdkafka 2.3.0 file CONFIGURATION.md ======
 // Code that generated this is a derivative work of the code from Nam Nguyen
 // https://gist.github.com/ntgn81/066c2c8ec5b4238f85d1e9168a04e3fb
 
@@ -77,9 +77,9 @@ export interface GlobalConfig {
     "metadata.max.age.ms"?: number;
 
     /**
-     * When a topic loses its leader a new metadata request will be enqueued with this initial interval, exponentially increasing until the topic metadata has been refreshed. This is used to recover quickly from transitioning leader brokers.
+     * When a topic loses its leader a new metadata request will be enqueued immediately and then with this initial interval, exponentially increasing upto `retry.backoff.max.ms`, until the topic metadata has been refreshed. If not set explicitly, it will be defaulted to `retry.backoff.ms`. This is used to recover quickly from transitioning leader brokers.
      *
-     * @default 250
+     * @default 100
      */
     "topic.metadata.refresh.fast.interval.ms"?: number;
 
@@ -704,11 +704,18 @@ export interface ProducerGlobalConfig extends GlobalConfig {
     "retries"?: number;
 
     /**
-     * The backoff time in milliseconds before retrying a protocol request.
+     * The backoff time in milliseconds before retrying a protocol request, this is the first backoff time, and will be backed off exponentially until number of retries is exhausted, and it's capped by retry.backoff.max.ms.
      *
      * @default 100
      */
     "retry.backoff.ms"?: number;
+
+    /**
+     * The max backoff time in milliseconds before retrying a protocol request, this is the atmost backoff allowed for exponentially backed off requests.
+     *
+     * @default 1000
+     */
+    "retry.backoff.max.ms"?: number;
 
     /**
      * The threshold of outstanding not yet transmitted broker requests needed to backpressure the producer's message accumulator. If the number of not yet transmitted requests equals or exceeds this number, produce request creation that would have otherwise been triggered (for example, in accordance with linger.ms) will be delayed. A lower number yields larger and more effective batches. A higher value can improve latency when using compression on slow machines.
