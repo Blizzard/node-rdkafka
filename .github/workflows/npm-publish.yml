@@ -16,7 +16,7 @@ jobs:
           submodules: recursive
       - uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
           registry-url: https://registry.npmjs.org/
           cache: "npm"
       - run: npm ci
