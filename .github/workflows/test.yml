@@ -10,15 +10,15 @@ jobs:
   build:
     strategy:
       matrix:
-        node: [10, 12, 14, 16, 18, 19]
+        node: [10, 12, 14, 16, 18, 20]
         os: [ubuntu-22.04]
         include:
           # single mac test due to minute multipliers
           # https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions
-          - node: 18
+          - node: 20
             os: macos-12
           # single windows test due to node.js 14 node-gyp / vs 2022 issues
-          - node: 18
+          - node: 20
             os: windows-2022
     runs-on: ${{ matrix.os }}
     steps:
