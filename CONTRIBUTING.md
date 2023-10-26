@@ -215,7 +215,7 @@ Steps to update:
     ```
     Note: This is ran automatically during CI flows but it's good to run it during the version upgrade pull request.
 
-1. Run `npm install --lockfile-version 2` to build with the new version and fix any build errors that occur.
+1. Run `npm install` to build with the new version and fix any build errors that occur.
 
 1. Run unit tests: `npm run test`
 
