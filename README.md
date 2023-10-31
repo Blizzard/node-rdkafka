@@ -19,6 +19,8 @@ The `node-rdkafka` library is a high-performance NodeJS client for [Apache Kafka
 
 __This library currently uses `librdkafka` version `2.3.0`.__
 
+For a step-by-step guide on using the client see [Getting Started with Apache Kafka and Node.js](https://developer.confluent.io/get-started/nodejs/).
+
 ## Reference Docs
 
 To view the reference docs for the current version, go [here](https://blizzard.github.io/node-rdkafka/current/)
