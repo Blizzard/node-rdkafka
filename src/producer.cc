@@ -567,20 +567,51 @@ NAN_METHOD(Producer::NodeProduce) {
           continue;
         }
 
+        size_t header_value_length;
+        const void* header_value_data;
+
+        // grab this header's key
         v8::Local<v8::Array> props = header->GetOwnPropertyNames(
           Nan::GetCurrentContext()).ToLocalChecked();
-        Nan::MaybeLocal<v8::String> v8Key = Nan::To<v8::String>(
-            Nan::Get(props, 0).ToLocalChecked());
-        Nan::MaybeLocal<v8::String> v8Value = Nan::To<v8::String>(
-            Nan::Get(header, v8Key.ToLocalChecked()).ToLocalChecked());
 
-        Nan::Utf8String uKey(v8Key.ToLocalChecked());
-        std::string key(*uKey);
+        v8::Local<v8::String> v8HeaderKey = Nan::To<v8::String>(
+            Nan::Get(props, 0).ToLocalChecked()).ToLocalChecked();
 
-        Nan::Utf8String uValue(v8Value.ToLocalChecked());
-        std::string value(*uValue);
-        headers.push_back(
-          RdKafka::Headers::Header(key, value.c_str(), value.size()));
+        Nan::Utf8String headerKeyUTF8(v8HeaderKey);
+        std::string headerKey(*headerKeyUTF8);
+
+        // grab this header's value
+        v8::Local<v8::Value> v8Value = Nan::Get(
+          header, v8HeaderKey).ToLocalChecked();
+
+        if (node::Buffer::HasInstance(v8Value)) {
+          v8::Local<v8::Object> v8ValueObject = Nan::To<v8::Object>(
+            v8Value).ToLocalChecked();
+
+          header_value_length = node::Buffer::Length(v8ValueObject);
+          header_value_data = node::Buffer::Data(v8ValueObject);
+
+          if (header_value_data == NULL) {
+            // empty buffer should not end up as null key
+            v8::Local<v8::Object> empty_buffer = Nan::NewBuffer(
+              new char[0], 0).ToLocalChecked();
+            header_value_length = node::Buffer::Length(empty_buffer);
+            header_value_data = node::Buffer::Data(empty_buffer);
+          }
+        } else {
+          // grab it as a string
+          v8::Local<v8::String> asString = Nan::To<v8::String>(
+            v8Value).ToLocalChecked();
+
+          Nan::Utf8String valueUTF8(asString);
+          std::string valueString(*valueUTF8);
+
+          header_value_length = valueString.length();
+          header_value_data = valueString.data();
+        }
+
+        headers.push_back(RdKafka::Headers::Header(
+          headerKey, header_value_data, header_value_length));
       }
     }
   }
