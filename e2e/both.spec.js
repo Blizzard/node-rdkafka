@@ -272,6 +272,49 @@ describe('Consumer/Producer', function() {
     });
   });
 
+  it('should stop consuming batch after consume timeout', function(done) {
+    crypto.randomBytes(4096, function(ex, buffer) {
+      producer.setPollInterval(10);
+
+      producer.once('delivery-report', function(err, report) {
+        t.ifError(err);
+      });
+
+      consumer.subscribe([topic]);
+
+      var events = [];
+
+      consumer.once('data', function(msg) {
+        events.push("data");
+      });
+
+      consumer.on('partition.eof', function(eof) {
+        events.push("partition.eof");
+      });
+
+      let timeoutId;
+      let toProduce = 10;
+      produceLoop = () => {
+        producer.produce(topic, null, buffer, null);
+        if (--toProduce > 0) {
+          timeoutId = setTimeout(produceLoop, 500);
+        }
+      };
+      produceLoop();
+
+      consumer.setDefaultConsumeTimeout(2000);
+      const startedAt = Date.now();
+      consumer.consume(100, function(err, messages) {
+        t.ifError(err);
+        t(Date.now() - startedAt < 3000, 'Consume took longer than consume timeout');
+        t(messages.length > 2, 'Too few messages consumed within batch');
+        t(messages.length < 8, 'Too many messages consumed within batch');
+        clearTimeout(timeoutId);
+        done();
+      });
+    });
+  });
+
   it('should be able to produce and consume messages: consumeLoop', function(done) {
     var key = 'key';
 
