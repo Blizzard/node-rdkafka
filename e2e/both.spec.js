@@ -306,10 +306,10 @@ describe('Consumer/Producer', function() {
       produceLoop();
 
       consumer.setDefaultConsumeTimeout(1000);
-      const startedAt = Date.now();
+      const started = Date.now();
       consumer.consume(10, function(err, messages) {
         t.ifError(err);
-        t(messages.length < 10, 'Too few messages consumed within batch');
+        t(messages.length >= 10, 'Too few messages consumed within batch');
         t(Date.now() - started < 5000, 'Consume finished too fast, should have taken at least 5 seconds')
         clearTimeout(timeoutId);
         done();
@@ -351,13 +351,15 @@ describe('Consumer/Producer', function() {
       produceLoop();
 
       consumer.setDefaultConsumeTimeout(1000);
-      consumer.setDefaultTotalConsumeTimeout(10000)
-      const startedAt = Date.now();
+      consumer.setDefaultTotalConsumeTimeout(10000);
+      const started = Date.now();
       consumer.consume(100, function(err, messages) {
         t.ifError(err);
-        t(messages.length < 11, 'Too few messages consumed within batch');
-        t(messages.length > 11, 'Too many messages consumed within batch');
-        t(Date.now() - started > 10000, 'Consume took longer than global timeout');
+        // Why 13? First message is produced immediately, then 11 more are
+        // produced over 990 seconds, and then a 13th is produced and consumed
+        // in the "final" loop where elapsed time > 10,000.
+        t(messages.length == 13, 'Batch should have consumed 13 messages, instead consumed ' + messages.length + ' messages');
+        t(Date.now() - started > 10000 + 1000, 'Consume took longer than global timeout + single message timeout');
         clearTimeout(timeoutId);
         done();
       });
