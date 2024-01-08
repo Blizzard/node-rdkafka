@@ -1122,28 +1122,62 @@ NAN_METHOD(KafkaConsumer::NodeConsume) {
   }
 
   if (info[1]->IsNumber()) {
-    if (!info[2]->IsFunction()) {
-      return Nan::ThrowError("Need to specify a callback");
-    }
+    if (info[2]->IsNumber()) {
+      if (!info[3]->IsFunction()) {
+        return Nan::ThrowError("Need to specify a callback");
+      }
 
-    v8::Local<v8::Number> numMessagesNumber = info[1].As<v8::Number>();
-    Nan::Maybe<uint32_t> numMessagesMaybe = Nan::To<uint32_t>(numMessagesNumber);  // NOLINT
+      v8::Local<v8::Number> numMessagesNumber = info[1].As<v8::Number>();
+      Nan::Maybe<uint32_t> numMessagesMaybe = Nan::To<uint32_t>(numMessagesNumber);  // NOLINT
 
-    uint32_t numMessages;
-    if (numMessagesMaybe.IsNothing()) {
-      return Nan::ThrowError("Parameter must be a number over 0");
+      uint32_t numMessages;
+      if (numMessagesMaybe.IsNothing()) {
+        return Nan::ThrowError("Parameter must be a number over 0");
+      } else {
+        numMessages = numMessagesMaybe.FromJust();
+      }
+
+      v8::Local<v8::Number> partitionNumber = info[2].As<v8::Number>();
+      Nan::Maybe<uint32_t> partitionMaybe = Nan::To<uint32_t>(partitionNumber);  // NOLINT
+
+      uint32_t partition;
+      if (partitionMaybe.IsNothing()) {
+        return Nan::ThrowError("Parameter must be a number over 0");
+      } else {
+        partition = partitionMaybe.FromJust();
+      }
+
+      KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
+
+      v8::Local<v8::Function> cb = info[3].As<v8::Function>();
+      Nan::Callback *callback = new Nan::Callback(cb);
+      Nan::AsyncQueueWorker(
+        new Workers::KafkaConsumerConsumeNumOfPartition(callback, consumer, numMessages, partition, timeout_ms));  // NOLINT
     } else {
-      numMessages = numMessagesMaybe.FromJust();
+      // 2 params
+      if (!info[2]->IsFunction()) {
+        return Nan::ThrowError("Need to specify a callback");
+      }
+
+      v8::Local<v8::Number> numMessagesNumber = info[1].As<v8::Number>();
+      Nan::Maybe<uint32_t> numMessagesMaybe = Nan::To<uint32_t>(numMessagesNumber);  // NOLINT
+
+      uint32_t numMessages;
+      if (numMessagesMaybe.IsNothing()) {
+        return Nan::ThrowError("Parameter must be a number over 0");
+      } else {
+        numMessages = numMessagesMaybe.FromJust();
+      }
+
+      KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
+
+      v8::Local<v8::Function> cb = info[2].As<v8::Function>();
+      Nan::Callback *callback = new Nan::Callback(cb);
+      Nan::AsyncQueueWorker(
+        new Workers::KafkaConsumerConsumeNum(callback, consumer, numMessages, timeout_ms));  // NOLINT
     }
-
-    KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
-
-    v8::Local<v8::Function> cb = info[2].As<v8::Function>();
-    Nan::Callback *callback = new Nan::Callback(cb);
-    Nan::AsyncQueueWorker(
-      new Workers::KafkaConsumerConsumeNum(callback, consumer, numMessages, timeout_ms));  // NOLINT
-
   } else {
+    // single param
     if (!info[1]->IsFunction()) {
       return Nan::ThrowError("Need to specify a callback");
     }
@@ -1195,7 +1229,7 @@ NAN_METHOD(KafkaConsumer::NodeDisconnect) {
     // cleanup the async worker
     consumeLoop->WorkComplete();
     consumeLoop->Destroy();
-  
+
     consumer->m_consume_loop = nullptr;
   }
 

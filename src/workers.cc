@@ -9,6 +9,7 @@
 
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include "src/workers.h"
 
@@ -786,6 +787,158 @@ void KafkaConsumerConsumeLoop::HandleErrorCallback() {
 /**
  * @brief KafkaConsumer get messages worker.
  *
+ * This callback will get a number of messages from a specific partition.
+ * Can be of use in streams or places where you don't want an infinite
+ * loop managed in C++land and would rather manage it in Node.
+ *
+ * @see RdKafka::KafkaConsumer::Consume
+ * @see NodeKafka::KafkaConsumer::GetMessage
+ */
+
+KafkaConsumerConsumeNumOfPartition::KafkaConsumerConsumeNumOfPartition(Nan::Callback *callback,
+                                     KafkaConsumer* consumer,
+                                     const uint32_t & num_messages,
+                                     const uint32_t & partition,
+                                     const int & timeout_ms) :
+  ErrorAwareWorker(callback),
+  m_consumer(consumer),
+  m_num_messages(num_messages),
+  m_partition(partition),
+  m_timeout_ms(timeout_ms) {}
+
+KafkaConsumerConsumeNumOfPartition::~KafkaConsumerConsumeNumOfPartition() {}
+
+void KafkaConsumerConsumeNumOfPartition::Execute() {
+  std::size_t max = static_cast<std::size_t>(m_num_messages);
+  bool looping = true;
+  int timeout_ms = m_timeout_ms;
+  std::size_t eof_event_count = 0;
+
+  std::cerr << "testing " << m_partition << "\n";
+
+  // disable forwarding for own partition
+  // get
+  string topic = "testing-slow-destinations";
+  get_partition_queue()
+
+  while (m_messages.size() - eof_event_count < max && looping) {
+    // Get a message
+    Baton b = m_consumer->Consume(timeout_ms);
+    if (b.err() == RdKafka::ERR_NO_ERROR) {
+      RdKafka::Message *message = b.data<RdKafka::Message*>();
+      RdKafka::ErrorCode errorCode = message->err();
+      switch (errorCode) {
+        case RdKafka::ERR__PARTITION_EOF:
+          // If partition EOF and have consumed messages, retry with timeout 1
+          // This allows getting ready messages, while not waiting for new ones
+          if (m_messages.size() > eof_event_count) {
+            timeout_ms = 1;
+          }
+
+          // We will only go into this code path when `enable.partition.eof` is set to true
+          // In this case, consumer is also interested in EOF messages, so we return an EOF message
+          m_messages.push_back(message);
+          eof_event_count += 1;
+          break;
+        case RdKafka::ERR__TIMED_OUT:
+        case RdKafka::ERR__TIMED_OUT_QUEUE:
+          // Break of the loop if we timed out
+          delete message;
+          looping = false;
+          break;
+        case RdKafka::ERR_NO_ERROR:
+          m_messages.push_back(b.data<RdKafka::Message*>());
+          break;
+        default:
+          // Set the error for any other errors and break
+          delete message;
+          if (m_messages.size() == eof_event_count) {
+            SetErrorBaton(Baton(errorCode));
+          }
+          looping = false;
+          break;
+      }
+    } else {
+      if (m_messages.size() == eof_event_count) {
+        SetErrorBaton(b);
+      }
+      looping = false;
+    }
+  }
+}
+
+void KafkaConsumerConsumeNumOfPartition::HandleOKCallback() {
+  Nan::HandleScope scope;
+  const unsigned int argc = 3;
+  v8::Local<v8::Value> argv[argc];
+  argv[0] = Nan::Null();
+
+  v8::Local<v8::Array> returnArray = Nan::New<v8::Array>();
+  v8::Local<v8::Array> eofEventsArray = Nan::New<v8::Array>();
+
+  if (m_messages.size() > 0) {
+    int returnArrayIndex = -1;
+    int eofEventsArrayIndex = -1;
+    for (std::vector<RdKafka::Message*>::iterator it = m_messages.begin();
+        it != m_messages.end(); ++it) {
+      RdKafka::Message* message = *it;
+
+      switch (message->err()) {
+        case RdKafka::ERR_NO_ERROR:
+          ++returnArrayIndex;
+          Nan::Set(returnArray, returnArrayIndex, Conversion::Message::ToV8Object(message));
+          break;
+        case RdKafka::ERR__PARTITION_EOF:
+          ++eofEventsArrayIndex;
+
+          // create EOF event
+          v8::Local<v8::Object> eofEvent = Nan::New<v8::Object>();
+
+          Nan::Set(eofEvent, Nan::New<v8::String>("topic").ToLocalChecked(),
+            Nan::New<v8::String>(message->topic_name()).ToLocalChecked());
+          Nan::Set(eofEvent, Nan::New<v8::String>("offset").ToLocalChecked(),
+            Nan::New<v8::Number>(message->offset()));
+          Nan::Set(eofEvent, Nan::New<v8::String>("partition").ToLocalChecked(),
+            Nan::New<v8::Number>(message->partition()));
+
+          // also store index at which position in the message array this event was emitted
+          // this way, we can later emit it at the right point in time
+          Nan::Set(eofEvent, Nan::New<v8::String>("messageIndex").ToLocalChecked(),
+            Nan::New<v8::Number>(returnArrayIndex));
+
+          Nan::Set(eofEventsArray, eofEventsArrayIndex, eofEvent);
+      }
+
+      delete message;
+    }
+  }
+
+  argv[1] = returnArray;
+  argv[2] = eofEventsArray;
+
+  callback->Call(argc, argv);
+}
+
+void KafkaConsumerConsumeNumOfPartition::HandleErrorCallback() {
+  Nan::HandleScope scope;
+
+  if (m_messages.size() > 0) {
+    for (std::vector<RdKafka::Message*>::iterator it = m_messages.begin();
+        it != m_messages.end(); ++it) {
+      RdKafka::Message* message = *it;
+      delete message;
+    }
+  }
+
+  const unsigned int argc = 1;
+  v8::Local<v8::Value> argv[argc] = { GetErrorObject() };
+
+  callback->Call(argc, argv);
+}
+
+/**
+ * @brief KafkaConsumer get messages worker.
+ *
  * This callback will get a number of messages. Can be of use in streams or
  * places where you don't want an infinite loop managed in C++land and would
  * rather manage it in Node.
@@ -824,7 +977,7 @@ void KafkaConsumerConsumeNum::Execute() {
           if (m_messages.size() > eof_event_count) {
             timeout_ms = 1;
           }
-          
+
           // We will only go into this code path when `enable.partition.eof` is set to true
           // In this case, consumer is also interested in EOF messages, so we return an EOF message
           m_messages.push_back(message);
@@ -872,7 +1025,7 @@ void KafkaConsumerConsumeNum::HandleOKCallback() {
     for (std::vector<RdKafka::Message*>::iterator it = m_messages.begin();
         it != m_messages.end(); ++it) {
       RdKafka::Message* message = *it;
-      
+
       switch (message->err()) {
         case RdKafka::ERR_NO_ERROR:
           ++returnArrayIndex;
@@ -890,7 +1043,7 @@ void KafkaConsumerConsumeNum::HandleOKCallback() {
             Nan::New<v8::Number>(message->offset()));
           Nan::Set(eofEvent, Nan::New<v8::String>("partition").ToLocalChecked(),
             Nan::New<v8::Number>(message->partition()));
-          
+
           // also store index at which position in the message array this event was emitted
           // this way, we can later emit it at the right point in time
           Nan::Set(eofEvent, Nan::New<v8::String>("messageIndex").ToLocalChecked(),
@@ -898,7 +1051,7 @@ void KafkaConsumerConsumeNum::HandleOKCallback() {
 
           Nan::Set(eofEventsArray, eofEventsArrayIndex, eofEvent);
       }
-      
+
       delete message;
     }
   }
