@@ -814,16 +814,23 @@ void KafkaConsumerConsumeNumOfPartition::Execute() {
   int timeout_ms = m_timeout_ms;
   std::size_t eof_event_count = 0;
 
-  std::cerr << "testing " << m_partition << "\n";
+  std::string topic = "testing-slow-destinations";
+  std::cerr << "testing topic " << topic << " partition: " << m_partition << "\n";
 
   // disable forwarding for own partition
-  // get
-  string topic = "testing-slow-destinations";
-  get_partition_queue()
+  
+  // RdKafka::TopicPartition::create(topic, partition)
+  // TopicPartition partition = m_consumer->;
+  // Baton b = m_consumer->Subscription();
+  // std::vector<std::string> * topics = b.data<std::vector<std::string>*>();
+  RdKafka::TopicPartition * topicPartition = RdKafka::TopicPartition::create(topic, m_partition);
+  RdKafka::Queue * queue = RdKafka::Handle::get_partition_queue(topicPartition);
+  queue->forward(NULL);
 
   while (m_messages.size() - eof_event_count < max && looping) {
     // Get a message
     Baton b = m_consumer->Consume(timeout_ms);
+    Baton b = queue->consume(timeout_ms);
     if (b.err() == RdKafka::ERR_NO_ERROR) {
       RdKafka::Message *message = b.data<RdKafka::Message*>();
       RdKafka::ErrorCode errorCode = message->err();
