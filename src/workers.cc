@@ -818,55 +818,48 @@ void KafkaConsumerConsumeNumOfPartition::Execute() {
   std::cerr << "testing topic " << topic << " partition: " << m_partition << "\n";
 
   // disable forwarding for own partition
-  RdKafka::TopicPartition * topicPartition = RdKafka::TopicPartition::create(topic, m_partition);
+  RdKafka::TopicPartition *topicPartition = RdKafka::TopicPartition::create(topic, m_partition);
+
+  std::cerr << "got topic " << topicPartition->topic() << " partition: " << topicPartition->partition() << " offset " << topicPartition->offset() << "\n";
 
   // Got RdKafka::Queue however we probably need one which is wrapped just like kafka-consumer.cc??
-  RdKafka::Queue * queue = RdKafka::Handle::get_partition_queue(topicPartition);
+  RdKafka::Queue *queue = m_consumer->GetClient()->get_partition_queue(topicPartition);
   queue->forward(NULL);
 
   while (m_messages.size() - eof_event_count < max && looping) {
     // Get a message
-    Baton b = m_consumer->Consume(timeout_ms);
-    Baton b = queue->consume(timeout_ms);
-    if (b.err() == RdKafka::ERR_NO_ERROR) {
-      RdKafka::Message *message = b.data<RdKafka::Message*>();
-      RdKafka::ErrorCode errorCode = message->err();
-      switch (errorCode) {
-        case RdKafka::ERR__PARTITION_EOF:
-          // If partition EOF and have consumed messages, retry with timeout 1
-          // This allows getting ready messages, while not waiting for new ones
-          if (m_messages.size() > eof_event_count) {
-            timeout_ms = 1;
-          }
+    RdKafka::Message *message = queue->consume(timeout_ms);
+    RdKafka::ErrorCode errorCode = message->err();
+    switch (errorCode) {
+      case RdKafka::ERR__PARTITION_EOF:
+        // If partition EOF and have consumed messages, retry with timeout 1
+        // This allows getting ready messages, while not waiting for new ones
+        if (m_messages.size() > eof_event_count) {
+          timeout_ms = 1;
+        }
 
-          // We will only go into this code path when `enable.partition.eof` is set to true
-          // In this case, consumer is also interested in EOF messages, so we return an EOF message
-          m_messages.push_back(message);
-          eof_event_count += 1;
-          break;
-        case RdKafka::ERR__TIMED_OUT:
-        case RdKafka::ERR__TIMED_OUT_QUEUE:
-          // Break of the loop if we timed out
-          delete message;
-          looping = false;
-          break;
-        case RdKafka::ERR_NO_ERROR:
-          m_messages.push_back(b.data<RdKafka::Message*>());
-          break;
-        default:
-          // Set the error for any other errors and break
-          delete message;
-          if (m_messages.size() == eof_event_count) {
-            SetErrorBaton(Baton(errorCode));
-          }
-          looping = false;
-          break;
-      }
-    } else {
-      if (m_messages.size() == eof_event_count) {
-        SetErrorBaton(b);
-      }
-      looping = false;
+        // We will only go into this code path when `enable.partition.eof` is set to true
+        // In this case, consumer is also interested in EOF messages, so we return an EOF message
+        m_messages.push_back(message);
+        eof_event_count += 1;
+        break;
+      case RdKafka::ERR__TIMED_OUT:
+      case RdKafka::ERR__TIMED_OUT_QUEUE:
+        // Break of the loop if we timed out
+        delete message;
+        looping = false;
+        break;
+      case RdKafka::ERR_NO_ERROR:
+        m_messages.push_back(message);
+        break;
+      default:
+        // Set the error for any other errors and break
+        delete message;
+        if (m_messages.size() == eof_event_count) {
+          SetErrorBaton(Baton(errorCode));
+        }
+        looping = false;
+        break;
     }
   }
 }
