@@ -1122,8 +1122,8 @@ NAN_METHOD(KafkaConsumer::NodeConsume) {
   }
 
   if (info[1]->IsNumber()) {
-    if (info[2]->IsNumber()) {
-      if (!info[3]->IsFunction()) {
+    if (info[2]->IsString() && info[3]->IsNumber()) {
+      if (!info[4]->IsFunction()) {
         return Nan::ThrowError("Need to specify a callback");
       }
 
@@ -1137,7 +1137,11 @@ NAN_METHOD(KafkaConsumer::NodeConsume) {
         numMessages = numMessagesMaybe.FromJust();
       }
 
-      v8::Local<v8::Number> partitionNumber = info[2].As<v8::Number>();
+      // Get string pointer for the topic name
+      Nan::Utf8String topicUTF8(Nan::To<v8::String>(info[2]).ToLocalChecked());
+      std::string topic_name(*topicUTF8);
+
+      v8::Local<v8::Number> partitionNumber = info[3].As<v8::Number>();
       Nan::Maybe<uint32_t> partitionMaybe = Nan::To<uint32_t>(partitionNumber);  // NOLINT
 
       uint32_t partition;
@@ -1149,10 +1153,11 @@ NAN_METHOD(KafkaConsumer::NodeConsume) {
 
       KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
-      v8::Local<v8::Function> cb = info[3].As<v8::Function>();
+      v8::Local<v8::Function> cb = info[4].As<v8::Function>();
       Nan::Callback *callback = new Nan::Callback(cb);
+
       Nan::AsyncQueueWorker(
-        new Workers::KafkaConsumerConsumeNumOfPartition(callback, consumer, numMessages, partition, timeout_ms));  // NOLINT
+        new Workers::KafkaConsumerConsumeNumOfPartition(callback, consumer, numMessages, topic_name, partition, timeout_ms));  // NOLINT
     } else {
       // 2 params
       if (!info[2]->IsFunction()) {

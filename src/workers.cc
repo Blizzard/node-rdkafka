@@ -798,11 +798,13 @@ void KafkaConsumerConsumeLoop::HandleErrorCallback() {
 KafkaConsumerConsumeNumOfPartition::KafkaConsumerConsumeNumOfPartition(Nan::Callback *callback,
                                      KafkaConsumer* consumer,
                                      const uint32_t & num_messages,
+                                     const std::string topic,
                                      const uint32_t & partition,
                                      const int & timeout_ms) :
   ErrorAwareWorker(callback),
   m_consumer(consumer),
   m_num_messages(num_messages),
+  m_topic(topic),
   m_partition(partition),
   m_timeout_ms(timeout_ms) {}
 
@@ -814,17 +816,16 @@ void KafkaConsumerConsumeNumOfPartition::Execute() {
   int timeout_ms = m_timeout_ms;
   std::size_t eof_event_count = 0;
 
-  std::string topic = "testing-slow-destinations";
-  std::cerr << "testing topic " << topic << " partition: " << m_partition << "\n";
-
+  std::string topic = "consume-per-partition";
+  
   // disable forwarding for own partition
   RdKafka::TopicPartition *topicPartition = RdKafka::TopicPartition::create(topic, m_partition);
 
-  std::cerr << "got topic " << topicPartition->topic() << " partition: " << topicPartition->partition() << " offset " << topicPartition->offset() << "\n";
+  // std::cerr << "got topic " << topicPartition->topic() << " partition: " << topicPartition->partition() << " offset " << topicPartition->offset() << "\n";
 
   // Got RdKafka::Queue however we probably need one which is wrapped just like kafka-consumer.cc??
   RdKafka::Queue *queue = m_consumer->GetClient()->get_partition_queue(topicPartition);
-  queue->forward(NULL);
+  RdKafka::ErrorCode err = queue->forward(NULL);
 
   while (m_messages.size() - eof_event_count < max && looping) {
     // Get a message
