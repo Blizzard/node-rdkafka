@@ -818,12 +818,9 @@ void KafkaConsumerConsumeNumOfPartition::Execute() {
   std::cerr << "testing topic " << topic << " partition: " << m_partition << "\n";
 
   // disable forwarding for own partition
-  
-  // RdKafka::TopicPartition::create(topic, partition)
-  // TopicPartition partition = m_consumer->;
-  // Baton b = m_consumer->Subscription();
-  // std::vector<std::string> * topics = b.data<std::vector<std::string>*>();
   RdKafka::TopicPartition * topicPartition = RdKafka::TopicPartition::create(topic, m_partition);
+
+  // Got RdKafka::Queue however we probably need one which is wrapped just like kafka-consumer.cc??
   RdKafka::Queue * queue = RdKafka::Handle::get_partition_queue(topicPartition);
   queue->forward(NULL);
 
