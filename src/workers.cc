@@ -826,13 +826,6 @@ void KafkaConsumerConsumeNumOfPartition::Execute() {
     return;
   }
 
-  RdKafka::ErrorCode err = queue->forward(NULL);
-  if (err != RdKafka::ERR_NO_ERROR) {
-    SetErrorBaton(Baton(RdKafka::ERR__STATE,
-      "Could not consume from given partition."));
-    return;
-  }
-
   while (m_messages.size() - eof_event_count < max && looping) {
     if (!m_consumer->IsConnected()) {
       if (m_messages.size() == eof_event_count) {

@@ -59,6 +59,12 @@ consumer.on('rebalance', function(err, updatedAssignments) {
   console.log('rebalancing done, got partitions assigned: ', updatedAssignments.map(function(a) {
     return a.partition;
   }));
+  
+  // Normally messages are forwarded to a general queue, which contains messages from all assigned partitions.
+  // however we want to consume per partitions, for this we need to disable forwarding.
+  updatedAssignments.forEach(function (assignment) {
+    consumer.disableQueueForwarding(assignment);
+  });
 
   // find new assignments
   var newAssignments = updatedAssignments.filter(function (updatedAssignment) {
