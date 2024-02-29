@@ -1,6 +1,6 @@
 {
   "name": "node-rdkafka-imhoff",
-  "version": "2.18.1",
+  "version": "2.18.2",
   "description": "Node.js bindings for librdkafka",
   "librdkafka": "2.3.0",
   "main": "lib/index.js",
