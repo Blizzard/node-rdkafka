@@ -178,7 +178,7 @@ type EventListener<K extends string> = K extends keyof EventListenerMap ? EventL
 export abstract class Client<Events extends string> extends EventEmitter {
     constructor(globalConf: GlobalConfig, SubClientType: any, topicConf: TopicConfig);
 
-    connect(metadataOptions?: MetadataOptions, cb?: (err: LibrdKafkaError, data: Metadata) => any): this;
+    connect(metadataOptions?: MetadataOptions, cb?: (err: LibrdKafkaError | null, data: Metadata) => any): this;
 
     getClient(): any;
 
