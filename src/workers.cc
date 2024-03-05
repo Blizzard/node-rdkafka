@@ -817,12 +817,21 @@ void KafkaConsumerConsumeNumOfPartition::Execute() {
   // Disable forwarding for own partition
   RdKafka::TopicPartition *topicPartition = RdKafka::TopicPartition::create(
     m_topic, m_partition);
+
+  if (topicPartition == NULL) {
+    SetErrorBaton(Baton(RdKafka::ERR__STATE,
+      "TopicPartition not found."));
+
+    return;
+  }
+  
   RdKafka::Queue *queue = m_consumer->GetClient()->get_partition_queue(
     topicPartition);
 
   if (queue == NULL) {
     SetErrorBaton(Baton(RdKafka::ERR__STATE,
       "TopicPartition has an invalid queue."));
+    delete topicPartition;
     return;
   }
 
@@ -872,6 +881,9 @@ void KafkaConsumerConsumeNumOfPartition::Execute() {
         break;
     }
   }
+
+  delete queue;
+  delete topicPartition;
 }
 
 void KafkaConsumerConsumeNumOfPartition::HandleOKCallback() {

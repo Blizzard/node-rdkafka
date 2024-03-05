@@ -484,10 +484,12 @@ Baton KafkaConsumer::DisableQueueForwarding(RdKafka::TopicPartition * toppar) {
 
   RdKafka::ErrorCode err = queue->forward(NULL);
   if (err != RdKafka::ERR_NO_ERROR) {
+    delete queue;
     return Baton(RdKafka::ERR__STATE,
       "Could not disable queue for given partition.");
   }
 
+  delete queue;
   return Baton(err);
 }
 
