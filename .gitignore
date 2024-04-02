@@ -1,4 +1,5 @@
-build/
+# Keep `build` dir to avoid recompilation on each installation
+# build/
 node_modules/
 deps/librdkafka
 npm-debug.log
