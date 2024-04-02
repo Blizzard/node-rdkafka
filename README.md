@@ -1,6 +1,11 @@
 node-rdkafka - Node.js wrapper for Kafka C/C++ library
 ==============================================
 
+--
+This fork goal is to avoid costly build time on each installation and provide
+static version builded for specific environment (defined in `Dockerfile`. Currently is `node:20.10-alpine`).
+--
+
 Copyright (c) 2016 Blizzard Entertainment.
 
 [https://github.com/blizzard/node-rdkafka](https://github.com/blizzard/node-rdkafka)
