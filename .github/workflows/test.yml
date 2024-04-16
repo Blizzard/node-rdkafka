@@ -10,7 +10,7 @@ jobs:
   build:
     strategy:
       matrix:
-        node: [18, 20, 21]
+        node: [16, 18, 20, 21]
         os: [ubuntu-22.04]
         include:
           # single mac test due to minute multipliers
