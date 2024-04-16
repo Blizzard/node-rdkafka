@@ -10,7 +10,7 @@ jobs:
   build:
     strategy:
       matrix:
-        node: [10, 12, 14, 16, 18, 20]
+        node: [16, 18, 20, 21]
         os: [ubuntu-22.04]
         include:
           # single mac test due to minute multipliers
@@ -39,5 +39,5 @@ jobs:
         run: npm ci
       # skipping on windows for now due to Make / mocha exit code issues
       - name: Test
-        if: runner.os != 'Windows' && matrix.node != 10
+        if: runner.os != 'Windows'
         run: npm test
