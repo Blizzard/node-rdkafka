@@ -511,6 +511,7 @@ The following table lists events for this API.
 |`data` | When using the Standard API consumed messages are emitted in this event. |
 |`partition.eof` | When using Standard API and the configuration option `enable.partition.eof` is set, `partition.eof` events are emitted in this event. The event contains `topic`, `partition` and `offset` properties. |
 |`warning` | The event is emitted in case of `UNKNOWN_TOPIC_OR_PART` or `TOPIC_AUTHORIZATION_FAILED` errors when consuming in *Flowing mode*. Since the consumer will continue working if the error is still happening, the warning event should reappear after the next metadata refresh. To control the metadata refresh rate set `topic.metadata.refresh.interval.ms` property. Once you resolve the error, you can manually call `getMetadata` to speed up consumer recovery. |
+|`rebalance` | The `rebalance` event is emitted when the consumer group is rebalanced. <br><br>This event is only emitted if the `rebalance_cb` configuration is set to a function or set to `true` |
 |`disconnected` | The `disconnected` event is emitted when the broker disconnects. <br><br>This event is only emitted when `.disconnect` is called. The wrapper will always try to reconnect otherwise. |
 |`ready` | The `ready` event is emitted when the `Consumer` is ready to read messages. |
 |`event` | The `event` event is emitted when `librdkafka` reports an event (if you opted in via the `event_cb` option).|
