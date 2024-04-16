@@ -117,6 +117,7 @@ export interface ReadStreamOptions extends ReadableOptions {
     autoClose?: boolean;
     streamAsBatch?: boolean;
     connectOptions?: any;
+    initOauthBearerToken?: string;
 }
 
 export interface WriteStreamOptions extends WritableOptions {
@@ -137,6 +138,7 @@ export interface ProducerStream extends Writable {
 export interface ConsumerStream extends Readable {
     consumer: KafkaConsumer;
     connect(options: ConsumerGlobalConfig): void;
+    refreshOauthBearerToken(tokenStr: string): void;
     close(cb?: () => void): void;
 }
 
@@ -179,6 +181,8 @@ export abstract class Client<Events extends string> extends EventEmitter {
     constructor(globalConf: GlobalConfig, SubClientType: any, topicConf: TopicConfig);
 
     connect(metadataOptions?: MetadataOptions, cb?: (err: LibrdKafkaError, data: Metadata) => any): this;
+
+    setOauthBearerToken(tokenStr: string): this;
 
     getClient(): any;
 
@@ -330,6 +334,8 @@ export interface NewTopic {
 }
 
 export interface IAdminClient {
+    refreshOauthBearerToken(tokenStr: string): void;
+
     createTopic(topic: NewTopic, cb?: (err: LibrdKafkaError) => void): void;
     createTopic(topic: NewTopic, timeout?: number, cb?: (err: LibrdKafkaError) => void): void;
 
@@ -343,5 +349,5 @@ export interface IAdminClient {
 }
 
 export abstract class AdminClient {
-    static create(conf: GlobalConfig): IAdminClient;
+    static create(conf: GlobalConfig, initOauthBearerToken?: string): IAdminClient;
 }
