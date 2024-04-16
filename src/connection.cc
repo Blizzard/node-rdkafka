@@ -239,7 +239,7 @@ NAN_METHOD(Connection::NodeSetToken)
   // we always set expiry to maximum value in ms, as we don't use refresh callback,
   // rdkafka continues sending a token even if it expired. Client code must
   // handle token refreshing by calling 'setToken' again when needed.
-  int64_t expiry = std::numeric_limits<int64_t>::max() / 100000;
+  int64_t expiry = (std::numeric_limits<int64_t>::max)() / 100000;
   Connection* obj = ObjectWrap::Unwrap<Connection>(info.This());
   RdKafka::Handle* handle = obj->m_client;
 
