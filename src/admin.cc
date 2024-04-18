@@ -49,6 +49,24 @@ Baton AdminClient::Connect() {
     return Baton(RdKafka::ERR__STATE, errstr);
   }
 
+  if (m_init_oauthToken) {
+    scoped_shared_write_lock lock(m_connection_lock);
+    if (m_init_oauthToken) {
+      std::list<std::string> emptyList;
+      std::string token = m_init_oauthToken->token;
+      int64_t expiry = m_init_oauthToken->expiry;
+      // needed for initial connection only
+      m_init_oauthToken.reset();
+
+      RdKafka::ErrorCode err = m_client->oauthbearer_set_token(token, expiry,
+            "", emptyList, errstr);
+
+      if (err != RdKafka::ERR_NO_ERROR) {
+        return Baton(err, errstr);
+      }
+    }
+  }
+
   if (rkqu == NULL) {
     rkqu = rd_kafka_queue_new(m_client->c_ptr());
   }
@@ -88,6 +106,7 @@ void AdminClient::Init(v8::Local<v8::Object> exports) {
 
   Nan::SetPrototypeMethod(tpl, "connect", NodeConnect);
   Nan::SetPrototypeMethod(tpl, "disconnect", NodeDisconnect);
+  Nan::SetPrototypeMethod(tpl, "setToken", NodeSetToken);
 
   constructor.Reset(
     (tpl->GetFunction(Nan::GetCurrentContext())).ToLocalChecked());

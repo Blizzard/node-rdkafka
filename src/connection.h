@@ -45,7 +45,13 @@ namespace NodeKafka {
  */
 
 class Connection : public Nan::ObjectWrap {
- public:
+  struct OauthBearerToken
+  {
+    std::string token;
+    int64_t expiry;
+  };
+
+public:
   bool IsConnected();
   bool IsClosing();
 
@@ -82,10 +88,13 @@ class Connection : public Nan::ObjectWrap {
   Conf* m_tconfig;
   std::string m_errstr;
 
+  std::unique_ptr<OauthBearerToken> m_init_oauthToken;
+
   uv_rwlock_t m_connection_lock;
 
   RdKafka::Handle* m_client;
 
+  static NAN_METHOD(NodeSetToken);
   static NAN_METHOD(NodeConfigureCallbacks);
   static NAN_METHOD(NodeGetMetadata);
   static NAN_METHOD(NodeQueryWatermarkOffsets);
