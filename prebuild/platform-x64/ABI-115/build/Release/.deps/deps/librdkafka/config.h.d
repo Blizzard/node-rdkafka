@@ -1,0 +1,1 @@
+cmd_deps/librdkafka/config.h := LD_LIBRARY_PATH=/home/node/api/build/Release/lib.host:/home/node/api/build/Release/lib.target:$$LD_LIBRARY_PATH; export LD_LIBRARY_PATH; cd ../deps; mkdir -p librdkafka; node ../util/configure

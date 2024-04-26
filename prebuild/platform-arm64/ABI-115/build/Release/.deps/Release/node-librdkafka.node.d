@@ -1,0 +1,1 @@
+cmd_Release/node-librdkafka.node := ln -f "Release/obj.target/node-librdkafka.node" "Release/node-librdkafka.node" 2>/dev/null || (rm -rf "Release/node-librdkafka.node" && cp -af "Release/obj.target/node-librdkafka.node" "Release/node-librdkafka.node")
