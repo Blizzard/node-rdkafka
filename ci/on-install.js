@@ -11,7 +11,7 @@ async function main() {
   if (fs.existsSync(prebuildDirectory)) {
     await fs.promises.rename(prebuildDirectory, './build');
   } else {
-    throw new Error(`Mispsing node-rdkafka for arch "${process.arch}" and ABI "${process.versions.modules}". Prebuild bindings first.`);
+    throw new Error(`Missing node-rdkafka for arch "${process.arch}" and ABI "${process.versions.modules}". Prebuild bindings first.`);
   }
 }
 
