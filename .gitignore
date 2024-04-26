@@ -3,6 +3,7 @@
 node_modules/
 deps/librdkafka
 npm-debug.log
+build/
 
 docs
 
