@@ -7,8 +7,9 @@
   "scripts": {
     "configure": "node-gyp configure",
     "build": "node-gyp build",
+    "prebuild": "node-gyp rebuild && node ./ci/on-prebuild.js",
     "test": "make test",
-    "install": "[ ! -f build/deps/librdkafka.a ] && node-gyp rebuild || echo Librdkafka already installed, skipping compilation",
+    "install": "./on_install.sh",
     "prepack": "node ./ci/prepublish.js"
   },
   "keywords": [
