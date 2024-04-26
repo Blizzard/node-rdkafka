@@ -1,0 +1,11 @@
+prefix=/home/node/api/build/deps
+libdir=/home/node/api/build/deps
+includedir=/home/node/api/build/deps/include
+
+Name: librdkafka++
+Description: The Apache Kafka C/C++ library
+Version: 2.3.0
+Requires.private: rdkafka
+Cflags: -I${includedir}
+Libs: -L${libdir} -lrdkafka++
+Libs.private: -lm -ldl -lpthread -lrt -lpthread -lrt
