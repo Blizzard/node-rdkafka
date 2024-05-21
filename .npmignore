@@ -8,3 +8,4 @@ deps/librdkafka/config.h
 build
 .github
 .vscode
+deps/librdkafka/examples
