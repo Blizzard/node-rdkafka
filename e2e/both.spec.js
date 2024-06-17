@@ -614,6 +614,65 @@ describe('Consumer/Producer', function() {
     });
   });
 
+  describe('Cooperative sticky', function() {
+    var consumer;
+
+    beforeEach(function(done) {
+      var grp = 'kafka-mocha-grp-' + crypto.randomBytes(20).toString('hex');
+
+      var consumerOpts = {
+        'metadata.broker.list': kafkaBrokerList,
+        'group.id': grp,
+        'fetch.wait.max.ms': 1000,
+        'session.timeout.ms': 10000,
+        'enable.auto.commit': false,
+        'debug': 'all',
+        'partition.assignment.strategy': 'cooperative-sticky'
+      };
+
+      consumer = new Kafka.KafkaConsumer(consumerOpts, {
+        'auto.offset.reset': 'largest',
+      });
+
+      consumer.connect({}, function(err, d) {
+        t.ifError(err);
+        t.equal(typeof d, 'object', 'metadata should be returned');
+        done();
+      });
+
+      eventListener(consumer);
+    });
+
+    afterEach(function(done) {
+      consumer.disconnect(function() {
+        done();
+      });
+    });
+
+    it('should be able to produce and consume messages', function (done) {
+      var key = 'key';
+
+      crypto.randomBytes(4096, function(ex, buffer) {
+        producer.setPollInterval(10);
+
+        consumer.on('data', function(message) {
+          t.equal(buffer.toString(), message.value.toString(), 'invalid message value');
+          t.equal(key, message.key, 'invalid message key');
+          t.equal(topic, message.topic, 'invalid message topic');
+          t.ok(message.offset >= 0, 'invalid message offset');
+          done();
+        });
+
+        consumer.subscribe([topic]);
+        consumer.consume();
+
+        setTimeout(function() {
+          producer.produce(topic, null, buffer, key);
+        }, 2000);
+      });
+    });
+  });
+
   function assert_headers_match(expectedHeaders, messageHeaders) {
     t.equal(expectedHeaders.length, messageHeaders.length, 'Headers length does not match expected length');
     for (var i = 0; i < expectedHeaders.length; i++) {
