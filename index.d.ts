@@ -218,7 +218,7 @@ export class KafkaConsumer extends Client<KafkaConsumerEvents> {
 
     commitMessageSync(msg: TopicPartitionOffset): this;
 
-    commitSync(topicPartition: TopicPartitionOffset | TopicPartitionOffset[]): this;
+    commitSync(topicPartition: TopicPartitionOffset | TopicPartitionOffset[] | null): this;
 
     committed(toppars: TopicPartition[], timeout: number, cb: (err: LibrdKafkaError, topicPartitions: TopicPartitionOffset[]) => void): this;
     committed(timeout: number, cb: (err: LibrdKafkaError, topicPartitions: TopicPartitionOffset[]) => void): this;
