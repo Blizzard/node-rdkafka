@@ -180,7 +180,7 @@ type EventListener<K extends string> = K extends keyof EventListenerMap ? EventL
 export abstract class Client<Events extends string> extends EventEmitter {
     constructor(globalConf: GlobalConfig, SubClientType: any, topicConf: TopicConfig);
 
-    connect(metadataOptions?: MetadataOptions, cb?: (err: LibrdKafkaError, data: Metadata) => any): this;
+    connect(metadataOptions?: MetadataOptions, cb?: (err: LibrdKafkaError | null, data: Metadata) => any): this;
 
     setOauthBearerToken(tokenStr: string): this;
 
@@ -223,8 +223,9 @@ export class KafkaConsumer extends Client<KafkaConsumerEvents> {
     committed(toppars: TopicPartition[], timeout: number, cb: (err: LibrdKafkaError, topicPartitions: TopicPartitionOffset[]) => void): this;
     committed(timeout: number, cb: (err: LibrdKafkaError, topicPartitions: TopicPartitionOffset[]) => void): this;
 
-    consume(number: number, cb?: (err: LibrdKafkaError, messages: Message[]) => void): void;
-    consume(cb: (err: LibrdKafkaError, messages: Message[]) => void): void;
+    consume(number: number, topic: string, partition: number, cb?: (err: LibrdKafkaError | null, messages: Message[] | undefined) => void): void;
+    consume(number: number, cb?: (err: LibrdKafkaError | null, messages: Message[] | undefined) => void): void;
+    consume(cb: (err: LibrdKafkaError | null, messages: Message[] | undefined) => void): void;
     consume(): void;
 
     getWatermarkOffsets(topic: string, partition: number): WatermarkOffsets;
@@ -237,9 +238,11 @@ export class KafkaConsumer extends Client<KafkaConsumerEvents> {
 
     resume(topicPartitions: TopicPartition[]): any;
 
-    seek(toppar: TopicPartitionOffset, timeout: number | null, cb: (err: LibrdKafkaError) => void): this;
+    seek(toppar: TopicPartitionOffset, timeout: number | null, cb: (err: LibrdKafkaError | undefined) => void): this;
 
     setDefaultConsumeTimeout(timeoutMs: number): void;
+
+    disableQueueForwarding(topicPartition: TopicPartition): this;
 
     setDefaultConsumeLoopTimeoutDelay(timeoutMs: number): void;
 
