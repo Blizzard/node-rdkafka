@@ -208,6 +208,7 @@ export class KafkaConsumer extends Client<KafkaConsumerEvents> {
     constructor(conf: ConsumerGlobalConfig, topicConf: ConsumerTopicConfig);
 
     assign(assignments: Assignment[]): this;
+    incrementalAssign(assignments: Assignment[]): this;
 
     assignments(): Assignment[];
 
@@ -248,11 +249,14 @@ export class KafkaConsumer extends Client<KafkaConsumerEvents> {
     subscription(): string[];
 
     unassign(): this;
+    incrementalUnassign(assignments: Assignment[]): this;
 
     unsubscribe(): this;
 
     offsetsForTimes(topicPartitions: TopicPartitionTime[], timeout: number, cb?: (err: LibrdKafkaError, offsets: TopicPartitionOffset[]) => any): void;
     offsetsForTimes(topicPartitions: TopicPartitionTime[], cb?: (err: LibrdKafkaError, offsets: TopicPartitionOffset[]) => any): void;
+
+    rebalanceProtocol(): string;
 
     static createReadStream(conf: ConsumerGlobalConfig, topicConfig: ConsumerTopicConfig, streamOptions: ReadStreamOptions | number): ConsumerStream;
 }
