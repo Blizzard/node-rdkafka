@@ -68,6 +68,18 @@ Connection::~Connection() {
   }
 }
 
+Baton Connection::rdkafkaErrorToBaton(RdKafka::Error* error) {
+  if ( NULL == error) {
+    return Baton(RdKafka::ERR_NO_ERROR);
+  }
+  else {
+    Baton result(error->code(), error->str(), error->is_fatal(),
+                 error->is_retriable(), error->txn_requires_abort());
+    delete error;
+    return result;
+  }
+}
+
 RdKafka::TopicPartition* Connection::GetPartition(std::string &topic) {
   return RdKafka::TopicPartition::create(topic, RdKafka::Topic::PARTITION_UA);
 }
