@@ -57,11 +57,11 @@ function processItem(configItem) {
     case 'dr_msg_cb':
       return { ...configItem, type: 'boolean' };
     case 'dr_cb':
-      return { ...configItem, type: 'boolean | Function' };
+      return { ...configItem, type: 'boolean | ((this: import("./").KafkaProducer, err: import("./").LibrdKafkaError, report: import("./").DeliveryReport) => void)' };
     case 'rebalance_cb':
-      return { ...configItem, type: 'boolean | Function' };
+      return { ...configItem, type: 'boolean | ((this: import("./").KafkaConsumer, err: import("./").LibrdKafkaError, assignment: import("./").Assignment[]) => void)' };
     case 'offset_commit_cb':
-      return { ...configItem, type: 'boolean | Function' };
+      return { ...configItem, type: 'boolean | ((this: import("./").KafkaConsumer, err: import("./").LibrdKafkaError, assignment: import("./").TopicPartitionOffset[]) => void)' };
   }
 
   switch (configItem.rawType) {
