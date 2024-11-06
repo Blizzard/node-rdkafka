@@ -1172,7 +1172,8 @@ NAN_METHOD(KafkaConsumer::NodeConsumeLoop) {
 
   Nan::Callback *callback = new Nan::Callback(cb);
 
-  consumer->m_consume_loop = new Workers::KafkaConsumerConsumeLoop(callback, consumer, timeout_ms, timeout_sleep_delay_ms);
+  consumer->m_consume_loop = new Workers::KafkaConsumerConsumeLoop(
+    callback, consumer, timeout_ms, timeout_sleep_delay_ms);
 
   info.GetReturnValue().Set(Nan::Null());
 }
@@ -1196,27 +1197,71 @@ NAN_METHOD(KafkaConsumer::NodeConsume) {
   }
 
   if (info[1]->IsNumber()) {
-    if (!info[2]->IsFunction()) {
-      return Nan::ThrowError("Need to specify a callback");
-    }
+    if (info[2]->IsString() && info[3]->IsNumber()) {
+      // Consume per partition
+      if (!info[4]->IsFunction()) {
+        return Nan::ThrowError("Need to specify a callback");
+      }
 
-    v8::Local<v8::Number> numMessagesNumber = info[1].As<v8::Number>();
-    Nan::Maybe<uint32_t> numMessagesMaybe = Nan::To<uint32_t>(numMessagesNumber);  // NOLINT
+      v8::Local<v8::Number> numMessagesNumber = info[1].As<v8::Number>();
+      Nan::Maybe<uint32_t> numMessagesMaybe = Nan::To<uint32_t>(numMessagesNumber);  // NOLINT
 
-    uint32_t numMessages;
-    if (numMessagesMaybe.IsNothing()) {
-      return Nan::ThrowError("Parameter must be a number over 0");
+      uint32_t numMessages;
+      if (numMessagesMaybe.IsNothing()) {
+        return Nan::ThrowError("Parameter must be a number over 0");
+      } else {
+        numMessages = numMessagesMaybe.FromJust();
+      }
+
+      // Get string pointer for the topic name
+      Nan::Utf8String topicUTF8(Nan::To<v8::String>(info[2]).ToLocalChecked());
+      std::string topic_name(*topicUTF8);
+
+      // Parse partition
+      v8::Local<v8::Number> partitionNumber = info[3].As<v8::Number>();
+      Nan::Maybe<uint32_t> partitionMaybe = Nan::To<uint32_t>(partitionNumber);  // NOLINT
+
+      uint32_t partition;
+      if (partitionMaybe.IsNothing()) {
+        return Nan::ThrowError("Parameter must be a number equal to or over 0");
+      } else {
+        partition = partitionMaybe.FromJust();
+      }
+
+      // Parse onlyApplyTimeoutToFirstMessage
+      bool only_apply_timeout_to_first_message;
+      if (!Nan::To<bool>(info[5]).To(&only_apply_timeout_to_first_message)) {
+        only_apply_timeout_to_first_message = false;
+      }
+
+      KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
+
+      v8::Local<v8::Function> cb = info[4].As<v8::Function>();
+      Nan::Callback *callback = new Nan::Callback(cb);
+      Nan::AsyncQueueWorker(
+        new Workers::KafkaConsumerConsumeNumOfPartition(callback, consumer, numMessages, topic_name, partition, timeout_ms, only_apply_timeout_to_first_message));  // NOLINT
     } else {
-      numMessages = numMessagesMaybe.FromJust();
+      if (!info[2]->IsFunction()) {
+        return Nan::ThrowError("Need to specify a callback");
+      }
+
+      v8::Local<v8::Number> numMessagesNumber = info[1].As<v8::Number>();
+      Nan::Maybe<uint32_t> numMessagesMaybe = Nan::To<uint32_t>(numMessagesNumber);  // NOLINT
+
+      uint32_t numMessages;
+      if (numMessagesMaybe.IsNothing()) {
+        return Nan::ThrowError("Parameter must be a number over 0");
+      } else {
+        numMessages = numMessagesMaybe.FromJust();
+      }
+
+      KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
+
+      v8::Local<v8::Function> cb = info[2].As<v8::Function>();
+      Nan::Callback *callback = new Nan::Callback(cb);
+      Nan::AsyncQueueWorker(
+        new Workers::KafkaConsumerConsumeNum(callback, consumer, numMessages, timeout_ms));  // NOLINT
     }
-
-    KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
-
-    v8::Local<v8::Function> cb = info[2].As<v8::Function>();
-    Nan::Callback *callback = new Nan::Callback(cb);
-    Nan::AsyncQueueWorker(
-      new Workers::KafkaConsumerConsumeNum(callback, consumer, numMessages, timeout_ms));  // NOLINT
-
   } else {
     if (!info[1]->IsFunction()) {
       return Nan::ThrowError("Need to specify a callback");
@@ -1269,7 +1314,7 @@ NAN_METHOD(KafkaConsumer::NodeDisconnect) {
     // cleanup the async worker
     consumeLoop->WorkComplete();
     consumeLoop->Destroy();
-  
+
     consumer->m_consume_loop = nullptr;
   }
 
