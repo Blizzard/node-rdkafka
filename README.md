@@ -447,7 +447,7 @@ stream.consumer.commit(); // Commits all locally stored offsets
 You can also use the Standard API and manage callbacks and events yourself.  You can choose different modes for consuming messages:
 
 * *Flowing mode*. This mode flows all of the messages it can read by maintaining an infinite loop in the event loop. It only stops when it detects the consumer has issued the `unsubscribe` or `disconnect` method.
-* *Non-flowing mode*. This mode reads a single message from Kafka at a time manually.
+* *Non-flowing mode*. This mode reads a single message from Kafka at a time manually. You may choose to read from a specific partition or all at once. [In the docs an example has been included on how to consume from a specific partition](https://blizzard.github.io/node-rdkafka/current/tutorial-consumer-per-partition.html).
 
 The following example illustrates flowing mode:
 ```js
