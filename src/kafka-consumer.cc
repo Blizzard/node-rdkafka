@@ -1228,18 +1228,12 @@ NAN_METHOD(KafkaConsumer::NodeConsume) {
         partition = partitionMaybe.FromJust();
       }
 
-      // Parse onlyApplyTimeoutToFirstMessage
-      bool only_apply_timeout_to_first_message;
-      if (!Nan::To<bool>(info[5]).To(&only_apply_timeout_to_first_message)) {
-        only_apply_timeout_to_first_message = false;
-      }
-
       KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
       v8::Local<v8::Function> cb = info[4].As<v8::Function>();
       Nan::Callback *callback = new Nan::Callback(cb);
       Nan::AsyncQueueWorker(
-        new Workers::KafkaConsumerConsumeNumOfPartition(callback, consumer, numMessages, topic_name, partition, timeout_ms, only_apply_timeout_to_first_message));  // NOLINT
+        new Workers::KafkaConsumerConsumeNumOfPartition(callback, consumer, numMessages, topic_name, partition, timeout_ms));  // NOLINT
     } else {
       if (!info[2]->IsFunction()) {
         return Nan::ThrowError("Need to specify a callback");

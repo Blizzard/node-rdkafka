@@ -435,7 +435,7 @@ class KafkaConsumerSeek : public ErrorAwareWorker {
 class KafkaConsumerConsumeNumOfPartition : public ErrorAwareWorker {
  public:
   KafkaConsumerConsumeNumOfPartition(Nan::Callback*, NodeKafka::KafkaConsumer*,
-    const uint32_t &, const std::string, const uint32_t &, const int &, const bool);
+    const uint32_t &, const std::string, const uint32_t &, const int &);
   ~KafkaConsumerConsumeNumOfPartition();
 
   void Execute();
@@ -448,7 +448,6 @@ class KafkaConsumerConsumeNumOfPartition : public ErrorAwareWorker {
   const uint32_t m_partition;
   const int m_timeout_ms;
   std::vector<RdKafka::Message*> m_messages;
-  const bool m_only_apply_timeout_to_first_message;
 };
 
 class KafkaConsumerConsumeNum : public ErrorAwareWorker {

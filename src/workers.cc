@@ -799,15 +799,13 @@ KafkaConsumerConsumeNumOfPartition::KafkaConsumerConsumeNumOfPartition(Nan::Call
                                      const uint32_t & num_messages,
                                      const std::string topic,
                                      const uint32_t & partition,
-                                     const int & timeout_ms,
-                                     const bool only_apply_timeout_to_first_message) :
+                                     const int & timeout_ms) :
   ErrorAwareWorker(callback),
   m_consumer(consumer),
   m_num_messages(num_messages),
   m_topic(topic),
   m_partition(partition),
-  m_timeout_ms(timeout_ms),
-  m_only_apply_timeout_to_first_message(only_apply_timeout_to_first_message) {}
+  m_timeout_ms(timeout_ms) {}
 
 KafkaConsumerConsumeNumOfPartition::~KafkaConsumerConsumeNumOfPartition() {}
 
@@ -851,13 +849,7 @@ void KafkaConsumerConsumeNumOfPartition::Execute() {
     // Get a message
     RdKafka::Message *message = queue->consume(timeout_ms);
     RdKafka::ErrorCode errorCode = message->err();
-
-    // If true, do not wait after the first message. This will cause to consume
-    // only what has also been fetched and then return immediately
-    if (m_only_apply_timeout_to_first_message) {
-      timeout_ms = 1;
-    }
-
+    
     switch (errorCode) {
       case RdKafka::ERR__PARTITION_EOF:
         // If partition EOF and have consumed messages, retry with timeout 1
