@@ -447,7 +447,7 @@ stream.consumer.commit(); // Commits all locally stored offsets
 You can also use the Standard API and manage callbacks and events yourself.  You can choose different modes for consuming messages:
 
 * *Flowing mode*. This mode flows all of the messages it can read by maintaining an infinite loop in the event loop. It only stops when it detects the consumer has issued the `unsubscribe` or `disconnect` method.
-* *Non-flowing mode*. This mode reads a single message from Kafka at a time manually.
+* *Non-flowing mode*. This mode reads a single message from Kafka at a time manually. You may choose to read from a specific partition or all at once. [In the docs an example has been included on how to consume from a specific partition](https://blizzard.github.io/node-rdkafka/current/tutorial-consumer-per-partition.html).
 
 The following example illustrates flowing mode:
 ```js
@@ -500,6 +500,7 @@ The following table lists important methods for this API.
 |`consumer.unsubscribe()` | Unsubscribes from the currently subscribed topics. <br><br>You cannot subscribe to different topics without calling the `unsubscribe()` method first. |
 |`consumer.consume(cb)` | Gets messages from the existing subscription as quickly as possible. If `cb` is specified, invokes `cb(err, message)`. <br><br>This method keeps a background thread running to do the work. Note that the number of threads in nodejs process is limited by `UV_THREADPOOL_SIZE` (default value is 4) and using up all of them blocks other parts of the application that need threads. If you need multiple consumers then consider increasing `UV_THREADPOOL_SIZE` or using `consumer.consume(number, cb)` instead. |
 |`consumer.consume(number, cb)` | Gets `number` of messages from the existing subscription. If `cb` is specified, invokes `cb(err, message)`. |
+|`consumer.consume(number, topic, partition, cb)` | Gets `number` of messages from a partition of the given topic. The topic must have a subscription. If `cb` is specified, invokes `cb(err, message)`.
 |`consumer.commit()` | Commits all locally stored offsets |
 |`consumer.commit(topicPartition)` | Commits offsets specified by the topic partition |
 |`consumer.commitMessage(message)` | Commits the offsets specified by the message |

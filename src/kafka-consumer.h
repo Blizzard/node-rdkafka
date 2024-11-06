@@ -73,6 +73,8 @@ class KafkaConsumer : public Connection {
 
   Baton Assign(std::vector<RdKafka::TopicPartition*>);
   Baton Unassign();
+  
+  Baton DisableQueueForwarding(RdKafka::TopicPartition*);
 
   Baton Seek(const RdKafka::TopicPartition &partition, int timeout_ms);
 
@@ -107,6 +109,7 @@ class KafkaConsumer : public Connection {
   static NAN_METHOD(NodeAssign);
   static NAN_METHOD(NodeUnassign);
   static NAN_METHOD(NodeAssignments);
+  static NAN_METHOD(NodeDisableQueueForwarding);
   static NAN_METHOD(NodeUnsubscribe);
   static NAN_METHOD(NodeCommit);
   static NAN_METHOD(NodeCommitSync);
