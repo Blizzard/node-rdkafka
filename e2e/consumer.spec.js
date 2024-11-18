@@ -344,4 +344,43 @@ describe('Consumer', function() {
     });
 
   });
+
+  describe('rebalance protocol', function () {
+    var strategies = {
+      'undefined': 'EAGER',
+      'range': 'EAGER',
+      'roundrobin': 'EAGER',
+      'cooperative-sticky': 'COOPERATIVE',
+    };
+
+    Object.keys(strategies).forEach(function (strategy) {
+      it('should return ' + strategies[strategy] + ' for ' + strategy, function(done) {
+        var consumer = new KafkaConsumer({
+          ...gcfg,
+          ...(strategy !== 'undefined' && { 'partition.assignment.strategy': strategy })
+        }, {});
+
+        t.equal(consumer.rebalanceProtocol(), 'NONE');
+  
+        consumer.connect({ timeout: 2000 }, function(err) {
+          t.ifError(err);
+  
+          consumer.subscribe([topic]);
+  
+          consumer.on('rebalance', function (err) {
+            if (err.code === -175) {
+              t.equal(consumer.rebalanceProtocol(), strategies[strategy]);
+              consumer.disconnect(done);
+            }
+          });
+  
+          consumer.consume(1, function(err) {
+            t.ifError(err);
+          });
+        });
+  
+        eventListener(consumer);
+      });
+    });
+  });
 });

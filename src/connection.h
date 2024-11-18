@@ -80,6 +80,7 @@ public:
 
   static Nan::Persistent<v8::Function> constructor;
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
+  static Baton rdkafkaErrorToBaton(RdKafka::Error* error);
 
   bool m_has_been_disconnected;
   bool m_is_closing;
