@@ -16,7 +16,7 @@ jobs:
           # single mac test due to minute multipliers
           # https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions
           - node: 20
-            os: macos-12
+            os: macos-14
           # single windows test due to node.js 14 node-gyp / vs 2022 issues
           - node: 20
             os: windows-2022
