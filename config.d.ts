@@ -1,4 +1,4 @@
-// ====== Generated from librdkafka 2.3.0 file CONFIGURATION.md ======
+// ====== Generated from librdkafka 2.6.0 file CONFIGURATION.md ======
 // Code that generated this is a derivative work of the code from Nam Nguyen
 // https://gist.github.com/ntgn81/066c2c8ec5b4238f85d1e9168a04e3fb
 
@@ -620,11 +620,32 @@ export interface GlobalConfig {
     "client.rack"?: string;
 
     /**
-     * Controls how the client uses DNS lookups. By default, when the lookup returns multiple IP addresses for a hostname, they will all be attempted for connection before the connection is considered failed. This applies to both bootstrap and advertised servers. If the value is set to `resolve_canonical_bootstrap_servers_only`, each entry will be resolved and expanded into a list of canonical names. NOTE: Default here is different from the Java client's default behavior, which connects only to the first IP address returned for a hostname.
+     * The backoff time in milliseconds before retrying a protocol request, this is the first backoff time, and will be backed off exponentially until number of retries is exhausted, and it's capped by retry.backoff.max.ms.
+     *
+     * @default 100
+     */
+    "retry.backoff.ms"?: number;
+
+    /**
+     * The max backoff time in milliseconds before retrying a protocol request, this is the atmost backoff allowed for exponentially backed off requests.
+     *
+     * @default 1000
+     */
+    "retry.backoff.max.ms"?: number;
+
+    /**
+     * Controls how the client uses DNS lookups. By default, when the lookup returns multiple IP addresses for a hostname, they will all be attempted for connection before the connection is considered failed. This applies to both bootstrap and advertised servers. If the value is set to `resolve_canonical_bootstrap_servers_only`, each entry will be resolved and expanded into a list of canonical names. **WARNING**: `resolve_canonical_bootstrap_servers_only` must only be used with `GSSAPI` (Kerberos) as `sasl.mechanism`, as it's the only purpose of this configuration value. **NOTE**: Default here is different from the Java client's default behavior, which connects only to the first IP address returned for a hostname.
      *
      * @default use_all_dns_ips
      */
     "client.dns.lookup"?: 'use_all_dns_ips' | 'resolve_canonical_bootstrap_servers_only';
+
+    /**
+     * Whether to enable pushing of client metrics to the cluster, if the cluster has a client metrics subscription which matches this client
+     *
+     * @default true
+     */
+    "enable.metrics.push"?: boolean;
 
     /**
      * Enables or disables `event.*` emitting.
@@ -702,20 +723,6 @@ export interface ProducerGlobalConfig extends GlobalConfig {
      * @default 2147483647
      */
     "retries"?: number;
-
-    /**
-     * The backoff time in milliseconds before retrying a protocol request, this is the first backoff time, and will be backed off exponentially until number of retries is exhausted, and it's capped by retry.backoff.max.ms.
-     *
-     * @default 100
-     */
-    "retry.backoff.ms"?: number;
-
-    /**
-     * The max backoff time in milliseconds before retrying a protocol request, this is the atmost backoff allowed for exponentially backed off requests.
-     *
-     * @default 1000
-     */
-    "retry.backoff.max.ms"?: number;
 
     /**
      * The threshold of outstanding not yet transmitted broker requests needed to backpressure the producer's message accumulator. If the number of not yet transmitted requests equals or exceeds this number, produce request creation that would have otherwise been triggered (for example, in accordance with linger.ms) will be delayed. A lower number yields larger and more effective batches. A higher value can improve latency when using compression on slow machines.
@@ -810,11 +817,23 @@ export interface ConsumerGlobalConfig extends GlobalConfig {
     "heartbeat.interval.ms"?: number;
 
     /**
-     * Group protocol type. NOTE: Currently, the only supported group protocol type is `consumer`.
+     * Group protocol type for the `classic` group protocol. NOTE: Currently, the only supported group protocol type is `consumer`.
      *
      * @default consumer
      */
     "group.protocol.type"?: string;
+
+    /**
+     * Group protocol to use. Use `classic` for the original protocol and `consumer` for the new protocol introduced in KIP-848. Available protocols: classic or consumer. Default is `classic`, but will change to `consumer` in next releases.
+     *
+     * @default classic
+     */
+    "group.protocol"?: 'classic' | 'consumer';
+
+    /**
+     * Server side assignor to use. Keep it null to make server select a suitable assignor for the group. Available assignors: uniform or range. Default is null
+     */
+    "group.remote.assignor"?: string;
 
     /**
      * How often to query for the current client group coordinator. If the currently assigned coordinator is down the configured query interval will be divided by ten to more quickly recover in case of coordinator reassignment.

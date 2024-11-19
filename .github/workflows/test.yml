@@ -10,13 +10,13 @@ jobs:
   build:
     strategy:
       matrix:
-        node: [10, 12, 14, 16, 18, 20]
+        node: [16, 18, 20, 21]
         os: [ubuntu-22.04]
         include:
           # single mac test due to minute multipliers
           # https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions
           - node: 20
-            os: macos-12
+            os: macos-14
           # single windows test due to node.js 14 node-gyp / vs 2022 issues
           - node: 20
             os: windows-2022
@@ -39,5 +39,5 @@ jobs:
         run: npm ci
       # skipping on windows for now due to Make / mocha exit code issues
       - name: Test
-        if: runner.os != 'Windows' && matrix.node != 10
+        if: runner.os != 'Windows'
         run: npm test

@@ -56,6 +56,24 @@ Baton KafkaConsumer::Connect() {
     return Baton(RdKafka::ERR__STATE, errstr);
   }
 
+  if (m_init_oauthToken) {
+    scoped_shared_write_lock lock(m_connection_lock);
+    if (m_init_oauthToken) {
+      std::list<std::string> emptyList;
+      std::string token = m_init_oauthToken->token;
+      int64_t expiry = m_init_oauthToken->expiry;
+      // needed for initial connection only
+      m_init_oauthToken.reset();
+
+      RdKafka::ErrorCode err = m_client->oauthbearer_set_token(token, expiry,
+            "", emptyList, errstr);
+
+      if (err != RdKafka::ERR_NO_ERROR) {
+        return Baton(err, errstr);
+      }
+    }
+  }
+
   if (m_partitions.size() > 0) {
     m_client->resume(m_partitions);
   }
@@ -199,6 +217,59 @@ Baton KafkaConsumer::Unassign() {
   m_partition_cnt = 0;
 
   return Baton(RdKafka::ERR_NO_ERROR);
+}
+
+Baton KafkaConsumer::IncrementalAssign(std::vector<RdKafka::TopicPartition*> partitions) {
+  if (!IsConnected()) {
+    return Baton(RdKafka::ERR__STATE, "KafkaConsumer is disconnected");
+  }
+
+  RdKafka::KafkaConsumer* consumer =
+    dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
+
+  RdKafka::Error* error = consumer->incremental_assign(partitions);
+
+  if (error == NULL) {
+    m_partition_cnt += partitions.size();
+    m_partitions.insert(m_partitions.end(), partitions.begin(), partitions.end());
+  } else {
+    RdKafka::TopicPartition::destroy(partitions);
+  }
+
+  return rdkafkaErrorToBaton(error);
+}
+
+Baton KafkaConsumer::IncrementalUnassign(std::vector<RdKafka::TopicPartition*> partitions) {
+  if (!IsClosing() && !IsConnected()) {
+    return Baton(RdKafka::ERR__STATE);
+  }
+
+  RdKafka::KafkaConsumer* consumer =
+    dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
+
+  RdKafka::Error* error = consumer->incremental_unassign(partitions);
+
+  std::vector<RdKafka::TopicPartition*> delete_partitions;
+
+  if (error == NULL) {
+    for (unsigned int i = 0; i < partitions.size(); i++) {
+      for (unsigned int j = 0; j < m_partitions.size(); j++) {
+        if (partitions[i]->partition() == m_partitions[j]->partition() &&
+            partitions[i]->topic() == m_partitions[j]->topic()) {
+          delete_partitions.push_back(m_partitions[j]);
+          m_partitions.erase(m_partitions.begin() + j);
+          m_partition_cnt--;
+          break;
+        }
+      }
+    }
+  }
+
+  RdKafka::TopicPartition::destroy(delete_partitions);
+
+  RdKafka::TopicPartition::destroy(partitions);
+
+  return rdkafkaErrorToBaton(error);
 }
 
 Baton KafkaConsumer::Commit(std::vector<RdKafka::TopicPartition*> toppars) {
@@ -476,6 +547,17 @@ std::string KafkaConsumer::Name() {
   return std::string(m_client->name());
 }
 
+std::string KafkaConsumer::RebalanceProtocol() {
+  if (!IsConnected()) {
+    return std::string("NONE");
+  }
+
+  RdKafka::KafkaConsumer* consumer =
+    dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
+
+  return consumer->rebalance_protocol();
+}
+
 Nan::Persistent<v8::Function> KafkaConsumer::constructor;
 
 void KafkaConsumer::Init(v8::Local<v8::Object> exports) {
@@ -499,6 +581,7 @@ void KafkaConsumer::Init(v8::Local<v8::Object> exports) {
 
   Nan::SetPrototypeMethod(tpl, "connect", NodeConnect);
   Nan::SetPrototypeMethod(tpl, "disconnect", NodeDisconnect);
+  Nan::SetPrototypeMethod(tpl, "setToken", NodeSetToken);
   Nan::SetPrototypeMethod(tpl, "getMetadata", NodeGetMetadata);
   Nan::SetPrototypeMethod(tpl, "queryWatermarkOffsets", NodeQueryWatermarkOffsets);  // NOLINT
   Nan::SetPrototypeMethod(tpl, "offsetsForTimes", NodeOffsetsForTimes);
@@ -528,7 +611,10 @@ void KafkaConsumer::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(tpl, "position", NodePosition);
   Nan::SetPrototypeMethod(tpl, "assign", NodeAssign);
   Nan::SetPrototypeMethod(tpl, "unassign", NodeUnassign);
+  Nan::SetPrototypeMethod(tpl, "incrementalAssign", NodeIncrementalAssign);
+  Nan::SetPrototypeMethod(tpl, "incrementalUnassign", NodeIncrementalUnassign);
   Nan::SetPrototypeMethod(tpl, "assignments", NodeAssignments);
+  Nan::SetPrototypeMethod(tpl, "rebalanceProtocol", NodeRebalanceProtocol);
 
   Nan::SetPrototypeMethod(tpl, "commit", NodeCommit);
   Nan::SetPrototypeMethod(tpl, "commitSync", NodeCommitSync);
@@ -701,6 +787,12 @@ NAN_METHOD(KafkaConsumer::NodeAssignments) {
     Conversion::TopicPartition::ToV8Array(consumer->m_partitions));
 }
 
+NAN_METHOD(KafkaConsumer::NodeRebalanceProtocol) {
+  KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
+  std::string protocol = consumer->RebalanceProtocol();
+  info.GetReturnValue().Set(Nan::New<v8::String>(protocol).ToLocalChecked());
+}
+
 NAN_METHOD(KafkaConsumer::NodeAssign) {
   Nan::HandleScope scope;
 
@@ -774,6 +866,114 @@ NAN_METHOD(KafkaConsumer::NodeUnassign) {
 
   if (b.err() != RdKafka::ERR_NO_ERROR) {
     Nan::ThrowError(RdKafka::err2str(b.err()).c_str());
+  }
+
+  info.GetReturnValue().Set(Nan::True());
+}
+
+NAN_METHOD(KafkaConsumer::NodeIncrementalAssign) {
+  Nan::HandleScope scope;
+
+  if (info.Length() < 1 || !info[0]->IsArray()) {
+    return Nan::ThrowError("Need to specify an array of partitions");
+  }
+
+  v8::Local<v8::Array> partitions = info[0].As<v8::Array>();
+  std::vector<RdKafka::TopicPartition*> topic_partitions;
+
+  for (unsigned int i = 0; i < partitions->Length(); ++i) {
+    v8::Local<v8::Value> partition_obj_value;
+    if (!(
+          Nan::Get(partitions, i).ToLocal(&partition_obj_value) &&
+          partition_obj_value->IsObject())) {
+      Nan::ThrowError("Must pass topic-partition objects");
+    }
+
+    v8::Local<v8::Object> partition_obj = partition_obj_value.As<v8::Object>();
+
+    int64_t partition = GetParameter<int64_t>(partition_obj, "partition", -1);
+    std::string topic = GetParameter<std::string>(partition_obj, "topic", "");
+
+    if (!topic.empty()) {
+      RdKafka::TopicPartition* part;
+
+      if (partition < 0) {
+        part = Connection::GetPartition(topic);
+      } else {
+        part = Connection::GetPartition(topic, partition);
+      }
+
+      int64_t offset = GetParameter<int64_t>(
+        partition_obj, "offset", RdKafka::Topic::OFFSET_INVALID);
+      if (offset != RdKafka::Topic::OFFSET_INVALID) {
+        part->set_offset(offset);
+      }
+
+      topic_partitions.push_back(part);
+    }
+  }
+
+  KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
+
+  Baton b = consumer->IncrementalAssign(topic_partitions);
+
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    v8::Local<v8::Value> errorObject = b.ToObject();
+    Nan::ThrowError(errorObject);
+  }
+
+  info.GetReturnValue().Set(Nan::True());
+}
+
+NAN_METHOD(KafkaConsumer::NodeIncrementalUnassign) {
+  Nan::HandleScope scope;
+
+  if (info.Length() < 1 || !info[0]->IsArray()) {
+    return Nan::ThrowError("Need to specify an array of partitions");
+  }
+
+  v8::Local<v8::Array> partitions = info[0].As<v8::Array>();
+  std::vector<RdKafka::TopicPartition*> topic_partitions;
+
+  for (unsigned int i = 0; i < partitions->Length(); ++i) {
+    v8::Local<v8::Value> partition_obj_value;
+    if (!(
+          Nan::Get(partitions, i).ToLocal(&partition_obj_value) &&
+          partition_obj_value->IsObject())) {
+      Nan::ThrowError("Must pass topic-partition objects");
+    }
+
+    v8::Local<v8::Object> partition_obj = partition_obj_value.As<v8::Object>();
+
+    int64_t partition = GetParameter<int64_t>(partition_obj, "partition", -1);
+    std::string topic = GetParameter<std::string>(partition_obj, "topic", "");
+
+    if (!topic.empty()) {
+      RdKafka::TopicPartition* part;
+
+      if (partition < 0) {
+        part = Connection::GetPartition(topic);
+      } else {
+        part = Connection::GetPartition(topic, partition);
+      }
+
+      int64_t offset = GetParameter<int64_t>(
+        partition_obj, "offset", RdKafka::Topic::OFFSET_INVALID);
+      if (offset != RdKafka::Topic::OFFSET_INVALID) {
+        part->set_offset(offset);
+      }
+
+      topic_partitions.push_back(part);
+    }
+  }
+
+  KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
+
+  Baton b = consumer->IncrementalUnassign(topic_partitions);
+
+  if (b.err() != RdKafka::ERR_NO_ERROR) {
+    v8::Local<v8::Value> errorObject = b.ToObject();
+    Nan::ThrowError(errorObject);
   }
 
   info.GetReturnValue().Set(Nan::True());
