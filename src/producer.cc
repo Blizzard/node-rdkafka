@@ -66,6 +66,7 @@ void Producer::Init(v8::Local<v8::Object> exports) {
 
   Nan::SetPrototypeMethod(tpl, "connect", NodeConnect);
   Nan::SetPrototypeMethod(tpl, "disconnect", NodeDisconnect);
+  Nan::SetPrototypeMethod(tpl, "setToken", NodeSetToken);
   Nan::SetPrototypeMethod(tpl, "getMetadata", NodeGetMetadata);
   Nan::SetPrototypeMethod(tpl, "queryWatermarkOffsets", NodeQueryWatermarkOffsets);  // NOLINT
   Nan::SetPrototypeMethod(tpl, "poll", NodePoll);
@@ -182,6 +183,25 @@ Baton Producer::Connect() {
     // @todo implement errstr into this somehow
     return Baton(RdKafka::ERR__STATE, errstr);
   }
+
+  if (m_init_oauthToken) {
+    scoped_shared_write_lock lock(m_connection_lock);
+    if (m_init_oauthToken) {
+      std::list<std::string> emptyList;
+      std::string token = m_init_oauthToken->token;
+      int64_t expiry = m_init_oauthToken->expiry;
+      // needed for initial connection only
+      m_init_oauthToken.reset();
+
+      RdKafka::ErrorCode err = m_client->oauthbearer_set_token(token, expiry,
+            "", emptyList, errstr);
+
+      if (err != RdKafka::ERR_NO_ERROR) {
+        return Baton(err, errstr);
+      }
+    }
+  }
+
 
   return Baton(RdKafka::ERR_NO_ERROR);
 }
@@ -347,18 +367,6 @@ void Producer::ConfigureCallback(const std::string &string_key, const v8::Local<
     }
   } else {
     Connection::ConfigureCallback(string_key, cb, add);
-  }
-}
-
-Baton rdkafkaErrorToBaton(RdKafka::Error* error) {
-  if ( NULL == error) {
-    return Baton(RdKafka::ERR_NO_ERROR);
-  }
-  else {
-    Baton result(error->code(), error->str(), error->is_fatal(),
-                 error->is_retriable(), error->txn_requires_abort());
-    delete error;
-    return result;
   }
 }
 

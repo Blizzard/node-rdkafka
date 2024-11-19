@@ -7,6 +7,7 @@
  * of the MIT license.  See the LICENSE.txt file for details.
  */
 
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -64,6 +65,18 @@ Connection::~Connection() {
 
   if (m_gconfig) {
     delete m_gconfig;
+  }
+}
+
+Baton Connection::rdkafkaErrorToBaton(RdKafka::Error* error) {
+  if ( NULL == error) {
+    return Baton(RdKafka::ERR_NO_ERROR);
+  }
+  else {
+    Baton result(error->code(), error->str(), error->is_fatal(),
+                 error->is_retriable(), error->txn_requires_abort());
+    delete error;
+    return result;
   }
 }
 
@@ -226,6 +239,45 @@ void Connection::ConfigureCallback(const std::string &string_key, const v8::Loca
 }
 
 // NAN METHODS
+NAN_METHOD(Connection::NodeSetToken)
+{
+  if (info.Length() < 1 || !info[0]->IsString()) {
+    Nan::ThrowError("Token argument must be a string");
+    return;
+  }
+
+  Nan::Utf8String tk(info[0]);
+  std::string token = *tk;
+  // we always set expiry to maximum value in ms, as we don't use refresh callback,
+  // rdkafka continues sending a token even if it expired. Client code must
+  // handle token refreshing by calling 'setToken' again when needed.
+  int64_t expiry = (std::numeric_limits<int64_t>::max)() / 100000;
+  Connection* obj = ObjectWrap::Unwrap<Connection>(info.This());
+  RdKafka::Handle* handle = obj->m_client;
+
+  if (!handle) {
+    scoped_shared_write_lock lock(obj->m_connection_lock);
+    obj->m_init_oauthToken = std::make_unique<OauthBearerToken>(
+          OauthBearerToken{token, expiry});
+    info.GetReturnValue().Set(Nan::Null());
+    return;
+  }
+
+  {
+    scoped_shared_write_lock lock(obj->m_connection_lock);
+    std::string errstr;
+    std::list<std::string> emptyList;
+    RdKafka::ErrorCode err = handle->oauthbearer_set_token(token, expiry,
+          "", emptyList, errstr);
+
+    if (err != RdKafka::ERR_NO_ERROR) {
+      Nan::ThrowError(errstr.c_str());
+      return;
+    }
+  }
+
+  info.GetReturnValue().Set(Nan::Null());
+}
 
 NAN_METHOD(Connection::NodeGetMetadata) {
   Nan::HandleScope scope;
