@@ -17,10 +17,29 @@
 #else
 // Windows specific
 #include <time.h>
+#include <sysinfoapi.h>
 #endif
 
 using NodeKafka::Producer;
 using NodeKafka::Connection;
+
+#ifndef _WIN32
+time_t get_millisecond_timestamp() {
+  // Get a precise timer from the monotonic clock.
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+
+  // Convert it to milliseconds by multiplying the seconds component by 10e3 and
+  // dividing the nanoseconds component by 10e6
+  return (ts.tv_sec * 1000 + ts.tv_nsec / 1000000);
+}
+#else
+time_t get_millisecond_timestamp() {
+  // Just call GetTickCount64. We could use QueryHighPerformanceCounter, but we
+  // don't need that level of precision.
+  return GetTickCount64()
+}
+#endif
 
 namespace NodeKafka {
 namespace Workers {
@@ -797,11 +816,13 @@ void KafkaConsumerConsumeLoop::HandleErrorCallback() {
 KafkaConsumerConsumeNum::KafkaConsumerConsumeNum(Nan::Callback *callback,
                                      KafkaConsumer* consumer,
                                      const uint32_t & num_messages,
-                                     const int & timeout_ms) :
+                                     const int & timeout_ms,
+                                     const uint & total_timeout_ms) :
   ErrorAwareWorker(callback),
   m_consumer(consumer),
   m_num_messages(num_messages),
-  m_timeout_ms(timeout_ms) {}
+  m_timeout_ms(timeout_ms),
+  m_total_timeout_ms(total_timeout_ms) {}
 
 KafkaConsumerConsumeNum::~KafkaConsumerConsumeNum() {}
 
@@ -809,14 +830,29 @@ void KafkaConsumerConsumeNum::Execute() {
   std::size_t max = static_cast<std::size_t>(m_num_messages);
   bool looping = true;
   int timeout_ms = m_timeout_ms;
+  uint total_timeout_ms = m_total_timeout_ms;
+  uint64_t start = get_millisecond_timestamp();
   std::size_t eof_event_count = 0;
 
   while (m_messages.size() - eof_event_count < max && looping) {
     // Get a message
+
     Baton b = m_consumer->Consume(timeout_ms);
     if (b.err() == RdKafka::ERR_NO_ERROR) {
       RdKafka::Message *message = b.data<RdKafka::Message*>();
       RdKafka::ErrorCode errorCode = message->err();
+
+      // Check how much time has passed since we started this consume loop — if
+      // it's more than the total timeout in milliseconds (if one is configured
+      // and is greater than 0ms — the default is -1, to avoid breaking
+      // behavioral changes), stop the loop regardless, after processing the
+      // error code.
+      uint64_t current = get_millisecond_timestamp();
+      uint64_t elapsed = current - start;
+      if (elapsed > total_timeout_ms && total_timeout_ms > 0) {
+        looping = false;
+      }
+
       switch (errorCode) {
         case RdKafka::ERR__PARTITION_EOF:
           // If partition EOF and have consumed messages, retry with timeout 1
@@ -824,7 +860,7 @@ void KafkaConsumerConsumeNum::Execute() {
           if (m_messages.size() > eof_event_count) {
             timeout_ms = 1;
           }
-          
+
           // We will only go into this code path when `enable.partition.eof` is set to true
           // In this case, consumer is also interested in EOF messages, so we return an EOF message
           m_messages.push_back(message);
@@ -872,7 +908,7 @@ void KafkaConsumerConsumeNum::HandleOKCallback() {
     for (std::vector<RdKafka::Message*>::iterator it = m_messages.begin();
         it != m_messages.end(); ++it) {
       RdKafka::Message* message = *it;
-      
+
       switch (message->err()) {
         case RdKafka::ERR_NO_ERROR:
           ++returnArrayIndex;
@@ -890,7 +926,7 @@ void KafkaConsumerConsumeNum::HandleOKCallback() {
             Nan::New<v8::Number>(message->offset()));
           Nan::Set(eofEvent, Nan::New<v8::String>("partition").ToLocalChecked(),
             Nan::New<v8::Number>(message->partition()));
-          
+
           // also store index at which position in the message array this event was emitted
           // this way, we can later emit it at the right point in time
           Nan::Set(eofEvent, Nan::New<v8::String>("messageIndex").ToLocalChecked(),
@@ -898,7 +934,7 @@ void KafkaConsumerConsumeNum::HandleOKCallback() {
 
           Nan::Set(eofEventsArray, eofEventsArrayIndex, eofEvent);
       }
-      
+
       delete message;
     }
   }
