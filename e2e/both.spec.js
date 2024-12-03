@@ -409,6 +409,27 @@ describe('Consumer/Producer', function() {
     ];
     run_headers_test(done, headers);
   });
+
+  it('should be able to produce and consume messages with one header with NULL byte', function(done) {
+    var b = Buffer.alloc(3);
+    b.writeUInt8(1, 0);
+    b.writeUInt8(0, 1);
+    b.writeUInt8(1, 2);
+    var headers = [
+      { key1: b },
+    ];
+    run_headers_test(done, headers);
+  });
+
+  it('should be able to produce and consume messages with one header with partial UTF-8 sequences byte', function(done) {
+    //first three bytes encode the euro sign '€' in UTF-8, the fourth byte marks the beginning of a three byte UTF-8 code, 
+    //followed by a single byte UTF-8 code encoding the dollar sign, therefore the fourth byte is a partial UTF-8 sequence
+    var b = Buffer.from([0xE2, 0x82, 0xAC, 0xE2, 0x24]);
+    var headers = [
+      { key1: b },
+    ];
+    run_headers_test(done, headers);
+  });
   
   it('should be able to produce and consume messages with multiple headers value as string: consumeLoop', function(done) {
     var headers = [
@@ -680,11 +701,14 @@ describe('Consumer/Producer', function() {
       var messageKey = Object.keys(messageHeaders[i]);
       t.equal(messageKey.length, 1, 'Expected only one Header key');
       t.equal(expectedKey, messageKey[0], 'Expected key does not match message key');
-      var expectedValue = Buffer.isBuffer(expectedHeaders[i][expectedKey]) ?
-                          expectedHeaders[i][expectedKey].toString() :
-                          expectedHeaders[i][expectedKey];
-      var actualValue = messageHeaders[i][expectedKey].toString();
-      t.equal(expectedValue, actualValue, 'invalid message header');
+      var expectedValue = expectedHeaders[i][expectedKey];
+      var actualValue = messageHeaders[i][expectedKey];
+      if (Buffer.isBuffer(expectedValue)) {
+        t.deepStrictEqual(expectedValue, actualValue, 'invalid message header');
+      } else {
+        actualValue = actualValue.toString();
+        t.equal(expectedValue, actualValue, 'invalid message header')
+      }
     }
   }
 
