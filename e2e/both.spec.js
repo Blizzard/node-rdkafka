@@ -163,7 +163,7 @@ describe('Consumer/Producer', function() {
 
     });
   });
-  
+
   it('should return ready messages on partition EOF', function(done) {
     crypto.randomBytes(4096, function(ex, buffer) {
       producer.setPollInterval(10);
@@ -221,7 +221,7 @@ describe('Consumer/Producer', function() {
       consumer.once('data', function(msg) {
         events.push("data");
       });
-      
+
       consumer.once('partition.eof', function(eof) {
         events.push("partition.eof");
       });
@@ -267,6 +267,100 @@ describe('Consumer/Producer', function() {
         t.ifError(err);
         t.equal(messages.length, 1);
         t.deepStrictEqual(events, ["partition.eof", "data", "partition.eof"]);
+        done();
+      });
+    });
+  });
+
+  it('should fill a batch when there is no total consume timeout set', function(done) {
+    crypto.randomBytes(4096, function(ex, buffer) {
+      producer.setPollInterval(10);
+
+      producer.once('delivery-report', function(err, report) {
+        t.ifError(err);
+      });
+
+      consumer.subscribe([topic]);
+
+      var events = [];
+
+      consumer.once('data', function(msg) {
+        events.push("data");
+      });
+
+      consumer.on('partition.eof', function(eof) {
+        events.push("partition.eof");
+      });
+
+      // Produce 10 messages, 500ms apart — the whole batch should fill, but the
+      // time taken for the consume call should be >=5000ms.
+
+      let timeoutId;
+      let toProduce = 10;
+      produceLoop = () => {
+        producer.produce(topic, null, buffer, null);
+        if (--toProduce > 0) {
+          timeoutId = setTimeout(produceLoop, 500);
+        }
+      };
+      produceLoop();
+
+      consumer.setDefaultConsumeTimeout(1000);
+      const started = Date.now();
+      consumer.consume(10, function(err, messages) {
+        t.ifError(err);
+        t(messages.length >= 10, 'Too few messages consumed within batch');
+        t(Date.now() - started < 5000, 'Consume finished too fast, should have taken at least 5 seconds')
+        clearTimeout(timeoutId);
+        done();
+      });
+    });
+  });
+
+  it('should not fill a batch when there is a total consume timeout set', function(done) {
+    crypto.randomBytes(4096, function(ex, buffer) {
+      producer.setPollInterval(10);
+
+      producer.once('delivery-report', function(err, report) {
+        t.ifError(err);
+      });
+
+      consumer.subscribe([topic]);
+
+      var events = [];
+
+      consumer.once('data', function(msg) {
+        events.push("data");
+      });
+
+      consumer.on('partition.eof', function(eof) {
+        events.push("partition.eof");
+      });
+
+      // Produce 20 messages, 900ms apart — the whole batch should *not* fill,
+      // we should only get 11 messages (11*900 = 9900, 9900 < 10000).
+
+      let timeoutId;
+      let toProduce = 20;
+      produceLoop = () => {
+        producer.produce(topic, null, buffer, null);
+        if (--toProduce > 0) {
+          timeoutId = setTimeout(produceLoop, 900);
+        }
+      };
+      produceLoop();
+
+      consumer.setDefaultConsumeTimeout(1000);
+      consumer.setDefaultTotalConsumeTimeout(10000);
+      const started = Date.now();
+      consumer.consume(100, function(err, messages) {
+        t.ifError(err);
+        // Why 13? First message is produced immediately, then 11 more are
+        // produced over 990 seconds, and then a 13th is produced and consumed
+        // in the "final" loop where elapsed time > 10,000.
+        t(messages.length == 13, 'Batch should have consumed 13 messages, instead consumed ' + messages.length + ' messages');
+        t((Date.now() - started) < (10000 + 1000), 'Consume took ' + (Date.now() - started) + ', longer than global timeout + single message timeout of ' + (10000 + 1000));
+        clearTimeout(timeoutId);
         done();
       });
     });
@@ -409,7 +503,7 @@ describe('Consumer/Producer', function() {
     ];
     run_headers_test(done, headers);
   });
-  
+
   it('should be able to produce and consume messages with multiple headers value as string: consumeLoop', function(done) {
     var headers = [
       { key1: 'value1' },
