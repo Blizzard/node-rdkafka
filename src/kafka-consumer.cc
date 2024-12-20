@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "src/kafka-consumer.h"
+#include "src/per-isolate-data.h"
 #include "src/workers.h"
 
 using Nan::FunctionCallbackInfo;
@@ -35,6 +36,10 @@ KafkaConsumer::KafkaConsumer(Conf* gconfig, Conf* tconfig):
 
     m_consume_loop = nullptr;
   }
+
+void KafkaConsumer::delete_instance(void* arg) {
+  delete (static_cast<KafkaConsumer*>(arg));
+}
 
 KafkaConsumer::~KafkaConsumer() {
   // We only want to run this if it hasn't been run already
@@ -558,8 +563,6 @@ std::string KafkaConsumer::RebalanceProtocol() {
   return consumer->rebalance_protocol();
 }
 
-Nan::Persistent<v8::Function> KafkaConsumer::constructor;
-
 void KafkaConsumer::Init(v8::Local<v8::Object> exports) {
   Nan::HandleScope scope;
 
@@ -620,7 +623,8 @@ void KafkaConsumer::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(tpl, "commitSync", NodeCommitSync);
   Nan::SetPrototypeMethod(tpl, "offsetsStore", NodeOffsetsStore);
 
-  constructor.Reset((tpl->GetFunction(Nan::GetCurrentContext()))
+  PerIsolateData::For(v8::Isolate::GetCurrent())->KafkaConsumerConstructor()
+    .Reset((tpl->GetFunction(Nan::GetCurrentContext()))
     .ToLocalChecked());
   Nan::Set(exports, Nan::New("KafkaConsumer").ToLocalChecked(),
     (tpl->GetFunction(Nan::GetCurrentContext())).ToLocalChecked());
@@ -680,7 +684,8 @@ v8::Local<v8::Object> KafkaConsumer::NewInstance(v8::Local<v8::Value> arg) {
   const unsigned argc = 1;
 
   v8::Local<v8::Value> argv[argc] = { arg };
-  v8::Local<v8::Function> cons = Nan::New<v8::Function>(constructor);
+  v8::Local<v8::Function> cons = Nan::New<v8::Function>(
+    PerIsolateData::For(v8::Isolate::GetCurrent())->KafkaConsumerConstructor());
   v8::Local<v8::Object> instance =
     Nan::NewInstance(cons, argc, argv).ToLocalChecked();
 
@@ -1395,7 +1400,7 @@ NAN_METHOD(KafkaConsumer::NodeDisconnect) {
     // cleanup the async worker
     consumeLoop->WorkComplete();
     consumeLoop->Destroy();
-  
+
     consumer->m_consume_loop = nullptr;
   }
 

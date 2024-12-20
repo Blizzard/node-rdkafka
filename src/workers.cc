@@ -40,7 +40,7 @@ OffsetsForTimes::OffsetsForTimes(Nan::Callback *callback,
                                  Connection* handle,
                                  std::vector<RdKafka::TopicPartition*> & t,
                                  const int & timeout_ms) :
-  ErrorAwareWorker(callback),
+  ErrorAwareWorker(callback, "node-rdkafka:OffsetsForTimes"),
   m_handle(handle),
   m_topic_partitions(t),
   m_timeout_ms(timeout_ms) {}
@@ -82,7 +82,7 @@ void OffsetsForTimes::HandleErrorCallback() {
 ConnectionMetadata::ConnectionMetadata(
   Nan::Callback *callback, Connection* connection,
   std::string topic, int timeout_ms, bool all_topics) :
-  ErrorAwareWorker(callback),
+  ErrorAwareWorker(callback, "node-rdkafka:ConnectionMetadata"),
   m_connection(connection),
   m_topic(topic),
   m_timeout_ms(timeout_ms),
@@ -139,7 +139,7 @@ void ConnectionMetadata::HandleErrorCallback() {
 ConnectionQueryWatermarkOffsets::ConnectionQueryWatermarkOffsets(
   Nan::Callback *callback, Connection* connection,
   std::string topic, int32_t partition, int timeout_ms) :
-  ErrorAwareWorker(callback),
+  ErrorAwareWorker(callback, "node-rdkafka:ConnectionQueryWatermarkOffsets"),
   m_connection(connection),
   m_topic(topic),
   m_partition(partition),
@@ -193,7 +193,7 @@ void ConnectionQueryWatermarkOffsets::HandleErrorCallback() {
  */
 
 ProducerConnect::ProducerConnect(Nan::Callback *callback, Producer* producer):
-  ErrorAwareWorker(callback),
+  ErrorAwareWorker(callback, "node-rdkafka:ProducerConnect"),
   producer(producer) {}
 
 ProducerConnect::~ProducerConnect() {}
@@ -240,7 +240,7 @@ void ProducerConnect::HandleErrorCallback() {
 
 ProducerDisconnect::ProducerDisconnect(Nan::Callback *callback,
   Producer* producer):
-  ErrorAwareWorker(callback),
+  ErrorAwareWorker(callback, "node-rdkafka:ProducerDisconnect"),
   producer(producer) {}
 
 ProducerDisconnect::~ProducerDisconnect() {}
@@ -262,6 +262,7 @@ void ProducerDisconnect::HandleOKCallback() {
 }
 
 void ProducerDisconnect::HandleErrorCallback() {
+  Nan::HandleScope scope;
   // This should never run
   assert(0);
 }
@@ -274,7 +275,7 @@ void ProducerDisconnect::HandleErrorCallback() {
 
 ProducerFlush::ProducerFlush(Nan::Callback *callback,
   Producer* producer, int timeout_ms):
-  ErrorAwareWorker(callback),
+  ErrorAwareWorker(callback, "node-rdkafka:ProducerFlush"),
   producer(producer),
   timeout_ms(timeout_ms) {}
 
@@ -312,7 +313,7 @@ void ProducerFlush::HandleOKCallback() {
 
 ProducerInitTransactions::ProducerInitTransactions(Nan::Callback *callback,
   Producer* producer, const int & timeout_ms):
-  ErrorAwareWorker(callback),
+  ErrorAwareWorker(callback, "node-rdkafka:ProducerInitTransactions"),
   producer(producer),
   m_timeout_ms(timeout_ms) {}
 
@@ -357,7 +358,7 @@ void ProducerInitTransactions::HandleErrorCallback() {
  */
 
 ProducerBeginTransaction::ProducerBeginTransaction(Nan::Callback *callback, Producer* producer):
-  ErrorAwareWorker(callback),
+  ErrorAwareWorker(callback, "node-rdkafka:ProducerBeginTransaction"),
   producer(producer) {}
 
 ProducerBeginTransaction::~ProducerBeginTransaction() {}
@@ -403,7 +404,7 @@ void ProducerBeginTransaction::HandleErrorCallback() {
 
 ProducerCommitTransaction::ProducerCommitTransaction(Nan::Callback *callback,
   Producer* producer, const int & timeout_ms):
-  ErrorAwareWorker(callback),
+  ErrorAwareWorker(callback, "node-rdkafka:ProducerCommitTransaction"),
   producer(producer),
   m_timeout_ms(timeout_ms) {}
 
@@ -449,7 +450,7 @@ void ProducerCommitTransaction::HandleErrorCallback() {
 
 ProducerAbortTransaction::ProducerAbortTransaction(Nan::Callback *callback,
   Producer* producer, const int & timeout_ms):
-  ErrorAwareWorker(callback),
+  ErrorAwareWorker(callback, "node-rdkafka:ProducerAbortTransaction"),
   producer(producer),
   m_timeout_ms(timeout_ms) {}
 
@@ -499,7 +500,7 @@ ProducerSendOffsetsToTransaction::ProducerSendOffsetsToTransaction(
     std::vector<RdKafka::TopicPartition *> & t,
     KafkaConsumer* consumer,
     const int & timeout_ms):
-  ErrorAwareWorker(callback),
+  ErrorAwareWorker(callback, "node-rdkafka:ProducerSendOffsetsToTransaction"),
   producer(producer),
   m_topic_partitions(t),
   consumer(consumer),
@@ -551,7 +552,7 @@ void ProducerSendOffsetsToTransaction::HandleErrorCallback() {
 
 KafkaConsumerConnect::KafkaConsumerConnect(Nan::Callback *callback,
   KafkaConsumer* consumer):
-  ErrorAwareWorker(callback),
+  ErrorAwareWorker(callback, "node-rdkafka:KafkaConsumerConnect"),
   consumer(consumer) {}
 
 KafkaConsumerConnect::~KafkaConsumerConnect() {}
@@ -601,7 +602,7 @@ void KafkaConsumerConnect::HandleErrorCallback() {
 
 KafkaConsumerDisconnect::KafkaConsumerDisconnect(Nan::Callback *callback,
   KafkaConsumer* consumer):
-  ErrorAwareWorker(callback),
+  ErrorAwareWorker(callback, "node-rdkafka:KafkaConsumerDisconnect"),
   consumer(consumer) {}
 
 KafkaConsumerDisconnect::~KafkaConsumerDisconnect() {}
@@ -661,7 +662,7 @@ KafkaConsumerConsumeLoop::KafkaConsumerConsumeLoop(Nan::Callback *callback,
                                      KafkaConsumer* consumer,
                                      const int & timeout_ms,
                                      const int & timeout_sleep_delay_ms) :
-  MessageWorker(callback),
+  MessageWorker(callback, "node-rdkafka:KafkaConsumerConsumeLoop"),
   consumer(consumer),
   m_looping(true),
   m_timeout_ms(timeout_ms),
@@ -798,7 +799,7 @@ KafkaConsumerConsumeNum::KafkaConsumerConsumeNum(Nan::Callback *callback,
                                      KafkaConsumer* consumer,
                                      const uint32_t & num_messages,
                                      const int & timeout_ms) :
-  ErrorAwareWorker(callback),
+  ErrorAwareWorker(callback, "node-rdkafka:KafkaConsumerConsumeNum"),
   m_consumer(consumer),
   m_num_messages(num_messages),
   m_timeout_ms(timeout_ms) {}
@@ -824,7 +825,7 @@ void KafkaConsumerConsumeNum::Execute() {
           if (m_messages.size() > eof_event_count) {
             timeout_ms = 1;
           }
-          
+
           // We will only go into this code path when `enable.partition.eof` is set to true
           // In this case, consumer is also interested in EOF messages, so we return an EOF message
           m_messages.push_back(message);
@@ -872,7 +873,7 @@ void KafkaConsumerConsumeNum::HandleOKCallback() {
     for (std::vector<RdKafka::Message*>::iterator it = m_messages.begin();
         it != m_messages.end(); ++it) {
       RdKafka::Message* message = *it;
-      
+
       switch (message->err()) {
         case RdKafka::ERR_NO_ERROR:
           ++returnArrayIndex;
@@ -890,7 +891,7 @@ void KafkaConsumerConsumeNum::HandleOKCallback() {
             Nan::New<v8::Number>(message->offset()));
           Nan::Set(eofEvent, Nan::New<v8::String>("partition").ToLocalChecked(),
             Nan::New<v8::Number>(message->partition()));
-          
+
           // also store index at which position in the message array this event was emitted
           // this way, we can later emit it at the right point in time
           Nan::Set(eofEvent, Nan::New<v8::String>("messageIndex").ToLocalChecked(),
@@ -898,7 +899,7 @@ void KafkaConsumerConsumeNum::HandleOKCallback() {
 
           Nan::Set(eofEventsArray, eofEventsArrayIndex, eofEvent);
       }
-      
+
       delete message;
     }
   }
@@ -940,7 +941,7 @@ void KafkaConsumerConsumeNum::HandleErrorCallback() {
 KafkaConsumerConsume::KafkaConsumerConsume(Nan::Callback *callback,
                                      KafkaConsumer* consumer,
                                      const int & timeout_ms) :
-  ErrorAwareWorker(callback),
+  ErrorAwareWorker(callback, "node-rdkafka:KafkaConsumerConsume"),
   consumer(consumer),
   m_timeout_ms(timeout_ms) {}
 
@@ -998,7 +999,7 @@ KafkaConsumerCommitted::KafkaConsumerCommitted(Nan::Callback *callback,
                                      KafkaConsumer* consumer,
                                      std::vector<RdKafka::TopicPartition*> & t,
                                      const int & timeout_ms) :
-  ErrorAwareWorker(callback),
+  ErrorAwareWorker(callback, "node-rdkafka:KafkaConsumerCommitted"),
   m_consumer(consumer),
   m_topic_partitions(t),
   m_timeout_ms(timeout_ms) {}
@@ -1052,7 +1053,7 @@ KafkaConsumerSeek::KafkaConsumerSeek(Nan::Callback *callback,
                                      KafkaConsumer* consumer,
                                      const RdKafka::TopicPartition * toppar,
                                      const int & timeout_ms) :
-  ErrorAwareWorker(callback),
+  ErrorAwareWorker(callback, "node-rdkafka:KafkaConsumerSeek"),
   m_consumer(consumer),
   m_toppar(toppar),
   m_timeout_ms(timeout_ms) {}
@@ -1108,7 +1109,7 @@ AdminClientCreateTopic::AdminClientCreateTopic(Nan::Callback *callback,
                                                AdminClient* client,
                                                rd_kafka_NewTopic_t* topic,
                                                const int & timeout_ms) :
-  ErrorAwareWorker(callback),
+  ErrorAwareWorker(callback, "node-rdkafka:AdminClientCreateTopic"),
   m_client(client),
   m_topic(topic),
   m_timeout_ms(timeout_ms) {}
@@ -1155,7 +1156,7 @@ AdminClientDeleteTopic::AdminClientDeleteTopic(Nan::Callback *callback,
                                                AdminClient* client,
                                                rd_kafka_DeleteTopic_t* topic,
                                                const int & timeout_ms) :
-  ErrorAwareWorker(callback),
+  ErrorAwareWorker(callback, "node-rdkafka:AdminClientDeleteTopic"),
   m_client(client),
   m_topic(topic),
   m_timeout_ms(timeout_ms) {}
@@ -1203,7 +1204,7 @@ AdminClientCreatePartitions::AdminClientCreatePartitions(
                                          AdminClient* client,
                                          rd_kafka_NewPartitions_t* partitions,
                                          const int & timeout_ms) :
-  ErrorAwareWorker(callback),
+  ErrorAwareWorker(callback, "node-rdkafka:AdminClientCreatePartitions"),
   m_client(client),
   m_partitions(partitions),
   m_timeout_ms(timeout_ms) {}

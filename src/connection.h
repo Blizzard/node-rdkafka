@@ -11,7 +11,6 @@
 #define SRC_CONNECTION_H_
 
 #include <nan.h>
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -77,6 +76,8 @@ public:
  protected:
   Connection(Conf*, Conf*);
   ~Connection();
+
+  static void delete_instance(void* arg);
 
   static Nan::Persistent<v8::Function> constructor;
   static void New(const Nan::FunctionCallbackInfo<v8::Value>& info);
