@@ -60,6 +60,8 @@ Dispatcher::~Dispatcher() {
     callbacks[i].Reset();
   }
 
+  Deactivate();
+
   uv_mutex_destroy(&async_lock);
 }
 
@@ -67,7 +69,7 @@ Dispatcher::~Dispatcher() {
 void Dispatcher::Activate() {
   if (!async) {
     async = new uv_async_t;
-    uv_async_init(uv_default_loop(), async, AsyncMessage_);
+    uv_async_init(Nan::GetCurrentEventLoop(), async, AsyncMessage_);
 
     async->data = this;
   }

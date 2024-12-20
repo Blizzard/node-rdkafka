@@ -12,7 +12,6 @@
 
 #include <nan.h>
 #include <uv.h>
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -95,6 +94,8 @@ class KafkaConsumer : public Connection {
   KafkaConsumer(Conf *, Conf *);
   ~KafkaConsumer();
 
+  static void delete_instance(void* arg);
+
  private:
   static void part_list_print(const std::vector<RdKafka::TopicPartition*>&);
 
@@ -103,7 +104,7 @@ class KafkaConsumer : public Connection {
   bool m_is_subscribed = false;
 
   void* m_consume_loop = nullptr;
-  
+
   // Node methods
   static NAN_METHOD(NodeConnect);
   static NAN_METHOD(NodeSubscribe);

@@ -12,6 +12,7 @@
 
 #include "src/common.h"
 #include "src/connection.h"
+#include "src/per-isolate-data.h"
 #include "src/topic.h"
 
 namespace NodeKafka {
@@ -33,9 +34,15 @@ Topic::Topic(std::string topic_name, RdKafka::Conf* config):
   m_topic_name(topic_name),
   m_config(config) {
   // We probably want to copy the config. May require refactoring if we do not
+  node::AddEnvironmentCleanupHook(v8::Isolate::GetCurrent(), delete_instance, this);
+}
+
+void Topic::delete_instance(void* arg) {
+  delete (static_cast<Topic*>(arg));
 }
 
 Topic::~Topic() {
+  node::RemoveEnvironmentCleanupHook(v8::Isolate::GetCurrent(), delete_instance, this);
   if (m_config) {
     delete m_config;
   }
@@ -74,8 +81,6 @@ Baton offset_store (int32_t partition, int64_t offset) {
 
 */
 
-Nan::Persistent<v8::Function> Topic::constructor;
-
 void Topic::Init(v8::Local<v8::Object> exports) {
   Nan::HandleScope scope;
 
@@ -86,7 +91,8 @@ void Topic::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(tpl, "name", NodeGetName);
 
   // connect. disconnect. resume. pause. get meta data
-  constructor.Reset((tpl->GetFunction(Nan::GetCurrentContext()))
+  PerIsolateData::For(v8::Isolate::GetCurrent())->TopicConstructor()
+    .Reset((tpl->GetFunction(Nan::GetCurrentContext()))
     .ToLocalChecked());
 
   Nan::Set(exports, Nan::New("Topic").ToLocalChecked(),
@@ -147,7 +153,8 @@ v8::Local<v8::Object> Topic::NewInstance(v8::Local<v8::Value> arg) {
   const unsigned argc = 1;
 
   v8::Local<v8::Value> argv[argc] = { arg };
-  v8::Local<v8::Function> cons = Nan::New<v8::Function>(constructor);
+  v8::Local<v8::Function> cons = Nan::New<v8::Function>(
+    PerIsolateData::For(v8::Isolate::GetCurrent())->TopicConstructor());
   v8::Local<v8::Object> instance =
     Nan::NewInstance(cons, argc, argv).ToLocalChecked();
 

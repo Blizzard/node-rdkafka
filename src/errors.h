@@ -11,7 +11,6 @@
 #define SRC_ERRORS_H_
 
 #include <nan.h>
-#include <iostream>
 #include <string>
 
 #include "rdkafkacpp.h"

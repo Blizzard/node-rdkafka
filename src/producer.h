@@ -99,6 +99,8 @@ class Producer : public Connection {
   Producer(Conf*, Conf*);
   ~Producer();
 
+  static void delete_instance(void* arg);
+
  private:
   static NAN_METHOD(NodeProduce);
   static NAN_METHOD(NodeSetPartitioner);

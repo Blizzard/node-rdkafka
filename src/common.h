@@ -12,7 +12,6 @@
 
 #include <nan.h>
 
-#include <iostream>
 #include <string>
 #include <vector>
 

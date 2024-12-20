@@ -12,7 +12,6 @@
 
 #include <nan.h>
 #include <uv.h>
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -58,6 +57,8 @@ class AdminClient : public Connection {
 
   explicit AdminClient(Conf* globalConfig);
   ~AdminClient();
+
+  static void delete_instance(void* arg);
 
   rd_kafka_queue_t* rkqu;
 

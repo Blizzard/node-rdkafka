@@ -7,6 +7,7 @@
  * of the MIT license.  See the LICENSE.txt file for details.
  */
 
+#include <iostream>
 #include <string>
 #include <vector>
 #include <list>
@@ -36,7 +37,14 @@ void Conf::DumpConfig(std::list<std::string> *dump) {
 
 Conf * Conf::create(RdKafka::Conf::ConfType type, v8::Local<v8::Object> object, std::string &errstr) {  // NOLINT
   v8::Local<v8::Context> context = Nan::GetCurrentContext();
-  Conf* rdconf = static_cast<Conf*>(RdKafka::Conf::create(type));
+  Conf* rdconf = new Conf(type);
+
+  if (type == CONF_GLOBAL)
+    rdconf->rk_conf_ = rd_kafka_conf_new();
+  else
+    rdconf->rkt_conf_ = rd_kafka_topic_conf_new();
+
+  // Conf* rdconf = static_cast<Conf*>(RdKafka::Conf::create(type));
 
   v8::MaybeLocal<v8::Array> _property_names = object->GetOwnPropertyNames(
     Nan::GetCurrentContext());
@@ -149,6 +157,10 @@ void Conf::stop() {
 Conf::~Conf() {
   if (m_rebalance_cb) {
     delete m_rebalance_cb;
+  }
+
+  if (m_offset_commit_cb) {
+    delete m_offset_commit_cb;
   }
 }
 
