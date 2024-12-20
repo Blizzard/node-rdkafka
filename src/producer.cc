@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 
+#include "src/per-isolate-data.h"
 #include "src/producer.h"
 #include "src/kafka-consumer.h"
 #include "src/workers.h"
@@ -39,11 +40,13 @@ Producer::Producer(Conf* gconfig, Conf* tconfig):
     m_gconfig->set("dr_cb", &m_dr_cb, errstr);
   }
 
+void Producer::delete_instance(void* arg) {
+  delete (static_cast<Producer*>(arg));
+}
+
 Producer::~Producer() {
   Disconnect();
 }
-
-Nan::Persistent<v8::Function> Producer::constructor;
 
 void Producer::Init(v8::Local<v8::Object> exports) {
   Nan::HandleScope scope;
@@ -91,7 +94,8 @@ void Producer::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(tpl, "sendOffsetsToTransaction", NodeSendOffsetsToTransaction);
 
     // connect. disconnect. resume. pause. get meta data
-  constructor.Reset((tpl->GetFunction(Nan::GetCurrentContext()))
+  PerIsolateData::For(v8::Isolate::GetCurrent())->KafkaProducerConstructor()
+    .Reset((tpl->GetFunction(Nan::GetCurrentContext()))
     .ToLocalChecked());
 
   Nan::Set(exports, Nan::New("Producer").ToLocalChecked(),
@@ -153,7 +157,8 @@ v8::Local<v8::Object> Producer::NewInstance(v8::Local<v8::Value> arg) {
   const unsigned argc = 1;
 
   v8::Local<v8::Value> argv[argc] = { arg };
-  v8::Local<v8::Function> cons = Nan::New<v8::Function>(constructor);
+  v8::Local<v8::Function> cons = Nan::New<v8::Function>(
+    PerIsolateData::For(v8::Isolate::GetCurrent())->KafkaProducerConstructor());
   v8::Local<v8::Object> instance =
     Nan::NewInstance(cons, argc, argv).ToLocalChecked();
 

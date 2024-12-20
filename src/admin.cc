@@ -11,6 +11,7 @@
 #include <vector>
 #include <math.h>
 
+#include "src/per-isolate-data.h"
 #include "src/workers.h"
 #include "src/admin.h"
 
@@ -31,6 +32,10 @@ namespace NodeKafka {
 AdminClient::AdminClient(Conf* gconfig):
   Connection(gconfig, NULL) {
     rkqu = NULL;
+}
+
+void AdminClient::delete_instance(void* arg) {
+  delete (static_cast<AdminClient*>(arg));
 }
 
 AdminClient::~AdminClient() {
@@ -90,8 +95,6 @@ Baton AdminClient::Disconnect() {
   return Baton(RdKafka::ERR_NO_ERROR);
 }
 
-Nan::Persistent<v8::Function> AdminClient::constructor;
-
 void AdminClient::Init(v8::Local<v8::Object> exports) {
   Nan::HandleScope scope;
 
@@ -108,7 +111,7 @@ void AdminClient::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(tpl, "disconnect", NodeDisconnect);
   Nan::SetPrototypeMethod(tpl, "setToken", NodeSetToken);
 
-  constructor.Reset(
+  PerIsolateData::For(v8::Isolate::GetCurrent())->AdminClientConstructor().Reset(
     (tpl->GetFunction(Nan::GetCurrentContext())).ToLocalChecked());
   Nan::Set(exports, Nan::New("AdminClient").ToLocalChecked(),
     tpl->GetFunction(Nan::GetCurrentContext()).ToLocalChecked());
@@ -155,7 +158,8 @@ v8::Local<v8::Object> AdminClient::NewInstance(v8::Local<v8::Value> arg) {
   const unsigned argc = 1;
 
   v8::Local<v8::Value> argv[argc] = { arg };
-  v8::Local<v8::Function> cons = Nan::New<v8::Function>(constructor);
+  v8::Local<v8::Function> cons = Nan::New<v8::Function>(
+    PerIsolateData::For(v8::Isolate::GetCurrent())->AdminClientConstructor());
   v8::Local<v8::Object> instance =
     Nan::NewInstance(cons, argc, argv).ToLocalChecked();
 

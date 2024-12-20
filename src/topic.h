@@ -41,6 +41,8 @@ class Topic : public Nan::ObjectWrap {
   Topic(std::string, RdKafka::Conf *);
   ~Topic();
 
+  static void delete_instance(void* arg);
+
   std::string m_topic_name;
   RdKafka::Conf * m_config;
 

@@ -54,9 +54,16 @@ Connection::Connection(Conf* gconfig, Conf* tconfig):
     // Perhaps node new methods should report this as an error? But there
     // isn't anything the user can do about it.
     m_gconfig->set("event_cb", &m_event_cb, errstr);
+
+    node::AddEnvironmentCleanupHook(v8::Isolate::GetCurrent(), delete_instance, this);
   }
 
+void Connection::delete_instance(void* arg) {
+  delete (static_cast<Connection*>(arg));
+}
+
 Connection::~Connection() {
+  node::RemoveEnvironmentCleanupHook(v8::Isolate::GetCurrent(), delete_instance, this);
   uv_rwlock_destroy(&m_connection_lock);
 
   if (m_tconfig) {
