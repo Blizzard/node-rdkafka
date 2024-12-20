@@ -439,7 +439,7 @@ v8::Local<v8::Object> ToV8Object(RdKafka::Message *message,
                                                      it != all.end(); it++) {
         v8::Local<v8::Object> v8header = Nan::New<v8::Object>();
         Nan::Set(v8header, Nan::New<v8::String>(it->key()).ToLocalChecked(),
-          Nan::Encode(it->value_string(),
+          Nan::Encode(it->value(),
             it->value_size(), Nan::Encoding::BUFFER));
         Nan::Set(v8headers, index, v8header);
         index++;
