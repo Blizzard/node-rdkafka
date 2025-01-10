@@ -26,8 +26,9 @@ namespace Workers {
 
 class ErrorAwareWorker : public Nan::AsyncWorker {
  public:
-  explicit ErrorAwareWorker(Nan::Callback* callback_) :
-    Nan::AsyncWorker(callback_),
+  explicit ErrorAwareWorker(Nan::Callback* callback_,
+    const char* resource_name = "node-rdkafka:ErrorAwareWorker") :
+    Nan::AsyncWorker(callback_, resource_name),
     m_baton(RdKafka::ERR_NO_ERROR) {}
   virtual ~ErrorAwareWorker() {}
 
@@ -68,11 +69,12 @@ class ErrorAwareWorker : public Nan::AsyncWorker {
 
 class MessageWorker : public ErrorAwareWorker {
  public:
-  explicit MessageWorker(Nan::Callback* callback_)
-      : ErrorAwareWorker(callback_), m_asyncdata() {
+  explicit MessageWorker(Nan::Callback* callback_,
+    const char* resource_name = "node-rdkafka:ErrorAwareWorker")
+      : ErrorAwareWorker(callback_, resource_name), m_asyncdata() {
     m_async = new uv_async_t;
     uv_async_init(
-      uv_default_loop(),
+      Nan::GetCurrentEventLoop(),
       m_async,
       m_async_message);
     m_async->data = this;

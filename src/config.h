@@ -11,18 +11,20 @@
 #define SRC_CONFIG_H_
 
 #include <nan.h>
-#include <iostream>
 #include <vector>
 #include <list>
 #include <string>
 
 #include "rdkafkacpp.h"
+#include "rdkafkacpp_int.h"
 #include "src/common.h"
 #include "src/callbacks.h"
 
 namespace NodeKafka {
 
-class Conf : public RdKafka::Conf {
+class Conf : public RdKafka::ConfImpl {
+ private:
+  Conf(RdKafka::Conf::ConfType type) : RdKafka::ConfImpl(type) {}  // NOLINT
  public:
   ~Conf();
 

@@ -15,6 +15,7 @@
         'src/connection.cc',
         'src/errors.cc',
         'src/kafka-consumer.cc',
+        'src/per-isolate-data.cc',
         'src/producer.cc',
         'src/topic.cc',
         'src/workers.cc',

@@ -9,6 +9,7 @@
 
 var Producer = require('../lib/producer');
 var t = require('assert');
+var worker_threads = require('worker_threads');
 // var Mock = require('./mock');
 
 var client;
@@ -94,6 +95,26 @@ module.exports = {
         };
 
         client.disconnect(next);
+      },
+      'does not crash in a worker': function (cb) {
+        var producer = new worker_threads.Worker(
+          path.join(__dirname, 'producer-worker.js')
+        );
+
+        var timeout = setTimeout(function() {
+          producer.terminate();
+        }, 1000);
+
+        consumer.on('message', (report) => {
+          t.strictEqual(report.topic, 'topic');
+          producer.terminate();
+        });
+
+        producer.on('exit', function(code) {
+          clearTimeout(timeout);
+          t.strictEqual(code, 0);
+          cb();
+        });
       }
     }
   },
