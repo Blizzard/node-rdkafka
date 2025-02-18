@@ -57,7 +57,7 @@ Dispatcher::~Dispatcher() {
   if (callbacks.size() < 1) return;
 
   for (size_t i=0; i < callbacks.size(); i++) {
-    callbacks[i].Reset();
+    delete callbacks[i];
   }
 
   uv_mutex_destroy(&async_lock);
@@ -98,24 +98,22 @@ void Dispatcher::Dispatch(const int _argc, Local<Value> _argv[]) {
   }
 
   for (size_t i=0; i < callbacks.size(); i++) {
-    v8::Local<v8::Function> f = Nan::New<v8::Function>(callbacks[i]);
-    Nan::Callback cb(f);
-    cb.Call(_argc, _argv);
+    callbacks[i]->Call(_argc, _argv);
   }
 }
 
 void Dispatcher::AddCallback(const v8::Local<v8::Function> &cb) {
-  Nan::Persistent<v8::Function,
-                  Nan::CopyablePersistentTraits<v8::Function> > value(cb);
+  Nan::Callback *value = new Nan::Callback(cb);
   // PersistentCopyableFunction value(func);
   callbacks.push_back(value);
 }
 
 void Dispatcher::RemoveCallback(const v8::Local<v8::Function> &cb) {
   for (size_t i=0; i < callbacks.size(); i++) {
-    if (callbacks[i] == cb) {
-      callbacks[i].Reset();
+    if (callbacks[i]->GetFunction() == cb) {
+      Nan::Callback *found_callback = callbacks[i];
       callbacks.erase(callbacks.begin() + i);
+      delete found_callback;
       break;
     }
   }
