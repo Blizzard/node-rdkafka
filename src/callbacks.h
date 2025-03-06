@@ -254,6 +254,23 @@ class Partitioner : public RdKafka::PartitionerCb {
   static unsigned int random(const RdKafka::Topic*, int32_t);
 };
 
+class OAuthBearerTokenRefreshDispatcher : public Dispatcher {
+  public:
+   OAuthBearerTokenRefreshDispatcher() {}
+   ~OAuthBearerTokenRefreshDispatcher() {}
+   void Add(const std::string &oauthbearer_config);
+   void Flush();
+ 
+  private:
+   std::string m_oauthbearer_config;
+ };
+ 
+ class OAuthBearerTokenRefresh : public RdKafka::OAuthBearerTokenRefreshCb {
+  public:
+   void oauthbearer_token_refresh_cb(RdKafka::Handle *, const std::string &);
+   OAuthBearerTokenRefreshDispatcher dispatcher;
+ };
+ 
 }  // namespace Callbacks
 
 }  // namespace NodeKafka

@@ -112,6 +112,7 @@ The library currently supports the following callbacks:
 * `event_cb`
 * `rebalance_cb` (see [Rebalancing](#rebalancing))
 * `offset_commit_cb` (see [Commits](#commits))
+* `oauthbearer_token_refresh_cb`
 
 ### Librdkafka Methods
 

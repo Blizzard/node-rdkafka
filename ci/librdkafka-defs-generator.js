@@ -60,6 +60,8 @@ function processItem(configItem) {
       return { ...configItem, type: 'boolean | Function' };
     case 'rebalance_cb':
       return { ...configItem, type: 'boolean | Function' };
+    case 'oauthbearer_token_refresh_cb':
+      return { ...configItem, type: 'boolean | Function' };
     case 'offset_commit_cb':
       return { ...configItem, type: 'boolean | Function' };
   }

@@ -604,6 +604,37 @@ void Partitioner::SetCallback(v8::Local<v8::Function> cb) {
   callback(cb);
 }
 
+// OAuthBearerTokenRefresh callback
+
+void OAuthBearerTokenRefreshDispatcher::Add(
+  const std::string &oauthbearer_config) {
+  scoped_mutex_lock lock(async_lock);
+  m_oauthbearer_config = oauthbearer_config;
+}
+
+void OAuthBearerTokenRefreshDispatcher::Flush() {
+  Nan::HandleScope scope;
+
+  const unsigned int argc = 1;
+
+  std::string oauthbearer_config;
+  {
+    scoped_mutex_lock lock(async_lock);
+    oauthbearer_config = m_oauthbearer_config;
+    m_oauthbearer_config.clear();
+  }
+
+  v8::Local<v8::Value> argv[argc] = {};
+  argv[0] = Nan::New<v8::String>(oauthbearer_config.c_str()).ToLocalChecked();
+
+  Dispatch(argc, argv);
+}
+
+void OAuthBearerTokenRefresh::oauthbearer_token_refresh_cb(
+  RdKafka::Handle *handle, const std::string &oauthbearer_config) {
+  dispatcher.Add(oauthbearer_config);
+  dispatcher.Execute();
+}
 
 }  // end namespace Callbacks
 

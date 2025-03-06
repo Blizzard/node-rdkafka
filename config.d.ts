@@ -570,7 +570,7 @@ export interface GlobalConfig {
     /**
      * SASL/OAUTHBEARER token refresh callback (set with rd_kafka_conf_set_oauthbearer_token_refresh_cb(), triggered by rd_kafka_poll(), et.al. This callback will be triggered when it is time to refresh the client's OAUTHBEARER token. Also see `rd_kafka_conf_enable_sasl_queue()`.
      */
-    "oauthbearer_token_refresh_cb"?: any;
+    "oauthbearer_token_refresh_cb"?: boolean | Function;
 
     /**
      * Set to "default" or "oidc" to control which login method to be used. If set to "oidc", the following properties must also be be specified: `sasl.oauthbearer.client.id`, `sasl.oauthbearer.client.secret`, and `sasl.oauthbearer.token.endpoint.url`.

@@ -123,6 +123,19 @@ void Conf::ConfigureCallback(const std::string &string_key, const v8::Local<v8::
         this->m_offset_commit_cb->dispatcher.RemoveCallback(cb);
       }
     }
+
+  } else if (string_key.compare("oauthbearer_token_refresh_cb") == 0) {
+    if (add) {
+      if (this->m_oauthbearer_token_refresh_cb == NULL) {
+        this->m_oauthbearer_token_refresh_cb = new NodeKafka::Callbacks::OAuthBearerTokenRefresh();
+      }
+      this->m_oauthbearer_token_refresh_cb->dispatcher.AddCallback(cb);
+      this->set(string_key, this->m_oauthbearer_token_refresh_cb, errstr);
+    } else {
+      if (this->m_oauthbearer_token_refresh_cb != NULL) {
+        this->m_oauthbearer_token_refresh_cb->dispatcher.RemoveCallback(cb);
+      }
+    }
   }
 }
 

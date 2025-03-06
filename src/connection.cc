@@ -246,19 +246,34 @@ NAN_METHOD(Connection::NodeSetToken)
     return;
   }
 
+  if (info.Length() > 1 && !info[1]->IsNumber()) {
+    Nan::ThrowError("2nd parameter must be a lifetime_ms number");
+    return;
+  }
+
   Nan::Utf8String tk(info[0]);
   std::string token = *tk;
-  // we always set expiry to maximum value in ms, as we don't use refresh callback,
-  // rdkafka continues sending a token even if it expired. Client code must
-  // handle token refreshing by calling 'setToken' again when needed.
-  int64_t expiry = (std::numeric_limits<int64_t>::max)() / 100000;
+
+  int64_t lifetime_ms;
+
+  if (info.Length() > 1) {
+    lifetime_ms = Nan::To<int64_t>(info[1]).FromJust();
+  }
+  else
+  {
+    // set expiry to maximum value in ms if it's not passed.
+    // rdkafka continues sending a token even if it expired. Client code must
+    // handle token refreshing by calling 'setToken' again when needed.
+    lifetime_ms = (std::numeric_limits<int64_t>::max)() / 100000;
+  }
+
   Connection* obj = ObjectWrap::Unwrap<Connection>(info.This());
   RdKafka::Handle* handle = obj->m_client;
 
   if (!handle) {
     scoped_shared_write_lock lock(obj->m_connection_lock);
     obj->m_init_oauthToken = std::make_unique<OauthBearerToken>(
-          OauthBearerToken{token, expiry});
+          OauthBearerToken{token, lifetime_ms});
     info.GetReturnValue().Set(Nan::Null());
     return;
   }
@@ -267,7 +282,7 @@ NAN_METHOD(Connection::NodeSetToken)
     scoped_shared_write_lock lock(obj->m_connection_lock);
     std::string errstr;
     std::list<std::string> emptyList;
-    RdKafka::ErrorCode err = handle->oauthbearer_set_token(token, expiry,
+    RdKafka::ErrorCode err = handle->oauthbearer_set_token(token, lifetime_ms,
           "", emptyList, errstr);
 
     if (err != RdKafka::ERR_NO_ERROR) {

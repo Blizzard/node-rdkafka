@@ -62,7 +62,7 @@ export interface Metadata {
     brokers: BrokerMetadata[];
 }
 
-export interface WatermarkOffsets{
+export interface WatermarkOffsets {
     lowOffset: number;
     highOffset: number;
 }
@@ -72,7 +72,7 @@ export interface TopicPartition {
     partition: number;
 }
 
-export interface TopicPartitionOffset extends TopicPartition{
+export interface TopicPartitionOffset extends TopicPartition {
     offset: number;
 }
 
@@ -142,7 +142,7 @@ export interface ConsumerStream extends Readable {
     close(cb?: () => void): void;
 }
 
-export type KafkaClientEvents = 'disconnected' | 'ready' | 'connection.failure' | 'event.error' | 'event.stats' | 'event.log' | 'event.event' | 'event.throttle';
+export type KafkaClientEvents = 'disconnected' | 'ready' | 'connection.failure' | 'event.error' | 'event.stats' | 'event.log' | 'event.event' | 'event.throttle' | 'oauthbearer.tokenrefresh';
 export type KafkaConsumerEvents = 'data' | 'partition.eof' | 'rebalance' | 'rebalance.error' | 'subscribed' | 'unsubscribed' | 'unsubscribe' | 'offset.commit' | KafkaClientEvents;
 export type KafkaProducerEvents = 'delivery-report' | KafkaClientEvents;
 
@@ -182,7 +182,7 @@ export abstract class Client<Events extends string> extends EventEmitter {
 
     connect(metadataOptions?: MetadataOptions, cb?: (err: LibrdKafkaError, data: Metadata) => any): this;
 
-    setOauthBearerToken(tokenStr: string): this;
+    setOauthBearerToken(tokenStr: string, lifetimeMs?: number): this;
 
     getClient(): any;
 
@@ -286,13 +286,13 @@ export class Producer extends Client<KafkaProducerEvents> {
 }
 
 export class HighLevelProducer extends Producer {
-  produce(topic: string, partition: NumberNullUndefined, message: any, key: any, timestamp: NumberNullUndefined, callback: (err: any, offset?: NumberNullUndefined) => void): any;
-  produce(topic: string, partition: NumberNullUndefined, message: any, key: any, timestamp: NumberNullUndefined, headers: MessageHeader[], callback: (err: any, offset?: NumberNullUndefined) => void): any;
+    produce(topic: string, partition: NumberNullUndefined, message: any, key: any, timestamp: NumberNullUndefined, callback: (err: any, offset?: NumberNullUndefined) => void): any;
+    produce(topic: string, partition: NumberNullUndefined, message: any, key: any, timestamp: NumberNullUndefined, headers: MessageHeader[], callback: (err: any, offset?: NumberNullUndefined) => void): any;
 
-  setKeySerializer(serializer: (key: any, cb: (err: any, key: MessageKey) => void) => void): void;
-  setKeySerializer(serializer: (key: any) => MessageKey | Promise<MessageKey>): void;
-  setValueSerializer(serializer: (value: any, cb: (err: any, value: MessageValue) => void) => void): void;
-  setValueSerializer(serializer: (value: any) => MessageValue | Promise<MessageValue>): void;
+    setKeySerializer(serializer: (key: any, cb: (err: any, key: MessageKey) => void) => void): void;
+    setKeySerializer(serializer: (key: any) => MessageKey | Promise<MessageKey>): void;
+    setValueSerializer(serializer: (value: any, cb: (err: any, value: MessageValue) => void) => void): void;
+    setValueSerializer(serializer: (value: any) => MessageValue | Promise<MessageValue>): void;
 }
 
 export const features: string[];

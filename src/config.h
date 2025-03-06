@@ -36,6 +36,7 @@ class Conf : public RdKafka::Conf {
  protected:
   NodeKafka::Callbacks::Rebalance * m_rebalance_cb = NULL;
   NodeKafka::Callbacks::OffsetCommit * m_offset_commit_cb = NULL;
+  NodeKafka::Callbacks::OAuthBearerTokenRefresh * m_oauthbearer_token_refresh_cb = NULL;
 };
 
 }  // namespace NodeKafka
