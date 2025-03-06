@@ -382,5 +382,33 @@ describe('Consumer', function() {
         eventListener(consumer);
       });
     });
+
+    describe('oauthbearer', function () {
+      gcfg['security.protocol'] = 'SASL_SSL';
+      gcfg['sasl.mechanisms'] = 'OAUTHBEARER';
+  
+      it('should emit token refresh event', function (cb) {
+        gcfg.oauthbearer_token_refresh_cb = true;
+  
+        consumer = new KafkaConsumer(gcfg, {});
+  
+        consumer.on('oauthbearer.tokenrefresh', function (oauthbearer_config) {
+          consumer.disconnect(cb);
+        });
+  
+        consumer.connect({ timeout: 2000 });
+      });
+  
+      it('should invoke oauthbearer_token_refresh_cb', function (cb) {
+        gcfg.oauthbearer_token_refresh_cb = (oauthbearer_config) => {
+          cb();
+        };
+  
+        consumer = new KafkaConsumer(gcfg, {});
+        consumer.connect({ timeout: 2000 });
+      });
+    });
+
+    
   });
 });
