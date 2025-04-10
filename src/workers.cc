@@ -7,10 +7,29 @@
  * of the MIT license.  See the LICENSE.txt file for details.
  */
 
+// Prevent warnings from node-gyp bindings.h
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma clang diagnostic ignored "-Wunused-parameter"
+
 #include <string>
 #include <vector>
+#include <list>
+#include <memory> // For std::shared_ptr
 
+#include "nan.h"  // NOLINT
+
+// Include rdkafka headers first
+#include "rdkafka.h" // C API
+#include <rdkafkacpp.h> // C++ API
+
+// Now include local headers
+#include "src/errors.h"
+#include "src/common.h"
 #include "src/workers.h"
+#include "src/producer.h"
+#include "src/kafka-consumer.h"
+#include "src/admin.h"
+#include "src/config.h"
 
 #ifndef _WIN32
 #include <unistd.h>
@@ -824,7 +843,7 @@ void KafkaConsumerConsumeNum::Execute() {
           if (m_messages.size() > eof_event_count) {
             timeout_ms = 1;
           }
-          
+
           // We will only go into this code path when `enable.partition.eof` is set to true
           // In this case, consumer is also interested in EOF messages, so we return an EOF message
           m_messages.push_back(message);
@@ -872,7 +891,7 @@ void KafkaConsumerConsumeNum::HandleOKCallback() {
     for (std::vector<RdKafka::Message*>::iterator it = m_messages.begin();
         it != m_messages.end(); ++it) {
       RdKafka::Message* message = *it;
-      
+
       switch (message->err()) {
         case RdKafka::ERR_NO_ERROR:
           ++returnArrayIndex;
@@ -890,7 +909,7 @@ void KafkaConsumerConsumeNum::HandleOKCallback() {
             Nan::New<v8::Number>(message->offset()));
           Nan::Set(eofEvent, Nan::New<v8::String>("partition").ToLocalChecked(),
             Nan::New<v8::Number>(message->partition()));
-          
+
           // also store index at which position in the message array this event was emitted
           // this way, we can later emit it at the right point in time
           Nan::Set(eofEvent, Nan::New<v8::String>("messageIndex").ToLocalChecked(),
@@ -898,7 +917,7 @@ void KafkaConsumerConsumeNum::HandleOKCallback() {
 
           Nan::Set(eofEventsArray, eofEventsArrayIndex, eofEvent);
       }
-      
+
       delete message;
     }
   }
@@ -1228,7 +1247,7 @@ void AdminClientCreatePartitions::HandleOKCallback() {
 
   argv[0] = Nan::Null();
 
-  callback->Call(argc, argv);
+  Nan::Call(*callback, argc, argv);
 }
 
 void AdminClientCreatePartitions::HandleErrorCallback() {
@@ -1237,7 +1256,460 @@ void AdminClientCreatePartitions::HandleErrorCallback() {
   const unsigned int argc = 1;
   v8::Local<v8::Value> argv[argc] = { GetErrorObject() };
 
-  callback->Call(argc, argv);
+  Nan::Call(*callback, argc, argv);
+}
+
+/**
+ * @brief Describe configuration for resources
+ *
+ * This callback will describe configuration for resources
+ *
+ */
+AdminClientDescribeConfigs::AdminClientDescribeConfigs(
+    Nan::Callback *callback,
+    AdminClient* client,
+    rd_kafka_ConfigResource_t** configs,
+    size_t config_cnt,
+    const int & timeout_ms):
+      ErrorAwareWorker(callback),
+      m_client(client),
+      m_config_cnt(config_cnt),
+      m_timeout_ms(timeout_ms),
+      m_event(nullptr) {
+
+  // Create a copy of the configs array for our use
+  m_configs = new rd_kafka_ConfigResource_t*[config_cnt];
+  for (size_t i = 0; i < config_cnt; i++) {
+    // We need to make a copy because the original will be destroyed
+    // by the caller after this constructor returns
+    rd_kafka_ResourceType_t res_type = rd_kafka_ConfigResource_type(configs[i]);
+    const char* res_name = rd_kafka_ConfigResource_name(configs[i]);
+    m_configs[i] = rd_kafka_ConfigResource_new(res_type, res_name);
+
+    // Store requested config names if provided (for potential later validation)
+    // We'll use the resource type and name as the key
+    std::pair<int, std::string> key = std::make_pair(
+      static_cast<int>(res_type),
+      std::string(res_name)
+    );
+
+    // Get the config entries to see if there are any specific configs requested
+    size_t entry_cnt = 0;
+    const rd_kafka_ConfigEntry_t **entries = rd_kafka_ConfigResource_configs(
+      configs[i], &entry_cnt);
+
+    if (entries && entry_cnt > 0) {
+      std::set<std::string> names;
+      for (size_t j = 0; j < entry_cnt; j++) {
+        const rd_kafka_ConfigEntry_t *entry = entries[j];
+        const char* name = rd_kafka_ConfigEntry_name(entry);
+        if (name) {
+          names.insert(std::string(name));
+        }
+      }
+      if (!names.empty()) {
+        m_requested_configs[key] = names;
+      }
+    }
+  }
+}
+
+AdminClientDescribeConfigs::~AdminClientDescribeConfigs() {
+  // Clean up ConfigResource objects created in the constructor
+  if (m_configs) {
+    for (size_t i = 0; i < m_config_cnt; i++) {
+      if (m_configs[i]) {
+        rd_kafka_ConfigResource_destroy(m_configs[i]);
+      }
+    }
+    delete[] m_configs;
+  }
+
+  // Clean up the event if it exists
+  if (m_event) {
+    rd_kafka_event_destroy(m_event);
+  }
+
+  // Clean up the options if they exist
+  if (m_opts) {
+    rd_kafka_AdminOptions_destroy(m_opts);
+  }
+}
+
+void AdminClientDescribeConfigs::Execute() {
+  // Check if we had an error during construction
+  if (IsErrored()) {
+    return;
+  }
+
+  if (!m_client->IsConnected()) {
+    SetErrorBaton(Baton(RdKafka::ERR__STATE, "AdminClient is disconnected."));
+    return;
+  }
+
+  // Use the AdminClient's DescribeConfigs method which handles the C API calls
+  std::pair<RdKafka::ErrorCode, rd_kafka_event_t*> result =
+    m_client->DescribeConfigs(m_configs, m_config_cnt, m_timeout_ms);
+
+  // Store the error code and event
+  if (result.first != RdKafka::ERR_NO_ERROR) {
+    SetErrorBaton(Baton(result.first));
+    // If we got an event despite the error, store it for potential partial results
+    m_event = result.second;
+    return;
+  }
+
+  // Store the event for processing in HandleOKCallback
+  m_event = result.second;
+
+  if (!m_event) {
+    SetErrorBaton(Baton(RdKafka::ERR__TIMED_OUT));
+    return;
+  }
+
+  // Check that we got the right event type
+  if (rd_kafka_event_type(m_event) != RD_KAFKA_EVENT_DESCRIBECONFIGS_RESULT) {
+    SetErrorBaton(Baton(RdKafka::ERR__FAIL,
+      "Received unexpected event type from DescribeConfigs queue"));
+    return;
+  }
+
+  // Check for errors in the event
+  if (rd_kafka_event_error(m_event)) {
+    SetErrorBaton(Baton(static_cast<RdKafka::ErrorCode>(rd_kafka_event_error(m_event)),
+      rd_kafka_event_error_string(m_event)));
+    // We still keep m_event, HandleOKCallback will process potential partial results/errors
+  }
+
+  // The event will be processed in HandleOKCallback and cleaned up in the destructor
+}
+
+/**
+ * @brief Convert the DescribeConfigs result event data to v8 object
+ *
+ * @param event The rd_kafka_event_t containing the DescribeConfigs result.
+ * @param requested_configs Map of originally requested config names per resource.
+ * @return v8::Local<v8::Object> V8 representation of the result.
+ */
+v8::Local<v8::Object> AdminClientDescribeConfigs::ResultEventToV8Object(
+    rd_kafka_event_t *event,
+    const std::map<std::pair<int, std::string>, std::set<std::string>>& requested_configs) {
+  Nan::EscapableHandleScope scope;
+
+  // Create the top-level result V8 object
+  v8::Local<v8::Object> result_v8 = Nan::New<v8::Object>();
+
+  // Get the result from the event
+  const rd_kafka_DescribeConfigs_result_t *result =
+    rd_kafka_event_DescribeConfigs_result(event);
+
+  if (!result) {
+    // If we can't get the result, return an empty object
+    return scope.Escape(result_v8);
+  }
+
+  // Get the resources from the result
+  size_t resource_cnt;
+  const rd_kafka_ConfigResource_t **resources =
+    rd_kafka_DescribeConfigs_result_resources(result, &resource_cnt);
+
+  // Create a V8 array to hold the resource results
+  v8::Local<v8::Array> resources_v8_array = Nan::New<v8::Array>(resource_cnt);
+
+  // Iterate over each resource result
+  for (size_t i = 0; i < resource_cnt; ++i) {
+    const rd_kafka_ConfigResource_t *resource = resources[i];
+    v8::Local<v8::Object> resource_v8_obj = Nan::New<v8::Object>();
+
+    // Set type and name
+    rd_kafka_ResourceType_t res_type = rd_kafka_ConfigResource_type(resource);
+    const char *res_name = rd_kafka_ConfigResource_name(resource);
+
+    Nan::Set(resource_v8_obj, Nan::New("type").ToLocalChecked(),
+      Nan::New<v8::Number>(static_cast<int>(res_type)));
+    Nan::Set(resource_v8_obj, Nan::New("name").ToLocalChecked(),
+      Nan::New<v8::String>(res_name).ToLocalChecked());
+
+    // Set error if present
+    rd_kafka_resp_err_t resource_err = rd_kafka_ConfigResource_error(resource);
+    if (resource_err != RD_KAFKA_RESP_ERR_NO_ERROR) {
+      const char *err_str = rd_kafka_ConfigResource_error_string(resource);
+      v8::Local<v8::Object> error = Nan::New<v8::Object>();
+      Nan::Set(error, Nan::New("code").ToLocalChecked(),
+        Nan::New<v8::Number>(resource_err));
+      if (err_str) {
+        Nan::Set(error, Nan::New("message").ToLocalChecked(),
+          Nan::New<v8::String>(err_str).ToLocalChecked());
+      }
+      Nan::Set(resource_v8_obj, Nan::New("error").ToLocalChecked(), error);
+    } else {
+      Nan::Set(resource_v8_obj, Nan::New("error").ToLocalChecked(), Nan::Null());
+    }
+
+    // Get config entries
+    size_t entry_cnt;
+    const rd_kafka_ConfigEntry_t **entries =
+      rd_kafka_ConfigResource_configs(resource, &entry_cnt);
+
+    v8::Local<v8::Array> entries_v8_array = Nan::New<v8::Array>(entry_cnt);
+
+    // Iterate over config entries for this resource
+    for (size_t j = 0; j < entry_cnt; ++j) {
+      const rd_kafka_ConfigEntry_t *entry = entries[j];
+      v8::Local<v8::Object> entry_v8_obj = Nan::New<v8::Object>();
+
+      const char *name = rd_kafka_ConfigEntry_name(entry);
+      const char *value = rd_kafka_ConfigEntry_value(entry);
+
+      Nan::Set(entry_v8_obj, Nan::New("name").ToLocalChecked(),
+        Nan::New<v8::String>(name).ToLocalChecked());
+
+      if (value) {
+        Nan::Set(entry_v8_obj, Nan::New("value").ToLocalChecked(),
+          Nan::New<v8::String>(value).ToLocalChecked());
+      } else {
+        Nan::Set(entry_v8_obj, Nan::New("value").ToLocalChecked(), Nan::Null());
+      }
+
+      Nan::Set(entry_v8_obj, Nan::New("source").ToLocalChecked(),
+        Nan::New<v8::Number>(rd_kafka_ConfigEntry_source(entry)));
+      Nan::Set(entry_v8_obj, Nan::New("isDefault").ToLocalChecked(),
+        Nan::New<v8::Boolean>(rd_kafka_ConfigEntry_is_default(entry)));
+      Nan::Set(entry_v8_obj, Nan::New("isReadOnly").ToLocalChecked(),
+        Nan::New<v8::Boolean>(rd_kafka_ConfigEntry_is_read_only(entry)));
+      Nan::Set(entry_v8_obj, Nan::New("isSensitive").ToLocalChecked(),
+        Nan::New<v8::Boolean>(rd_kafka_ConfigEntry_is_sensitive(entry)));
+      // Note: Synonyms are available via rd_kafka_ConfigEntry_synonyms if needed in the future
+
+      Nan::Set(entries_v8_array, j, entry_v8_obj);
+    }
+
+    Nan::Set(resource_v8_obj, Nan::New("configs").ToLocalChecked(), entries_v8_array);
+    Nan::Set(resources_v8_array, i, resource_v8_obj);
+  }
+
+  Nan::Set(result_v8, Nan::New("resources").ToLocalChecked(), resources_v8_array);
+  return scope.Escape(result_v8);
+}
+
+void AdminClientDescribeConfigs::HandleOKCallback() {
+  Nan::HandleScope scope;
+
+  // Check if Execute stored a Baton error. If so, HandleErrorCallback should be called.
+  // Also check if m_event is null (could happen if poll failed but error wasn't set right).
+  if (IsErrored() || m_event == nullptr) {
+    if (!IsErrored()) { // Ensure baton is set if event is missing unexpectedly
+        SetErrorBaton(Baton(RdKafka::ERR_UNKNOWN, "DescribeConfigs event missing in HandleOKCallback"));
+    }
+    HandleErrorCallback();
+    return;
+  }
+
+  // Check for top-level error within the event itself.
+  // Even if there's a top-level error, we proceed to convert the (potentially partial)
+  // result, as individual resources might still contain data or specific errors.
+  // The JS layer might want to inspect this.
+  rd_kafka_resp_err_t top_level_err = rd_kafka_event_error(m_event);
+  v8::Local<v8::Value> err_obj = Nan::Null();
+  if (top_level_err != RD_KAFKA_RESP_ERR_NO_ERROR) {
+      const char* errstr = rd_kafka_event_error_string(m_event);
+      if (errstr) {
+          // Create a Baton with the error code and message, then convert to v8 object
+          Baton baton(static_cast<RdKafka::ErrorCode>(top_level_err), errstr);
+          err_obj = baton.ToObject();
+      } else {
+          // Create a Baton with just the error code, then convert to v8 object
+          err_obj = RdKafkaError(static_cast<RdKafka::ErrorCode>(top_level_err));
+      }
+  }
+
+  // Convert the result event to V8 object
+  v8::Local<v8::Object> result_v8_obj = ResultEventToV8Object(m_event, m_requested_configs);
+
+  // Prepare arguments for the JS callback
+  const unsigned int argc = 2;
+  v8::Local<v8::Value> argv[argc] = {
+    err_obj,        // Pass top-level error (or null)
+    result_v8_obj   // Pass the structured result object
+  };
+
+  Nan::Call(*callback, argc, argv);
+
+  // m_event will be cleaned up in the destructor
+}
+
+void AdminClientDescribeConfigs::HandleErrorCallback() {
+  Nan::HandleScope scope;
+
+  // If m_event is null, it means Execute() failed very early, use m_baton.
+  // If m_event is not null, it means Execute() stored a result (possibly with errors),
+  // but a top-level error occurred (either in Execute or implicitly set by Nan framework).
+  // We should prioritize the error from m_baton if it exists.
+
+  v8::Local<v8::Value> argv[1];
+  if (IsErrored()) {
+      argv[0] = GetErrorObject();
+  } else {
+      // Fallback, should not typically happen if IsErrored() is false here
+      Baton baton(RdKafka::ERR_UNKNOWN, "Unknown error in HandleErrorCallback");
+      argv[0] = baton.ToObject();
+  }
+
+  // Event object (m_event) might be available even on error, but we don't pass it here.
+  // The destructor will handle cleanup.
+  Nan::Call(*callback, 1, argv);
+}
+
+/**
+ * @brief AlterConfigs worker implementation
+ */
+AdminClientAlterConfigs::AdminClientAlterConfigs(Nan::Callback *callback,
+                                               AdminClient* client,
+                                               rd_kafka_ConfigResource_t** configs,
+                                               size_t config_cnt,
+                                               const int & timeout_ms) :
+  ErrorAwareWorker(callback),
+  m_client(client),
+  m_configs(configs), // Takes ownership
+  m_config_cnt(config_cnt),
+  m_timeout_ms(timeout_ms),
+  m_result_event(nullptr),
+  m_error_code(RdKafka::ERR_NO_ERROR) {
+    // Basic validation
+    if (!m_configs || m_config_cnt == 0) {
+        m_error_code = RdKafka::ERR__INVALID_ARG;
+        SetErrorMessage("Invalid config resource array passed to worker.");
+        m_configs = nullptr; // Prevent cleanup issues
+        m_config_cnt = 0;
+    }
+}
+
+AdminClientAlterConfigs::~AdminClientAlterConfigs() {
+  if (m_configs) {
+      for (size_t i = 0; i < m_config_cnt; ++i) {
+          if (m_configs[i]) rd_kafka_ConfigResource_destroy(m_configs[i]);
+      }
+      delete[] m_configs;
+  }
+  if (m_result_event) {
+    rd_kafka_event_destroy(m_result_event);
+  }
+}
+
+void AdminClientAlterConfigs::Execute() {
+  if (m_error_code != RdKafka::ERR_NO_ERROR) return;
+  if (!m_client || !m_client->IsConnected()) {
+    m_error_code = RdKafka::ERR__STATE;
+    SetErrorMessage("Client is not connected");
+    return;
+  }
+
+  std::pair<RdKafka::ErrorCode, rd_kafka_event_t*> result =
+    m_client->AlterConfigs(m_configs, m_config_cnt, m_timeout_ms);
+
+  m_error_code = result.first;
+  m_result_event = result.second;
+
+  if (m_error_code != RdKafka::ERR_NO_ERROR && m_result_event == nullptr) {
+      std::string errstr = RdKafka::err2str(m_error_code);
+      SetErrorMessage(errstr.c_str());
+  }
+}
+
+// Helper to convert AlterConfigs result event to V8 object
+v8::Local<v8::Object> AdminClientAlterConfigs::ResultEventToV8Object(rd_kafka_event_t* event_response) {
+    Nan::EscapableHandleScope scope;
+    v8::Local<v8::Object> result_obj = Nan::New<v8::Object>();
+    const rd_kafka_AlterConfigs_result_t *result = rd_kafka_event_AlterConfigs_result(event_response);
+
+    if (!result) {
+        Nan::Set(result_obj, Nan::New("error").ToLocalChecked(), Nan::New("Invalid AlterConfigs result event").ToLocalChecked());
+        return scope.Escape(result_obj);
+    }
+
+    size_t res_cnt = 0;
+    const rd_kafka_ConfigResource_t **resources = rd_kafka_AlterConfigs_result_resources(result, &res_cnt);
+    v8::Local<v8::Array> resources_array = Nan::New<v8::Array>(res_cnt);
+
+    for (size_t i = 0; i < res_cnt; i++) {
+      const rd_kafka_ConfigResource_t *resource = resources[i];
+      v8::Local<v8::Object> resource_obj = Nan::New<v8::Object>();
+
+      Nan::Set(resource_obj, Nan::New("type").ToLocalChecked(), Nan::New<v8::Number>(rd_kafka_ConfigResource_type(resource)));
+      Nan::Set(resource_obj, Nan::New("name").ToLocalChecked(), Nan::New<v8::String>(rd_kafka_ConfigResource_name(resource)).ToLocalChecked());
+
+      rd_kafka_resp_err_t resource_err = rd_kafka_ConfigResource_error(resource);
+      if (resource_err != RD_KAFKA_RESP_ERR_NO_ERROR) {
+        std::string err_str = rd_kafka_ConfigResource_error_string(resource);
+        v8::Local<v8::Object> err_obj = Nan::New<v8::Object>();
+        Nan::Set(err_obj, Nan::New("message").ToLocalChecked(), Nan::New(err_str).ToLocalChecked());
+        Nan::Set(err_obj, Nan::New("code").ToLocalChecked(), Nan::New(static_cast<int>(resource_err)));
+        Nan::Set(resource_obj, Nan::New("error").ToLocalChecked(), err_obj);
+      } else {
+         Nan::Set(resource_obj, Nan::New("error").ToLocalChecked(), Nan::Null());
+      }
+      // AlterConfigs result doesn't contain the config values themselves, just success/failure per resource.
+      Nan::Set(resources_array, i, resource_obj);
+    }
+
+    Nan::Set(result_obj, Nan::New("resources").ToLocalChecked(), resources_array);
+    return scope.Escape(result_obj);
+}
+
+void AdminClientAlterConfigs::HandleOKCallback() {
+  Nan::HandleScope scope;
+
+  if (m_error_code != RdKafka::ERR_NO_ERROR) {
+    if (m_result_event && !ErrorMessage()) {
+        const char* event_err_str_c = rd_kafka_event_error_string(m_result_event);
+        std::string event_err_str = event_err_str_c ? event_err_str_c : "";
+        std::string default_err_str = RdKafka::err2str(m_error_code);
+        SetErrorMessage(event_err_str.empty() ? default_err_str.c_str() : event_err_str.c_str());
+    }
+    if (m_baton.err() == RdKafka::ERR_NO_ERROR) {
+        m_baton = Baton(m_error_code, ErrorMessage());
+    }
+    HandleErrorCallback();
+    return;
+  }
+
+  if (!m_result_event) {
+      m_error_code = RdKafka::ERR_UNKNOWN;
+      SetErrorMessage("AlterConfigs succeeded but result event is missing");
+      m_baton = Baton(m_error_code, ErrorMessage());
+      HandleErrorCallback();
+      return;
+  }
+
+  v8::Local<v8::Object> result_obj = ResultEventToV8Object(m_result_event);
+  const unsigned int argc = 2;
+  v8::Local<v8::Value> argv[argc] = { Nan::Null(), result_obj };
+  Nan::Call(*callback, argc, argv);
+
+  rd_kafka_event_destroy(m_result_event);
+  m_result_event = nullptr;
+}
+
+void AdminClientAlterConfigs::HandleErrorCallback() {
+  Nan::HandleScope scope;
+
+  // If m_result_event is null, it means Execute() failed very early, use m_baton.
+  // If m_result_event is not null, it means Execute() stored a result (possibly with errors),
+  // but a top-level error occurred (either in Execute or implicitly set by Nan framework).
+  // We should prioritize the error from m_baton if it exists.
+
+  v8::Local<v8::Value> argv[1];
+  if (IsErrored()) {
+      argv[0] = GetErrorObject();
+  } else {
+      // Fallback, should not typically happen if IsErrored() is false here
+      Baton baton(RdKafka::ERR_UNKNOWN, "Unknown error in HandleErrorCallback");
+      argv[0] = baton.ToObject();
+  }
+
+  // Event object (m_result_event) might be available even on error, but we don't pass it here.
+  // The destructor will handle cleanup.
+  Nan::Call(*callback, 1, argv);
 }
 
 }  // namespace Workers

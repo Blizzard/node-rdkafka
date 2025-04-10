@@ -12,7 +12,6 @@
 
 #include <nan.h>
 #include <string>
-#include "rdkafkacpp.h"
 #include "src/common.h"
 #include "src/errors.h"
 #include "src/config.h"

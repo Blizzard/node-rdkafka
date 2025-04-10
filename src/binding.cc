@@ -7,8 +7,31 @@
  * of the MIT license.  See the LICENSE.txt file for details.
  */
 
-#include <iostream>
+// Prevent warnings from node-gyp bindings.h
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma clang diagnostic ignored "-Wunused-parameter"
+
+#include <string>
+#include <vector>
+#include <list>
+
+// Include rdkafka headers first
+#include "rdkafka.h" // C API
+#include <rdkafkacpp.h> // C++ API
+
+// Nan/V8 first
+#include <nan.h>
+
+// Now local headers
 #include "src/binding.h"
+#include "src/common.h"
+#include "src/errors.h"
+#include "src/callbacks.h"
+#include "src/config.h"
+#include "src/connection.h"
+#include "src/producer.h"
+#include "src/kafka-consumer.h"
+#include "src/admin.h"
 
 using NodeKafka::Producer;
 using NodeKafka::KafkaConsumer;

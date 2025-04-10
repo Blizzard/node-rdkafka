@@ -14,12 +14,15 @@
 #include <nan.h>
 #include <string>
 #include <vector>
+#include <map>
+#include <set>
 
 #include "src/common.h"
 #include "src/producer.h"
 #include "src/kafka-consumer.h"
 #include "src/admin.h"
 #include "rdkafka.h"  // NOLINT
+#include <rdkafkacpp.h>
 
 namespace NodeKafka {
 namespace Workers {
@@ -39,7 +42,12 @@ class ErrorAwareWorker : public Nan::AsyncWorker {
     const unsigned int argc = 1;
     v8::Local<v8::Value> argv[argc] = { Nan::Error(ErrorMessage()) };
 
-    callback->Call(argc, argv);
+    Nan::Call(*callback, argc, argv);
+  }
+
+  // Helper method to check if an error has been set
+  bool IsErrored() {
+    return m_baton.err() != RdKafka::ERR_NO_ERROR;
   }
 
  protected:
@@ -500,6 +508,60 @@ class AdminClientCreatePartitions : public ErrorAwareWorker {
   NodeKafka::AdminClient * m_client;
   rd_kafka_NewPartitions_t* m_partitions;
   const int m_timeout_ms;
+};
+
+/**
+ * @brief Describe configuration for resources
+ */
+class AdminClientDescribeConfigs : public ErrorAwareWorker {
+ public:
+  AdminClientDescribeConfigs(Nan::Callback*, NodeKafka::AdminClient*,
+    rd_kafka_ConfigResource_t**, size_t, const int &);
+  ~AdminClientDescribeConfigs();
+
+  void Execute();
+  void HandleOKCallback();
+  void HandleErrorCallback();
+
+  // Helper method to convert result event to V8 object
+  v8::Local<v8::Object> ResultEventToV8Object(
+    rd_kafka_event_t *event,
+    const std::map<std::pair<int, std::string>, std::set<std::string>>& requested_configs);
+
+ private:
+  NodeKafka::AdminClient * m_client;
+  rd_kafka_ConfigResource_t** m_configs;
+  size_t m_config_cnt;
+  const int m_timeout_ms;
+  rd_kafka_AdminOptions_t *m_opts;
+  rd_kafka_event_t *m_event;
+  // Map: Resource Key (Type, Name) -> Set of requested config names
+  std::map<std::pair<int, std::string>, std::set<std::string>> m_requested_configs;
+};
+
+/**
+ * @brief Alter configuration for resources
+ */
+class AdminClientAlterConfigs : public ErrorAwareWorker {
+ public:
+  AdminClientAlterConfigs(Nan::Callback*, NodeKafka::AdminClient*,
+    rd_kafka_ConfigResource_t**, size_t, const int &);
+  ~AdminClientAlterConfigs();
+
+  void Execute();
+  void HandleOKCallback();
+  void HandleErrorCallback();
+
+  // Helper method to convert result event to V8 object
+  v8::Local<v8::Object> ResultEventToV8Object(rd_kafka_event_t* event_response);
+
+ private:
+  NodeKafka::AdminClient * m_client;
+  rd_kafka_ConfigResource_t** m_configs;
+  size_t m_config_cnt;
+  const int m_timeout_ms;
+  rd_kafka_event_t* m_result_event;
+  RdKafka::ErrorCode m_error_code;
 };
 
 }  // namespace Workers
