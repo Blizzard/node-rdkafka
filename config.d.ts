@@ -1,4 +1,4 @@
-// ====== Generated from librdkafka 2.8.0 file CONFIGURATION.md ======
+// ====== Generated from librdkafka 2.10.0 file CONFIGURATION.md ======
 // Code that generated this is a derivative work of the code from Nam Nguyen
 // https://gist.github.com/ntgn81/066c2c8ec5b4238f85d1e9168a04e3fb
 
@@ -61,6 +61,13 @@ export interface GlobalConfig {
      * @default 1000000
      */
     "max.in.flight"?: number;
+
+    /**
+     * Controls how the client recovers when none of the brokers known to it is available. If set to `none`, the client fails with a fatal error. If set to `rebootstrap`, the client repeats the bootstrap process using `bootstrap.servers` and brokers added through `rd_kafka_brokers_add()`. Rebootstrapping is useful when a client communicates with brokers so infrequently that the set of brokers may change entirely before the client refreshes metadata. Metadata recovery is triggered when all last-known brokers appear unavailable simultaneously.
+     *
+     * @default rebootstrap
+     */
+    "metadata.recovery.strategy"?: 'none' | 'rebootstrap';
 
     /**
      * Period of time in milliseconds at which topic and broker metadata is refreshed in order to proactively discover any new brokers, topics, partitions or partition leader changes. Use -1 to disable the intervalled refresh (not recommended). If there are no locally referenced topics (no topic objects created, no messages produced, no subscription or no assignment) then only the broker list will be refreshed every interval but no more often than every 10s.
@@ -152,7 +159,7 @@ export interface GlobalConfig {
     /**
      * Disable the Nagle algorithm (TCP_NODELAY) on broker sockets.
      *
-     * @default false
+     * @default true
      */
     "socket.nagle.disable"?: boolean;
 
@@ -329,7 +336,7 @@ export interface GlobalConfig {
     "internal.termination.signal"?: number;
 
     /**
-     * Request broker's supported API versions to adjust functionality to available protocol features. If set to false, or the ApiVersionRequest fails, the fallback version `broker.version.fallback` will be used. **NOTE**: Depends on broker version >=0.10.0. If the request is not supported by (an older) broker the `broker.version.fallback` fallback is used.
+     * **DEPRECATED** **Post-deprecation actions: remove this configuration property, brokers < 0.10.0 won't be supported anymore in librdkafka 3.x.** Request broker's supported API versions to adjust functionality to available protocol features. If set to false, or the ApiVersionRequest fails, the fallback version `broker.version.fallback` will be used. **NOTE**: Depends on broker version >=0.10.0. If the request is not supported by (an older) broker the `broker.version.fallback` fallback is used.
      *
      * @default true
      */
@@ -343,14 +350,14 @@ export interface GlobalConfig {
     "api.version.request.timeout.ms"?: number;
 
     /**
-     * Dictates how long the `broker.version.fallback` fallback is used in the case the ApiVersionRequest fails. **NOTE**: The ApiVersionRequest is only issued when a new connection to the broker is made (such as after an upgrade).
+     * **DEPRECATED** **Post-deprecation actions: remove this configuration property, brokers < 0.10.0 won't be supported anymore in librdkafka 3.x.** Dictates how long the `broker.version.fallback` fallback is used in the case the ApiVersionRequest fails. **NOTE**: The ApiVersionRequest is only issued when a new connection to the broker is made (such as after an upgrade).
      *
      * @default 0
      */
     "api.version.fallback.ms"?: number;
 
     /**
-     * Older broker versions (before 0.10.0) provide no way for a client to query for supported protocol features (ApiVersionRequest, see `api.version.request`) making it impossible for the client to know what features it may use. As a workaround a user may set this property to the expected broker version and the client will automatically adjust its feature set accordingly if the ApiVersionRequest fails (or is disabled). The fallback broker version will be used for `api.version.fallback.ms`. Valid values are: 0.9.0, 0.8.2, 0.8.1, 0.8.0. Any other value >= 0.10, such as 0.10.2.1, enables ApiVersionRequests.
+     * **DEPRECATED** **Post-deprecation actions: remove this configuration property, brokers < 0.10.0 won't be supported anymore in librdkafka 3.x.** Older broker versions (before 0.10.0) provide no way for a client to query for supported protocol features (ApiVersionRequest, see `api.version.request`) making it impossible for the client to know what features it may use. As a workaround a user may set this property to the expected broker version and the client will automatically adjust its feature set accordingly if the ApiVersionRequest fails (or is disabled). The fallback broker version will be used for `api.version.fallback.ms`. Valid values are: 0.9.0, 0.8.2, 0.8.1, 0.8.0. Any other value >= 0.10, such as 0.10.2.1, enables ApiVersionRequests.
      *
      * @default 0.10.0
      */
@@ -796,28 +803,28 @@ export interface ConsumerGlobalConfig extends GlobalConfig {
     "group.instance.id"?: string;
 
     /**
-     * The name of one or more partition assignment strategies. The elected group leader will use a strategy supported by all members of the group to assign partitions to group members. If there is more than one eligible strategy, preference is determined by the order of this list (strategies earlier in the list have higher priority). Cooperative and non-cooperative (eager) strategies must not be mixed. Available strategies: range, roundrobin, cooperative-sticky.
+     * The name of one or more partition assignment strategies. The elected group leader will use a strategy supported by all members of the group to assign partitions to group members. If there is more than one eligible strategy, preference is determined by the order of this list (strategies earlier in the list have higher priority). Cooperative and non-cooperative (eager)strategies must not be mixed. `partition.assignment.strategy` is not supported for `group.protocol=consumer`. Use `group.remote.assignor` instead. Available strategies: range, roundrobin, cooperative-sticky.
      *
      * @default range,roundrobin
      */
     "partition.assignment.strategy"?: string;
 
     /**
-     * Client group session and failure detection timeout. The consumer sends periodic heartbeats (heartbeat.interval.ms) to indicate its liveness to the broker. If no hearts are received by the broker for a group member within the session timeout, the broker will remove the consumer from the group and trigger a rebalance. The allowed range is configured with the **broker** configuration properties `group.min.session.timeout.ms` and `group.max.session.timeout.ms`. Also see `max.poll.interval.ms`.
+     * Client group session and failure detection timeout. The consumer sends periodic heartbeats (heartbeat.interval.ms) to indicate its liveness to the broker. If no hearts are received by the broker for a group member within the session timeout, the broker will remove the consumer from the group and trigger a rebalance. The allowed range is configured with the **broker** configuration properties `group.min.session.timeout.ms` and `group.max.session.timeout.ms`. `session.timeout.ms` is not supported for `group.protocol=consumer`. It is set with the broker configuration property `group.consumer.session.timeout.ms` by default or can be configured through the AdminClient IncrementalAlterConfigs API. The allowed range is configured with the broker configuration properties `group.consumer.min.session.timeout.ms` and `group.consumer.max.session.timeout.ms`. Also see `max.poll.interval.ms`.
      *
      * @default 45000
      */
     "session.timeout.ms"?: number;
 
     /**
-     * Group session keepalive heartbeat interval.
+     * Group session keepalive heartbeat interval. `heartbeat.interval.ms` is not supported for `group.protocol=consumer`. It is set with the broker configuration property `group.consumer.heartbeat.interval.ms` by default or can be configured through the AdminClient IncrementalAlterConfigs API. The allowed range is configured with the broker configuration properties `group.consumer.min.heartbeat.interval.ms` and `group.consumer.max.heartbeat.interval.ms`.
      *
      * @default 3000
      */
     "heartbeat.interval.ms"?: number;
 
     /**
-     * Group protocol type for the `classic` group protocol. NOTE: Currently, the only supported group protocol type is `consumer`.
+     * Group protocol type for the `classic` group protocol. NOTE: Currently, the only supported group protocol type is `consumer`. `group.protocol.type` is not supported for `group.protocol=consumer`
      *
      * @default consumer
      */
