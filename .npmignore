@@ -5,7 +5,7 @@ deps/*
 .gitmodules
 Dockerfile
 deps/librdkafka/config.h
-deps/librdkafka/examples
+deps/librdkafka/examples/*
 build
 .github
 .vscode
