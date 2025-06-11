@@ -1,4 +1,4 @@
-// ====== Generated from librdkafka 2.10.0 file CONFIGURATION.md ======
+// ====== Generated from librdkafka 2.10.1 file CONFIGURATION.md ======
 // Code that generated this is a derivative work of the code from Nam Nguyen
 // https://gist.github.com/ntgn81/066c2c8ec5b4238f85d1e9168a04e3fb
 
