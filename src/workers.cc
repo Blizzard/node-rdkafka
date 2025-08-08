@@ -767,7 +767,10 @@ void KafkaConsumerConsumeLoop::HandleMessageCallback(RdKafka::Message* msg, RdKa
     delete msg;
   }
 
-  callback->Call(argc, argv);
+  // Don't call after work completed
+  if (callback && !callback->IsEmpty()) {
+    callback->Call(argc, argv);
+  }
 }
 
 void KafkaConsumerConsumeLoop::HandleOKCallback() {
