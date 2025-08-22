@@ -1,4 +1,4 @@
-// ====== Generated from librdkafka 2.10.1 file src-cpp/rdkafkacpp.h ======
+// ====== Generated from librdkafka 2.11.1 file src-cpp/rdkafkacpp.h ======
 export const CODES: { ERRORS: {
   /* Internal errors to rdkafka: */
   /** Begin internal error codes (**-200**) */
@@ -128,6 +128,11 @@ export const CODES: { ERRORS: {
   ERR__AUTO_OFFSET_RESET: number,
   /** Partition log truncation detected (**-139**) */
   ERR__LOG_TRUNCATION: number,
+  /** A different record in the batch was invalid
+  *  and this message failed persisting (**-138**) */
+  ERR__INVALID_DIFFERENT_RECORD: number,
+  /** Broker is going away but client isn't terminating (**-137**) */
+  ERR__DESTROY_BROKER: number,
 
   /** End internal error codes (**-100**) */
   ERR__END: number,
@@ -346,4 +351,25 @@ export const CODES: { ERRORS: {
   ERR_FEATURE_UPDATE_FAILED: number,
   /** Request principal deserialization failed during forwarding (**97**) */
   ERR_PRINCIPAL_DESERIALIZATION_FAILURE: number,
+  /** Unknown Topic Id (**100**) */
+  ERR_UNKNOWN_TOPIC_ID: number,
+  /** The member epoch is fenced by the group coordinator (**110**) */
+  ERR_FENCED_MEMBER_EPOCH: number,
+  /** The instance ID is still used by another member in the
+  *  consumer group (**111**) */
+  ERR_UNRELEASED_INSTANCE_ID: number,
+  /** The assignor or its version range is not supported by the consumer
+  *  group (**112**) */
+  ERR_UNSUPPORTED_ASSIGNOR: number,
+  /** The member epoch is stale (**113**) */
+  ERR_STALE_MEMBER_EPOCH: number,
+  /** Client sent a push telemetry request with an invalid or outdated
+  *  subscription ID (**117**) */
+  ERR_UNKNOWN_SUBSCRIPTION_ID: number,
+  /** Client sent a push telemetry request larger than the maximum size
+  *  the broker will accept (**118**) */
+  ERR_TELEMETRY_TOO_LARGE: number,
+  /** Client metadata is stale,
+  *  client should rebootstrap to obtain new metadata (**129**) */
+  ERR_REBOOTSTRAP_REQUIRED: number,
 }}
