@@ -100,7 +100,9 @@ class MessageWorker : public ErrorAwareWorker {
     }
 
     for (unsigned int i = 0; i < message_queue.size(); i++) {
-      HandleMessageCallback(message_queue[i], RdKafka::ERR_NO_ERROR);
+      if (callback && !callback->IsEmpty()) {
+        HandleMessageCallback(message_queue[i], RdKafka::ERR_NO_ERROR);
+      }
 
       // we are done with it. it is about to go out of scope
       // for the last time so let's just free it up here. can't rely
@@ -108,7 +110,9 @@ class MessageWorker : public ErrorAwareWorker {
     }
 
     for (unsigned int i = 0; i < warning_queue.size(); i++) {
-      HandleMessageCallback(NULL, warning_queue[i]);
+      if (callback && !callback->IsEmpty()) {
+        HandleMessageCallback(NULL, warning_queue[i]);
+      }
     }
   }
 
