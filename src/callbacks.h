@@ -12,6 +12,7 @@
 #include <uv.h>
 #include <nan.h>
 
+#include <memory>
 #include <vector>
 #include <deque>
 
@@ -49,7 +50,9 @@ class Dispatcher {
      dispatcher->Flush();
   }
 
-  uv_async_t *async;
+  static inline void async_deleter(uv_async_t* async);
+
+  std::unique_ptr<uv_async_t, decltype(async_deleter)*> async;
 };
 
 struct event_t {
