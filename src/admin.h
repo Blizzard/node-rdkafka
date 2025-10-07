@@ -37,7 +37,7 @@ namespace NodeKafka {
 
 class AdminClient : public Connection {
  public:
-  static void Init(v8::Local<v8::Object>);
+  static NAN_MODULE_INIT(Init);
   static v8::Local<v8::Object> NewInstance(v8::Local<v8::Value>);
 
   void ActivateDispatchers();
@@ -49,8 +49,8 @@ class AdminClient : public Connection {
   Baton CreateTopic(rd_kafka_NewTopic_t* topic, int timeout_ms);
   Baton DeleteTopic(rd_kafka_DeleteTopic_t* topic, int timeout_ms);
   Baton CreatePartitions(rd_kafka_NewPartitions_t* topic, int timeout_ms);
-  // Baton AlterConfig(rd_kafka_NewTopic_t* topic, int timeout_ms);
-  // Baton DescribeConfig(rd_kafka_NewTopic_t* topic, int timeout_ms);
+  std::pair<RdKafka::ErrorCode, rd_kafka_event_t*> DescribeConfigs(rd_kafka_ConfigResource_t** configs, size_t config_cnt, int timeout_ms);
+  std::pair<RdKafka::ErrorCode, rd_kafka_event_t*> AlterConfigs(rd_kafka_ConfigResource_t** configs, size_t config_cnt, int timeout_ms);
 
  protected:
   static Nan::Persistent<v8::Function> constructor;
@@ -67,9 +67,12 @@ class AdminClient : public Connection {
   static NAN_METHOD(NodeCreateTopic);
   static NAN_METHOD(NodeDeleteTopic);
   static NAN_METHOD(NodeCreatePartitions);
+  static NAN_METHOD(NodeDescribeConfigs);
+  static NAN_METHOD(NodeAlterConfigs);
 
   static NAN_METHOD(NodeConnect);
   static NAN_METHOD(NodeDisconnect);
+  static NAN_METHOD(NodeSetToken);
 };
 
 }  // namespace NodeKafka

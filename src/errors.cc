@@ -68,7 +68,6 @@ Baton::Baton(const RdKafka::ErrorCode &code, std::string errstr, bool isFatal,
   m_isTxnRequiresAbort = isTxnRequiresAbort;
 }
 
-
 v8::Local<v8::Object> Baton::ToObject() {
   if (m_errstr.empty()) {
     return RdKafkaError(m_err);
