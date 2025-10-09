@@ -1249,7 +1249,7 @@ NAN_METHOD(KafkaConsumer::NodeConsumeLoop) {
 
   if (info.Length() < 3) {
     // Just throw an exception
-    return Nan::ThrowError("Invalid number of parameters");
+    return Nan::ThrowError("Invalid number of parameters, expected 3");
   }
 
   if (!info[0]->IsNumber()) {
@@ -1306,11 +1306,12 @@ NAN_METHOD(KafkaConsumer::NodeConsumeLoop) {
 NAN_METHOD(KafkaConsumer::NodeConsume) {
   Nan::HandleScope scope;
 
-  if (info.Length() < 2) {
-    // Just throw an exception
-    return Nan::ThrowError("Invalid number of parameters");
+  if (info.Length() != 4) {
+    // Just throw an exception — we didn't get enough arguments
+    return Nan::ThrowError("Invalid number of arguments, expected 4");
   }
 
+  // The first argument should always be the timeout.
   int timeout_ms;
   Nan::Maybe<uint32_t> maybeTimeout =
     Nan::To<uint32_t>(info[0].As<v8::Number>());
@@ -1321,40 +1322,36 @@ NAN_METHOD(KafkaConsumer::NodeConsume) {
     timeout_ms = static_cast<int>(maybeTimeout.FromJust());
   }
 
-  if (info[1]->IsNumber()) {
-    if (!info[2]->IsFunction()) {
-      return Nan::ThrowError("Need to specify a callback");
-    }
-
-    v8::Local<v8::Number> numMessagesNumber = info[1].As<v8::Number>();
-    Nan::Maybe<uint32_t> numMessagesMaybe = Nan::To<uint32_t>(numMessagesNumber);  // NOLINT
-
-    uint32_t numMessages;
-    if (numMessagesMaybe.IsNothing()) {
-      return Nan::ThrowError("Parameter must be a number over 0");
-    } else {
-      numMessages = numMessagesMaybe.FromJust();
-    }
-
-    KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
-
-    v8::Local<v8::Function> cb = info[2].As<v8::Function>();
-    Nan::Callback *callback = new Nan::Callback(cb);
-    Nan::AsyncQueueWorker(
-      new Workers::KafkaConsumerConsumeNum(callback, consumer, numMessages, timeout_ms));  // NOLINT
-
+  // Parse the total timeout — how long to wait
+  uint total_timeout_ms;
+  Nan::Maybe<uint32_t> maybeTotalTimeout =
+    Nan::To<uint32_t>(info[1].As<v8::Number>());
+  if (maybeTotalTimeout.IsNothing()) {
+    total_timeout_ms = -1;
   } else {
-    if (!info[1]->IsFunction()) {
-      return Nan::ThrowError("Need to specify a callback");
-    }
-
-    KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
-
-    v8::Local<v8::Function> cb = info[1].As<v8::Function>();
-    Nan::Callback *callback = new Nan::Callback(cb);
-    Nan::AsyncQueueWorker(
-      new Workers::KafkaConsumerConsume(callback, consumer, timeout_ms));
+    total_timeout_ms = static_cast<uint>(maybeTotalTimeout.FromJust());
   }
+
+  // Parse the # of messages to read
+  v8::Local<v8::Number> numMessagesNumber = info[2].As<v8::Number>();
+  Nan::Maybe<uint32_t> numMessagesMaybe = Nan::To<uint32_t>(numMessagesNumber);  // NOLINT
+  uint32_t numMessages;
+  if (numMessagesMaybe.IsNothing()) {
+    return Nan::ThrowError("Number of messages to consume must be a number over 0");
+  } else {
+    numMessages = numMessagesMaybe.FromJust();
+  }
+
+  // Check that the callback is configured properly
+  if (!info[3]->IsFunction()) {
+    return Nan::ThrowError("Need to specify a callback");
+  }
+  v8::Local<v8::Function> cb = info[3].As<v8::Function>();
+  Nan::Callback *callback = new Nan::Callback(cb);
+
+  KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
+  Nan::AsyncQueueWorker(
+    new Workers::KafkaConsumerConsumeNum(callback, consumer, numMessages, timeout_ms, total_timeout_ms));  // NOLINT
 
   info.GetReturnValue().Set(Nan::Null());
 }
@@ -1395,7 +1392,7 @@ NAN_METHOD(KafkaConsumer::NodeDisconnect) {
     // cleanup the async worker
     consumeLoop->WorkComplete();
     consumeLoop->Destroy();
-  
+
     consumer->m_consume_loop = nullptr;
   }
 
