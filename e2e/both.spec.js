@@ -229,7 +229,7 @@ describe('Consumer/Producer', function() {
       setTimeout(function() {
         producer.produce(topic, null, buffer, null);
       }, 500)
-      consumer.setDefaultConsumeTimeout(2000);
+      consumer.setDefaultConsumeTimeout(3000);
       consumer.consume(1000, function(err, messages) {
         t.ifError(err);
         t.equal(messages.length, 1);
@@ -262,11 +262,54 @@ describe('Consumer/Producer', function() {
       setTimeout(function() {
         producer.produce(topic, null, buffer, null);
       }, 2000)
-      consumer.setDefaultConsumeTimeout(3000);
+      consumer.setDefaultConsumeTimeout(5000);
       consumer.consume(1000, function(err, messages) {
         t.ifError(err);
         t.equal(messages.length, 1);
         t.deepStrictEqual(events, ["partition.eof", "data", "partition.eof"]);
+        done();
+      });
+    });
+  });
+
+  it('should stop consuming batch after consume timeout', function(done) {
+    crypto.randomBytes(4096, function(ex, buffer) {
+      producer.setPollInterval(10);
+
+      producer.once('delivery-report', function(err, report) {
+        t.ifError(err);
+      });
+
+      consumer.subscribe([topic]);
+
+      var events = [];
+
+      consumer.once('data', function(msg) {
+        events.push("data");
+      });
+
+      consumer.on('partition.eof', function(eof) {
+        events.push("partition.eof");
+      });
+
+      let timeoutId;
+      let toProduce = 10;
+      produceLoop = () => {
+        producer.produce(topic, null, buffer, null);
+        if (--toProduce > 0) {
+          timeoutId = setTimeout(produceLoop, 500);
+        }
+      };
+      produceLoop();
+
+      consumer.setDefaultConsumeTimeout(2000);
+      const startedAt = Date.now();
+      consumer.consume(100, function(err, messages) {
+        t.ifError(err);
+        t(Date.now() - startedAt < 3000, 'Consume took longer than consume timeout');
+        t(messages.length > 2, 'Too few messages consumed within batch');
+        t(messages.length < 8, 'Too many messages consumed within batch');
+        clearTimeout(timeoutId);
         done();
       });
     });
