@@ -1,4 +1,4 @@
-// ====== Generated from librdkafka 2.11.1 file CONFIGURATION.md ======
+// ====== Generated from librdkafka 2.12.0 file CONFIGURATION.md ======
 // Code that generated this is a derivative work of the code from Nam Nguyen
 // https://gist.github.com/ntgn81/066c2c8ec5b4238f85d1e9168a04e3fb
 
@@ -712,6 +712,13 @@ export interface GlobalConfig {
      * Path to the JWT template file. Only used when `sasl.oauthbearer.method` is set to "oidc" and JWT assertion is needed.
      */
     "sasl.oauthbearer.assertion.jwt.template.file"?: string;
+
+    /**
+     * Type of metadata-based authentication to use for OAUTHBEARER/OIDC `azure_imds` authenticates using the Azure IMDS endpoint. Sets a default value for `sasl.oauthbearer.token.endpoint.url` if missing. Configuration values specific of chosen authentication type can be passed through `sasl.oauthbearer.config`.
+     *
+     * @default none
+     */
+    "sasl.oauthbearer.metadata.authentication.type"?: 'none' | 'azure_imds';
 
     /**
      * List of plugin libraries to load (; separated). The library search path is platform dependent (see dlopen(3) for Unix and LoadLibrary() for Windows). If no filename extension is specified the platform-specific extension (such as .dll or .so) will be appended automatically.
