@@ -11,15 +11,17 @@
 #define SRC_COMMON_H_
 
 #include <nan.h>
+#include <node.h>
 
 #include <iostream>
 #include <string>
 #include <vector>
 
-#include "rdkafkacpp.h"
 #include "rdkafka.h"  // NOLINT
+#include <rdkafkacpp.h>
 
 #include "src/errors.h"
+#include "src/callbacks.h"
 
 typedef std::vector<const RdKafka::BrokerMetadata*> BrokerMetadataList;
 typedef std::vector<const RdKafka::PartitionMetadata*> PartitionMetadataList;
@@ -92,9 +94,14 @@ namespace Conversion {
 
 namespace Admin {
   // Topics from topic object, or topic object array
-  rd_kafka_NewTopic_t* FromV8TopicObject(
+  rd_kafka_NewTopic_t* FromV8NewTopicObject(
     v8::Local<v8::Object>, std::string &errstr);  // NOLINT
   rd_kafka_NewTopic_t** FromV8TopicObjectArray(v8::Local<v8::Array>);
+  rd_kafka_DeleteTopic_t* FromV8DeleteTopicObject(v8::Local<v8::Object> object,
+                                           std::string & errstr);
+  rd_kafka_ConfigResource_t* FromV8ConfigResourceObject(
+    v8::Local<v8::Object> object,
+    std::string & errstr);
 }
 
 namespace Topic {

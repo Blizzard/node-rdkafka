@@ -92,7 +92,7 @@ Baton AdminClient::Disconnect() {
 
 Nan::Persistent<v8::Function> AdminClient::constructor;
 
-void AdminClient::Init(v8::Local<v8::Object> exports) {
+NAN_MODULE_INIT(AdminClient::Init) {
   Nan::HandleScope scope;
 
   v8::Local<v8::FunctionTemplate> tpl = Nan::New<v8::FunctionTemplate>(New);
@@ -100,17 +100,18 @@ void AdminClient::Init(v8::Local<v8::Object> exports) {
   tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
   // Admin client operations
+  Nan::SetPrototypeMethod(tpl, "connect", NodeConnect);
+  Nan::SetPrototypeMethod(tpl, "disconnect", NodeDisconnect);
   Nan::SetPrototypeMethod(tpl, "createTopic", NodeCreateTopic);
   Nan::SetPrototypeMethod(tpl, "deleteTopic", NodeDeleteTopic);
   Nan::SetPrototypeMethod(tpl, "createPartitions", NodeCreatePartitions);
-
-  Nan::SetPrototypeMethod(tpl, "connect", NodeConnect);
-  Nan::SetPrototypeMethod(tpl, "disconnect", NodeDisconnect);
+  Nan::SetPrototypeMethod(tpl, "describeConfigs", NodeDescribeConfigs);
+  Nan::SetPrototypeMethod(tpl, "alterConfigs", NodeAlterConfigs);
   Nan::SetPrototypeMethod(tpl, "setToken", NodeSetToken);
 
   constructor.Reset(
-    (tpl->GetFunction(Nan::GetCurrentContext())).ToLocalChecked());
-  Nan::Set(exports, Nan::New("AdminClient").ToLocalChecked(),
+    tpl->GetFunction(Nan::GetCurrentContext()).ToLocalChecked());
+  Nan::Set(target, Nan::New("AdminClient").ToLocalChecked(),
     tpl->GetFunction(Nan::GetCurrentContext()).ToLocalChecked());
 }
 
@@ -185,23 +186,33 @@ rd_kafka_event_t* PollForEvent(
   rd_kafka_event_t * event_response = nullptr;
 
   // Poll the event queue until we get it
+  int attempt_count = 0;
   do {
+    attempt_count++;
     // free previously fetched event
-    rd_kafka_event_destroy(event_response);
+    if (event_response != nullptr) {
+      rd_kafka_event_destroy(event_response);
+      event_response = nullptr;
+    }
+
     // poll and update attempts and exponential timeout
     event_response = rd_kafka_queue_poll(topic_rkqu, exp_timeout_ms);
+
     attempts = attempts - 1;
     exp_timeout_ms = 2 * exp_timeout_ms;
-  } while (
-    rd_kafka_event_type(event_response) != event_type &&
-    attempts > 0);
+  } while (event_response != nullptr &&
+           rd_kafka_event_type(event_response) != event_type &&
+           attempts > 0);
 
   // If this isn't the type of response we want, or if we do not have a response
   // type, bail out with a null
-  if (event_response == NULL ||
-    rd_kafka_event_type(event_response) != event_type) {
+  if (event_response == nullptr) {
+    return nullptr;
+  }
+
+  if (rd_kafka_event_type(event_response) != event_type) {
     rd_kafka_event_destroy(event_response);
-    return NULL;
+    return nullptr;
   }
 
   return event_response;
@@ -508,7 +519,7 @@ NAN_METHOD(AdminClient::NodeCreateTopic) {
 
   std::string errstr;
   // Get that topic we want to create
-  rd_kafka_NewTopic_t* topic = Conversion::Admin::FromV8TopicObject(
+  rd_kafka_NewTopic_t* topic = Conversion::Admin::FromV8NewTopicObject(
     info[0].As<v8::Object>(), errstr);
 
   if (topic == NULL) {
@@ -550,7 +561,7 @@ NAN_METHOD(AdminClient::NodeDeleteTopic) {
   // Get the timeout
   int timeout = Nan::To<int32_t>(info[1]).FromJust();
 
-  // Get that topic we want to create
+  // Get that topic we want to create - NO LONGER FROM OBJECT, JUST NAME
   rd_kafka_DeleteTopic_t* topic = rd_kafka_DeleteTopic_new(
     topic_name.c_str());
 
@@ -615,6 +626,489 @@ NAN_METHOD(AdminClient::NodeCreatePartitions) {
     callback, client, new_partitions, timeout));
 
   return info.GetReturnValue().Set(Nan::Null());
+}
+
+// Update AdminClient::DescribeConfigs to use C API
+std::pair<RdKafka::ErrorCode, rd_kafka_event_t*> AdminClient::DescribeConfigs(
+    rd_kafka_ConfigResource_t** configs,
+    size_t config_cnt,
+    int timeout_ms) {
+
+  if (!IsConnected()) {
+    return std::make_pair(RdKafka::ERR__STATE, nullptr);
+  }
+
+  scoped_shared_read_lock lock(m_connection_lock);
+  if (!IsConnected()) {
+    return std::make_pair(RdKafka::ERR__STATE, nullptr);
+  }
+
+  // Create admin options
+  rd_kafka_AdminOptions_t *options = rd_kafka_AdminOptions_new(
+    m_client->c_ptr(), RD_KAFKA_ADMIN_OP_DESCRIBECONFIGS);
+
+  if (!options) {
+    return std::make_pair(RdKafka::ERR__FAIL, nullptr);
+  }
+
+  // Create queue for this operation
+  rd_kafka_queue_t* queue = rd_kafka_queue_new(m_client->c_ptr());
+
+  // Call the C API to describe configs
+  rd_kafka_DescribeConfigs(
+    m_client->c_ptr(),
+    configs,
+    config_cnt,
+    options,
+    queue);
+
+  // Poll for the result event with exponential backoff
+  rd_kafka_event_t* event = rd_kafka_queue_poll(queue, timeout_ms);
+
+  // Destroy the queue as we're done with it
+  rd_kafka_queue_destroy(queue);
+
+  // Destroy the options as we're done with them
+  rd_kafka_AdminOptions_destroy(options);
+
+  if (!event) {
+    return std::make_pair(RdKafka::ERR__TIMED_OUT, nullptr);
+  }
+
+  // Check that we got the right event type
+  if (rd_kafka_event_type(event) != RD_KAFKA_EVENT_DESCRIBECONFIGS_RESULT) {
+    rd_kafka_event_destroy(event);
+    return std::make_pair(RdKafka::ERR__FAIL, nullptr);
+  }
+
+  // Check for errors in the event
+  if (rd_kafka_event_error(event)) {
+    // Even when there's an error, return the event since it may contain useful error details
+    // The caller is responsible for destroying the event
+    return std::make_pair(
+      static_cast<RdKafka::ErrorCode>(rd_kafka_event_error(event)), 
+      event
+    );
+  }
+
+  return std::make_pair(RdKafka::ERR_NO_ERROR, event);
+}
+
+// Add the new AlterConfigs method here
+std::pair<RdKafka::ErrorCode, rd_kafka_event_t*> AdminClient::AlterConfigs(
+    rd_kafka_ConfigResource_t** configs,
+    size_t config_cnt,
+    int timeout_ms) {
+
+  if (!IsConnected()) {
+    return std::make_pair(RdKafka::ERR__STATE, nullptr);
+  }
+
+  scoped_shared_read_lock lock(m_connection_lock);
+  if (!IsConnected()) {
+    return std::make_pair(RdKafka::ERR__STATE, nullptr);
+  }
+
+  // Create admin options
+  rd_kafka_AdminOptions_t *options = rd_kafka_AdminOptions_new(
+    m_client->c_ptr(), RD_KAFKA_ADMIN_OP_ALTERCONFIGS);
+
+  if (!options) {
+    return std::make_pair(RdKafka::ERR__FAIL, nullptr);
+  }
+
+  // Create queue for this operation
+  rd_kafka_queue_t* queue = rd_kafka_queue_new(m_client->c_ptr());
+
+  // Call the C API to alter configs
+  rd_kafka_AlterConfigs(
+    m_client->c_ptr(),
+    configs,
+    config_cnt,
+    options,
+    queue);
+
+  // Poll for the result event
+  rd_kafka_event_t* event = rd_kafka_queue_poll(queue, timeout_ms);
+
+  // Destroy the queue as we're done with it
+  rd_kafka_queue_destroy(queue);
+
+  // Destroy the options as we're done with them
+  rd_kafka_AdminOptions_destroy(options);
+
+  if (!event) {
+    return std::make_pair(RdKafka::ERR__TIMED_OUT, nullptr);
+  }
+
+  // Check that we got the right event type
+  if (rd_kafka_event_type(event) != RD_KAFKA_EVENT_ALTERCONFIGS_RESULT) {
+    rd_kafka_event_destroy(event);
+    return std::make_pair(RdKafka::ERR__FAIL, nullptr);
+  }
+
+  // Check for errors in the event
+  if (rd_kafka_event_error(event)) {
+    // Even when there's an error, return the event since it may contain useful error details
+    // The caller is responsible for destroying the event
+    return std::make_pair(
+      static_cast<RdKafka::ErrorCode>(rd_kafka_event_error(event)), 
+      event
+    );
+  }
+
+  return std::make_pair(RdKafka::ERR_NO_ERROR, event);
+}
+
+NAN_METHOD(AdminClient::NodeDescribeConfigs) {
+  Nan::HandleScope scope;
+
+  if (info.Length() < 2 || !info[1]->IsFunction()) {
+    // Just throw an exception
+    return Nan::ThrowError("Need to specify array of resources and a callback");
+  }
+
+  if (!info[0]->IsArray()) {
+    return Nan::ThrowError("First parameter must be an array of resources");
+  }
+
+  AdminClient* client = ObjectWrap::Unwrap<AdminClient>(info.This());
+
+  // Get the array of resources
+  v8::Local<v8::Array> resources_array = info[0].As<v8::Array>();
+  size_t resource_cnt = resources_array->Length();
+
+  if (resource_cnt == 0) {
+    return Nan::ThrowError("Resources array must not be empty");
+  }
+
+  // Create the final callback object
+  v8::Local<v8::Function> cb = info[1].As<v8::Function>();
+  Nan::Callback *callback = new Nan::Callback(cb);
+
+  // Get the timeout (optional third parameter)
+  int timeout_ms = 5000;  // Default timeout
+
+  if (info.Length() >= 3 && !info[2]->IsUndefined()) {
+    if (!info[2]->IsInt32()) {
+      return Nan::ThrowError("Timeout must be an integer");
+    }
+    timeout_ms = Nan::To<int>(info[2]).FromJust();
+  }
+
+  // Convert the JS array to ConfigResource objects
+  rd_kafka_ConfigResource_t** configs = new rd_kafka_ConfigResource_t*[resource_cnt];
+
+  for (size_t i = 0; i < resource_cnt; i++) {
+    v8::Local<v8::Value> resource = Nan::Get(resources_array, i).ToLocalChecked();
+
+    if (!resource->IsObject()) {
+      delete[] configs;
+      return Nan::ThrowError("All resources must be objects with type and name");
+    }
+
+    v8::Local<v8::Object> resource_obj = resource.As<v8::Object>();
+
+    if (!Nan::Has(resource_obj, Nan::New("type").ToLocalChecked()).FromJust() ||
+        !Nan::Has(resource_obj, Nan::New("name").ToLocalChecked()).FromJust()) {
+      delete[] configs;
+      return Nan::ThrowError("Resources must have type and name properties");
+    }
+
+    v8::Local<v8::Value> type_val = Nan::Get(resource_obj,
+                                         Nan::New("type").ToLocalChecked()).ToLocalChecked();
+    v8::Local<v8::Value> name_val = Nan::Get(resource_obj,
+                                         Nan::New("name").ToLocalChecked()).ToLocalChecked();
+
+    if (!type_val->IsNumber() || !name_val->IsString()) {
+      delete[] configs;
+      return Nan::ThrowError("Resource type must be a number and name must be a string");
+    }
+
+    rd_kafka_ResourceType_t res_type =
+      static_cast<rd_kafka_ResourceType_t>(Nan::To<int32_t>(type_val).FromJust());
+    Nan::Utf8String name_utf8(name_val);
+
+    configs[i] = rd_kafka_ConfigResource_new(res_type, *name_utf8);
+
+    // Store configNames for client-side filtering, but don't set them on the resource
+    // This avoids the "Invalid argument or configuration" error
+    if (Nan::Has(resource_obj, Nan::New("configNames").ToLocalChecked()).FromJust()) {
+      v8::Local<v8::Value> config_names_val = Nan::Get(resource_obj,
+                                                  Nan::New("configNames").ToLocalChecked()).ToLocalChecked();
+
+      if (config_names_val->IsArray()) {
+        v8::Local<v8::Array> config_names_array = config_names_val.As<v8::Array>();
+        size_t config_names_count = config_names_array->Length();
+      }
+    }
+  }
+
+  // Queue up the async worker
+  Nan::AsyncQueueWorker(
+    new Workers::AdminClientDescribeConfigs(callback, client, configs, resource_cnt, timeout_ms));
+
+  // Clean up the configs array - the worker makes its own copy
+  for (size_t i = 0; i < resource_cnt; i++) {
+    rd_kafka_ConfigResource_destroy(configs[i]);
+  }
+  delete[] configs;
+
+  return info.GetReturnValue().Set(Nan::Null());
+}
+
+// Add the new NodeAlterConfigs method here
+NAN_METHOD(AdminClient::NodeAlterConfigs) {
+  Nan::HandleScope scope;
+
+  // Correct argument checking: Expect resources, timeout, callback
+  if (info.Length() < 3 || !info[2]->IsFunction()) {
+    return Nan::ThrowError("Need to specify resources array, timeout, and a callback");
+  }
+
+  if (!info[0]->IsArray()) {
+    return Nan::ThrowError("First parameter must be an array of resources");
+  }
+
+  if (!info[1]->IsNumber()) {
+    return Nan::ThrowError("Second parameter (timeout) must be a number");
+  }
+
+  AdminClient* client = ObjectWrap::Unwrap<AdminClient>(info.This());
+
+  // Get the array of resources
+  v8::Local<v8::Array> resources_array = info[0].As<v8::Object>().As<v8::Array>(); // Get resource array from info[0]
+  size_t resource_cnt = resources_array->Length();
+
+  if (resource_cnt == 0) {
+    return Nan::ThrowError("Resources array must not be empty");
+  }
+
+  // Create the final callback object from info[2]
+  v8::Local<v8::Function> cb = info[2].As<v8::Function>();
+  Nan::Callback *callback = new Nan::Callback(cb);
+
+  // Get the timeout from info[1]
+  int timeout_ms = Nan::To<int>(info[1]).FromJust();
+
+  // Convert the JS array to ConfigResource objects
+  rd_kafka_ConfigResource_t** configs = new rd_kafka_ConfigResource_t*[resource_cnt];
+  std::vector<std::string> config_errors; // To collect errors during conversion
+
+  for (size_t i = 0; i < resource_cnt; i++) {
+    v8::Local<v8::Value> resource_val = Nan::Get(resources_array, i).ToLocalChecked();
+    configs[i] = nullptr; // Initialize to null
+
+    if (!resource_val->IsObject()) {
+      config_errors.push_back("Resource item must be an object");
+      continue;
+    }
+    v8::Local<v8::Object> resource_obj = resource_val.As<v8::Object>();
+
+    // Extract type and name
+    if (!Nan::Has(resource_obj, Nan::New("type").ToLocalChecked()).FromJust() ||
+        !Nan::Has(resource_obj, Nan::New("name").ToLocalChecked()).FromJust() ||
+        !Nan::Has(resource_obj, Nan::New("configEntries").ToLocalChecked()).FromJust()) {
+      config_errors.push_back("Resource must have 'type', 'name', and 'configEntries' properties");
+      continue;
+    }
+
+    v8::Local<v8::Value> type_val = Nan::Get(resource_obj, Nan::New("type").ToLocalChecked()).ToLocalChecked();
+    v8::Local<v8::Value> name_val = Nan::Get(resource_obj, Nan::New("name").ToLocalChecked()).ToLocalChecked();
+    v8::Local<v8::Value> entries_val = Nan::Get(resource_obj, Nan::New("configEntries").ToLocalChecked()).ToLocalChecked();
+
+    if (!type_val->IsNumber() || !name_val->IsString() || !entries_val->IsArray()) {
+      config_errors.push_back("Resource 'type' must be a number, 'name' a string, and 'configEntries' an array");
+      continue;
+    }
+
+    rd_kafka_ResourceType_t res_type = static_cast<rd_kafka_ResourceType_t>(Nan::To<int32_t>(type_val).FromJust());
+    Nan::Utf8String name_utf8(name_val);
+
+    configs[i] = rd_kafka_ConfigResource_new(res_type, *name_utf8);
+    if (!configs[i]) {
+       config_errors.push_back("Failed to create ConfigResource");
+       continue;
+    }
+
+    // Process config entries
+    v8::Local<v8::Array> entries_array = entries_val.As<v8::Array>();
+    size_t entry_cnt = entries_array->Length();
+    for (size_t j = 0; j < entry_cnt; j++) {
+        v8::Local<v8::Value> entry_val = Nan::Get(entries_array, j).ToLocalChecked();
+        if (!entry_val->IsObject()) {
+            config_errors.push_back("configEntry item must be an object");
+            continue; // Skip this entry
+        }
+        v8::Local<v8::Object> entry_obj = entry_val.As<v8::Object>();
+
+        if (!Nan::Has(entry_obj, Nan::New("name").ToLocalChecked()).FromJust() ||
+            !Nan::Has(entry_obj, Nan::New("value").ToLocalChecked()).FromJust()) {
+             config_errors.push_back("configEntry must have 'name' and 'value' properties");
+             continue; // Skip this entry
+        }
+
+        v8::Local<v8::Value> entry_name_val = Nan::Get(entry_obj, Nan::New("name").ToLocalChecked()).ToLocalChecked();
+        v8::Local<v8::Value> entry_value_val = Nan::Get(entry_obj, Nan::New("value").ToLocalChecked()).ToLocalChecked();
+
+        if (!entry_name_val->IsString()) {
+            config_errors.push_back("configEntry 'name' must be a string");
+            continue; // Skip this entry
+        }
+
+        Nan::Utf8String entry_name_utf8(entry_name_val);
+        const char* entry_value_cstr = nullptr;
+        std::string entry_value_str; // Keep string alive
+
+        if (entry_value_val->IsNull() || entry_value_val->IsUndefined()) {
+            // Special handling for config reset
+            // Each entry in the configEntries array is processed separately, so this branch handles just
+            // the current name=value pair where value is null/undefined
+            
+            // For numeric configs like retention.ms, we need to pass a special value
+            std::string config_name(*entry_name_utf8);
+            if (config_name == "retention.ms") {
+                // For retention.ms we use -1 to reset to the default
+                rd_kafka_resp_err_t config_err = rd_kafka_ConfigResource_set_config(
+                    configs[i], 
+                    *entry_name_utf8, 
+                    "-1");
+                    
+                if (config_err != RD_KAFKA_RESP_ERR_NO_ERROR) {
+                    std::string err_msg = "Failed to reset config '" + std::string(*entry_name_utf8) + 
+                                        "': " + rd_kafka_err2str(config_err);
+                    config_errors.push_back(err_msg);
+                }
+            } else {
+                // For other configs, try using an empty string
+                rd_kafka_resp_err_t config_err = rd_kafka_ConfigResource_set_config(
+                    configs[i], 
+                    *entry_name_utf8, 
+                    "");
+                    
+                if (config_err != RD_KAFKA_RESP_ERR_NO_ERROR) {
+                    std::string err_msg = "Failed to reset config '" + std::string(*entry_name_utf8) + 
+                                        "': " + rd_kafka_err2str(config_err);
+                    config_errors.push_back(err_msg);
+                }
+            }
+        } else if (entry_value_val->IsString()) {
+            Nan::Utf8String entry_value_utf8(entry_value_val);
+            entry_value_str = *entry_value_utf8; // Copy to std::string
+            entry_value_cstr = entry_value_str.c_str();
+            
+            rd_kafka_resp_err_t config_err = rd_kafka_ConfigResource_set_config(
+                configs[i], 
+                *entry_name_utf8, 
+                entry_value_cstr);
+                
+            if (config_err != RD_KAFKA_RESP_ERR_NO_ERROR) {
+                std::string err_msg = "Failed to set config '" + std::string(*entry_name_utf8) + 
+                                     "': " + rd_kafka_err2str(config_err);
+                config_errors.push_back(err_msg);
+            }
+        } else {
+            config_errors.push_back("configEntry 'value' must be a string or null/undefined");
+            continue; // Skip this entry
+        }
+    }
+  }
+
+  // If there were errors during conversion, report them and exit
+  if (!config_errors.empty()) {
+    // Clean up partially created configs
+    for (size_t i = 0; i < resource_cnt; i++) {
+        if (configs[i]) {
+            rd_kafka_ConfigResource_destroy(configs[i]);
+        }
+    }
+    delete[] configs;
+
+    // Concatenate errors
+    std::string combined_error;
+    for (const auto& err : config_errors) {
+        combined_error += err + "; ";
+    }
+    Nan::ThrowError(combined_error.c_str());
+    return;
+  }
+
+  // Queue up the worker
+  Nan::AsyncQueueWorker(
+    new Workers::AdminClientAlterConfigs(callback, client, configs, resource_cnt, timeout_ms));
+
+  return info.GetReturnValue().Set(Nan::Null());
+}
+
+NAN_METHOD(AdminClient::NodeSetToken) {
+  // Implementation of NodeSetToken method
+  Nan::HandleScope scope;
+
+  if (info.Length() < 2 || !info[1]->IsFunction()) {
+    return Nan::ThrowError("Need to specify a callback");
+  }
+
+  if (!info[0]->IsObject()) {
+    return Nan::ThrowError("Token object must be specified");
+  }
+
+  v8::Local<v8::Function> cb = info[1].As<v8::Function>();
+  AdminClient* client = ObjectWrap::Unwrap<AdminClient>(info.This());
+
+  v8::Local<v8::Object> token_obj = info[0].As<v8::Object>();
+
+  if (!Nan::Has(token_obj, Nan::New("token").ToLocalChecked()).FromJust() ||
+      !Nan::Has(token_obj, Nan::New("expiry").ToLocalChecked()).FromJust()) {
+    return Nan::ThrowError("Token object must have 'token' and 'expiry' properties");
+  }
+
+  v8::Local<v8::Value> token_val = Nan::Get(token_obj, Nan::New("token").ToLocalChecked()).ToLocalChecked();
+  v8::Local<v8::Value> expiry_val = Nan::Get(token_obj, Nan::New("expiry").ToLocalChecked()).ToLocalChecked();
+
+  if (!token_val->IsString() || !expiry_val->IsNumber()) {
+    return Nan::ThrowError("Token must be a string and expiry must be a number");
+  }
+
+  Nan::Utf8String token_utf8(token_val);
+  int64_t expiry = Nan::To<int64_t>(expiry_val).FromJust();
+
+  std::string errstr;
+  char errbuf[512];
+
+  // Create an empty list of extensions
+  const char* extensions[1] = { NULL };
+
+  // Use the RdKafka client directly
+  if (!client->IsConnected()) {
+    v8::Local<v8::Value> argv[1] = {
+      Nan::Error("Client is not connected")
+    };
+    Nan::Call(cb, info.This(), 1, argv);
+    return;
+  }
+
+  rd_kafka_resp_err_t err = rd_kafka_oauthbearer_set_token(
+    client->m_client->c_ptr(),
+    *token_utf8,               // token_value
+    expiry,                    // md_lifetime_ms
+    "",                        // md_principal_name (empty string)
+    extensions,                // extensions
+    0,                         // extension_size
+    errbuf,                    // errstr
+    sizeof(errbuf));           // errstr_size
+
+  if (err != RD_KAFKA_RESP_ERR_NO_ERROR) {
+    v8::Local<v8::Value> argv[1] = {
+      Nan::Error(errbuf)
+    };
+    Nan::Call(cb, info.This(), 1, argv);
+    return;
+  }
+
+  v8::Local<v8::Value> argv[1] = { Nan::Null() };
+  Nan::Call(cb, info.This(), 1, argv);
+
+  info.GetReturnValue().Set(Nan::Undefined());
 }
 
 }  // namespace NodeKafka

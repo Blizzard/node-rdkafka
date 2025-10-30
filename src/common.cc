@@ -491,7 +491,7 @@ namespace Admin {
  *
  *
  */
-rd_kafka_NewTopic_t* FromV8TopicObject(
+rd_kafka_NewTopic_t* FromV8NewTopicObject(
   v8::Local<v8::Object> object, std::string &errstr) {  // NOLINT
   std::string topic_name = GetParameter<std::string>(object, "topic", "");
   int num_partitions = GetParameter<int>(object, "num_partitions", 0);
@@ -566,6 +566,70 @@ rd_kafka_NewTopic_t* FromV8TopicObject(
 
 rd_kafka_NewTopic_t** FromV8TopicObjectArray(v8::Local<v8::Array>) {
   return NULL;
+}
+
+// Add implementation for delete topic object conversion
+rd_kafka_DeleteTopic_t* FromV8DeleteTopicObject(
+    v8::Local<v8::Object> object,
+    std::string & errstr) {
+
+  v8::MaybeLocal<v8::Value> maybe_name_val = Nan::Get(object, Nan::New("topic").ToLocalChecked());
+
+  if (maybe_name_val.IsEmpty()) {
+      errstr = "DeleteTopic object must have 'topic' property.";
+      return nullptr;
+  }
+  v8::Local<v8::Value> name_val = maybe_name_val.ToLocalChecked();
+  if (!name_val->IsString()) {
+      errstr = "DeleteTopic 'topic' property must be a string.";
+      return nullptr;
+  }
+  Nan::Utf8String name_utf8(name_val);
+  return rd_kafka_DeleteTopic_new(*name_utf8);
+}
+
+// Implement the ConfigResource conversion function
+rd_kafka_ConfigResource_t* FromV8ConfigResourceObject(
+    v8::Local<v8::Object> object,
+    std::string & errstr) {
+
+  v8::MaybeLocal<v8::Value> maybe_type_val = Nan::Get(object, Nan::New("type").ToLocalChecked());
+  v8::MaybeLocal<v8::Value> maybe_name_val = Nan::Get(object, Nan::New("name").ToLocalChecked());
+
+  if (maybe_type_val.IsEmpty() || maybe_name_val.IsEmpty()) {
+    errstr = "Resource object must have 'type' and 'name' properties.";
+    return nullptr;
+  }
+
+  v8::Local<v8::Value> type_val = maybe_type_val.ToLocalChecked();
+  v8::Local<v8::Value> name_val = maybe_name_val.ToLocalChecked();
+
+  if (!type_val->IsNumber() || !name_val->IsString()) {
+    errstr = "Resource 'type' must be a number and 'name' must be a string.";
+    return nullptr;
+  }
+
+  rd_kafka_ResourceType_t res_type = static_cast<rd_kafka_ResourceType_t>(Nan::To<int32_t>(type_val).FromJust());
+  Nan::Utf8String name_utf8(name_val);
+
+  rd_kafka_ConfigResource_t* resource = rd_kafka_ConfigResource_new(res_type, *name_utf8);
+  if (!resource) {
+      errstr = "Failed to create ConfigResource object.";
+      return nullptr;
+  }
+
+  // Handle optional configNames for DescribeConfigs
+  // We'll store these in the JS layer and filter client-side
+  // Don't set them on the resource to avoid "Invalid argument or configuration" error
+  v8::MaybeLocal<v8::Value> maybe_config_names_val = Nan::Get(object, Nan::New("configNames").ToLocalChecked());
+  if (!maybe_config_names_val.IsEmpty()) {
+      v8::Local<v8::Value> config_names_val = maybe_config_names_val.ToLocalChecked();
+      if (config_names_val->IsArray()) {
+          // We have config names, but we'll filter client-side
+      }
+  }
+
+  return resource;
 }
 
 }  // namespace Admin

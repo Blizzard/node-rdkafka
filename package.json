@@ -8,6 +8,7 @@
     "configure": "node-gyp configure",
     "build": "node-gyp build",
     "test": "make test",
+    "test:e2e": "make e2e",
     "install": "node-gyp rebuild",
     "prepack": "node ./ci/prepublish.js"
   },
