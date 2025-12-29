@@ -47,6 +47,13 @@ OpenSSL has been upgraded in High Sierra and homebrew does not overwrite default
 export CPPFLAGS=-I/usr/local/opt/openssl/include
 export LDFLAGS=-L/usr/local/opt/openssl/lib
 ```
+Mac M1
+If you are using a Mac with an M1 chip, use the following paths instead:
+
+```sh
+export CPPFLAGS=-I/opt/homebrew/opt/openssl@3/include
+export LDFLAGS=-L/opt/homebrew/opt/openssl@3/lib
+```
 
 Then you can run `npm install` on your application to get it to build correctly.
 
