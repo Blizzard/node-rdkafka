@@ -21,11 +21,11 @@ jobs:
             os: windows-2022
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           submodules: recursive
       - name: Install Node ${{ matrix.node }} in ${{ runner.os }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
           cache: "npm"
