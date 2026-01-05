@@ -225,7 +225,7 @@ export class KafkaConsumer extends Client<KafkaConsumerEvents> {
     committed(timeout: number, cb: (err: LibrdKafkaError, topicPartitions: TopicPartitionOffset[]) => void): this;
 
     consume(number: number, cb?: (err: LibrdKafkaError, messages: Message[]) => void): void;
-    consume(cb: (err: LibrdKafkaError, messages: Message[]) => void): void;
+    consume(cb: (err: LibrdKafkaError, messages: Message) => void): void;
     consume(): void;
 
     getWatermarkOffsets(topic: string, partition: number): WatermarkOffsets;
@@ -241,6 +241,8 @@ export class KafkaConsumer extends Client<KafkaConsumerEvents> {
     seek(toppar: TopicPartitionOffset, timeout: number | null, cb: (err: LibrdKafkaError) => void): this;
 
     setDefaultConsumeTimeout(timeoutMs: number): void;
+
+    setDefaultTotalConsumeTimeout(totalTimeoutMs: number): void
 
     setDefaultConsumeLoopTimeoutDelay(timeoutMs: number): void;
 
