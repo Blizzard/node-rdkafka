@@ -60,7 +60,21 @@ Using Alpine Linux? Check out the [docs](https://github.com/Blizzard/node-rdkafk
 
 ### Windows
 
-Windows build **is not** compiled from `librdkafka` source but it is rather linked against the appropriate version of [NuGet librdkafka.redist](https://www.nuget.org/packages/librdkafka.redist/) static binary that gets downloaded from `https://globalcdn.nuget.org/packages/librdkafka.redist.2.12.0.nupkg` during installation. This download link can be changed using the environment variable `NODE_RDKAFKA_NUGET_BASE_URL` that defaults to `https://globalcdn.nuget.org/packages/` when it's no set.
+Windows build **is not** compiled from `librdkafka` source but it is rather
+linked against the appropriate version of
+[NuGet librdkafka.redist](https://www.nuget.org/packages/librdkafka.redist/)
+static binary that gets downloaded from
+`https://globalcdn.nuget.org/packages/librdkafka.redist.2.12.0.nupkg` during
+installation. This download link can be changed using the environment variable
+`NODE_RDKAFKA_NUGET_BASE_URL`, which defaults to
+`https://globalcdn.nuget.org/packages/` when it is not set.
+
+For private repositories, set `NODE_RDKAFKA_NUGET_HEADERS` to a JSON object of
+HTTP request headers. This supports the authentication scheme required by the
+repository, for example `{"Authorization":"Basic <base64-credentials>"}`,
+`{"Authorization":"Bearer <token>"}`, or
+`{"X-JFrog-Art-Api":"<api-key>"}`. Basic authentication credentials must be
+Base64-encoded in the standard `username:password` format.
 
 Requirements:
  * [node-gyp for Windows](https://github.com/nodejs/node-gyp#on-windows)
