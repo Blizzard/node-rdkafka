@@ -429,7 +429,13 @@ void Delivery::SendMessageBuffer(bool send_dr_msg) {
 }
 
 void Delivery::dr_cb(RdKafka::Message &message) {
-  if (!dispatcher.HasCallbacks()) {
+  // Still queue the report with no 'delivery-report' listener if there's an
+  // opaque to dispose - dr_cb can run off the main thread (e.g. via
+  // flush()), and Flush() is the only place safe to touch a v8::Persistent,
+  // since it's only reached via the uv_async_t callback, which always runs
+  // on the main thread. With no listener and no opaque there's nothing to
+  // clean up, so skip queuing as before.
+  if (!dispatcher.HasCallbacks() && !message.msg_opaque()) {
     return;
   }
 
