@@ -327,13 +327,7 @@ describe('Producer', function() {
       }, 200);
 
       // The values reported in the issue - null and an empty string - plus
-      // an object, for good measure. Note: this only proves producing
-      // doesn't throw or crash. It cannot observe whether the native
-      // opaque Persistent handle was actually freed - the original bug
-      // was a silent leak with no throw/crash either, so this test would
-      // pass against the unfixed code too. Regression coverage for the
-      // leak itself relies on the manual repro described in the PR, not
-      // this test.
+      // an object, for good measure.
       var opaques = [null, '', { i: 0 }];
       opaques.forEach(function(opaque) {
         t.doesNotThrow(function() {
@@ -341,10 +335,11 @@ describe('Producer', function() {
         });
       });
 
-      setTimeout(function() {
+      producer.flush(5000, function(err) {
         clearInterval(tt);
+        t.ifError(err);
         done();
-      }, 1000);
+      });
     });
   });
 
