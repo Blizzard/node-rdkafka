@@ -136,6 +136,24 @@ describe('Producer', function() {
       producer.produce('test', null, Buffer.from('value'), null, null, 'opaque');
     });
 
+    it('should produce a message with opaque explicitly set to null and get null back (https://github.com/Blizzard/node-rdkafka/issues/1127)', function(done) {
+      var tt = setInterval(function() {
+        producer.poll();
+      }, 200);
+
+      producer.once('delivery-report', function(err, report) {
+        clearInterval(tt);
+        t.ifError(err);
+        t.notStrictEqual(report, undefined);
+        // opaque: null must still round-trip as null with a listener
+        // registered - only the no-listener leak-cleanup path changes.
+        t.strictEqual(report.opaque, null);
+        done();
+      });
+
+      producer.produce('test', null, Buffer.from('value'), null, null, null);
+    });
+
 
     it('should get 100% deliverability', function(done) {
       var total = 0;
@@ -278,6 +296,56 @@ describe('Producer', function() {
 
     });
 
+  });
+
+  describe('without a delivery-report listener', function() {
+    beforeEach(function(done) {
+      producer = new Kafka.Producer({
+        'client.id': 'kafka-test',
+        'metadata.broker.list': kafkaBrokerList,
+        'debug': 'all'
+        // Intentionally no dr_cb / dr_msg_cb - this is the common
+        // fire-and-forget usage pattern.
+      });
+      producer.connect({}, function(err) {
+        t.ifError(err);
+        done();
+      });
+
+      eventListener(producer);
+    });
+
+    afterEach(function(done) {
+      producer.disconnect(function() {
+        done();
+      });
+    });
+
+    it('produces messages with the opaque values from the issue without throwing (https://github.com/Blizzard/node-rdkafka/issues/1127)', function(done) {
+      var tt = setInterval(function() {
+        producer.poll();
+      }, 200);
+
+      // The values reported in the issue - null and an empty string - plus
+      // an object, for good measure. Note: this only proves producing
+      // doesn't throw or crash. It cannot observe whether the native
+      // opaque Persistent handle was actually freed - the original bug
+      // was a silent leak with no throw/crash either, so this test would
+      // pass against the unfixed code too. Regression coverage for the
+      // leak itself relies on the manual repro described in the PR, not
+      // this test.
+      var opaques = [null, '', { i: 0 }];
+      opaques.forEach(function(opaque) {
+        t.doesNotThrow(function() {
+          producer.produce('test', null, Buffer.from('value'), null, null, opaque);
+        });
+      });
+
+      setTimeout(function() {
+        clearInterval(tt);
+        done();
+      }, 1000);
+    });
   });
 
 });
