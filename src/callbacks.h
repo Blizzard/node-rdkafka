@@ -56,6 +56,10 @@ struct event_t {
   RdKafka::Event::Type type;
   std::string message;
 
+  // Only set for EVENT_ERROR
+  RdKafka::ErrorCode err;
+  bool fatal;
+
   RdKafka::Event::Severity severity;
   std::string fac;
 
