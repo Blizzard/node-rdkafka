@@ -122,12 +122,16 @@ void Dispatcher::RemoveCallback(const v8::Local<v8::Function> &cb) {
 event_t::event_t(const RdKafka::Event &event) {
   message = "";
   fac = "";
+  err = RdKafka::ERR_NO_ERROR;
+  fatal = false;
 
   type = event.type();
 
   switch (type = event.type()) {
     case RdKafka::Event::EVENT_ERROR:
       message = RdKafka::err2str(event.err());
+      err = event.err();
+      fatal = event.fatal();
     break;
     case RdKafka::Event::EVENT_STATS:
       message = event.str();
@@ -201,6 +205,13 @@ void EventDispatcher::Flush() {
       case RdKafka::Event::EVENT_ERROR:
         argv[0] = Nan::New("error").ToLocalChecked();
         argv[1] = Nan::Error(_events[i].message.c_str());
+
+        // Keep the numeric librdkafka error code. Without it LibrdKafkaError
+        // falls back to code -1 (ERR_UNKNOWN) for every event error.
+        Nan::Set(argv[1].As<v8::Object>(), Nan::New("code").ToLocalChecked(),
+          Nan::New<Number>(static_cast<int>(_events[i].err)));
+        Nan::Set(argv[1].As<v8::Object>(), Nan::New("isFatal").ToLocalChecked(),
+          Nan::New<v8::Boolean>(_events[i].fatal));
 
         // if (event->err() == RdKafka::ERR__ALL_BROKERS_DOWN). Stop running
         // This may be better suited to the node side of things
