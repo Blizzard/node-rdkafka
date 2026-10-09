@@ -45,7 +45,7 @@ std::string Topic::name() {
   return m_topic_name;
 }
 
-Baton Topic::toRDKafkaTopic(Connection* handle) {
+KafkaOperationResult<RdKafka::Topic> Topic::toRDKafkaTopic(Connection* handle) {
   if (m_config) {
     return handle->CreateTopic(m_topic_name, m_config);
   } else {

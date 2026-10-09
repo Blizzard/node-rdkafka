@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "src/connection.h"
+#include "kafka-operation-result.h"
 #include "src/workers.h"
 
 using RdKafka::Conf;
@@ -100,11 +101,11 @@ RdKafka::Handle* Connection::GetClient() {
   return m_client;
 }
 
-Baton Connection::CreateTopic(std::string topic_name) {
+KafkaOperationResult<RdKafka::Topic> Connection::CreateTopic(std::string topic_name) {
   return CreateTopic(topic_name, NULL);
 }
 
-Baton Connection::CreateTopic(std::string topic_name, RdKafka::Conf* conf) {
+KafkaOperationResult<RdKafka::Topic> Connection::CreateTopic(std::string topic_name, RdKafka::Conf* conf) {
   std::string errstr;
 
   RdKafka::Topic* topic = NULL;
@@ -114,19 +115,19 @@ Baton Connection::CreateTopic(std::string topic_name, RdKafka::Conf* conf) {
     if (IsConnected()) {
       topic = RdKafka::Topic::create(m_client, topic_name, conf, errstr);
     } else {
-      return Baton(RdKafka::ErrorCode::ERR__STATE);
+      return KafkaOperationResult<RdKafka::Topic>(RdKafka::ErrorCode::ERR__STATE);
     }
   } else {
-    return Baton(RdKafka::ErrorCode::ERR__STATE);
+    return KafkaOperationResult<RdKafka::Topic>(RdKafka::ErrorCode::ERR__STATE);
   }
 
   if (!errstr.empty()) {
-    return Baton(RdKafka::ErrorCode::ERR_TOPIC_EXCEPTION, errstr);
+    return KafkaOperationResult<RdKafka::Topic>(RdKafka::ErrorCode::ERR_TOPIC_EXCEPTION, errstr);
   }
 
   // Maybe do it this way later? Then we don't need to do static_cast
   // <RdKafka::Topic*>
-  return Baton(topic);
+  return KafkaOperationResult<RdKafka::Topic>(topic);
 }
 
 Baton Connection::QueryWatermarkOffsets(
@@ -189,15 +190,15 @@ Baton Connection::OffsetsForTimes(
 
 Baton Connection::GetMetadata(
   bool all_topics, std::string topic_name, int timeout_ms) {
-  RdKafka::Topic* topic = NULL;
+  std::unique_ptr<RdKafka::Topic> topic{};
   RdKafka::ErrorCode err;
 
   std::string errstr;
 
   if (!topic_name.empty()) {
-    Baton b = CreateTopic(topic_name);
+    KafkaOperationResult<RdKafka::Topic> b = CreateTopic(topic_name);
     if (b.err() == RdKafka::ErrorCode::ERR_NO_ERROR) {
-      topic = b.data<RdKafka::Topic*>();
+      topic = b.take_ownership();
     }
   }
 
@@ -211,7 +212,7 @@ Baton Connection::GetMetadata(
     scoped_shared_read_lock lock(m_connection_lock);
     if (IsConnected()) {
       // Always send true - we
-      err = m_client->metadata(all_topics, topic, &metadata, timeout_ms);
+      err = m_client->metadata(all_topics, topic.get(), &metadata, timeout_ms);
     } else {
       err = RdKafka::ERR__STATE;
     }

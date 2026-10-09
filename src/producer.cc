@@ -12,6 +12,7 @@
 
 #include "src/producer.h"
 #include "src/kafka-consumer.h"
+#include "src/kafka-operation-result.h"
 #include "src/workers.h"
 
 namespace NodeKafka {
@@ -617,22 +618,17 @@ NAN_METHOD(Producer::NodeProduce) {
     Topic* topic = ObjectWrap::Unwrap<Topic>(info[0].As<v8::Object>());
 
     // Unwrap it and turn it into an RdKafka::Topic*
-    Baton topic_baton = topic->toRDKafkaTopic(producer);
+    KafkaOperationResult<RdKafka::Topic> topic_result = topic->toRDKafkaTopic(producer);
 
-    if (topic_baton.err() != RdKafka::ERR_NO_ERROR) {
+    if (topic_result.err() != RdKafka::ERR_NO_ERROR) {
       // Let the JS library throw if we need to so the error can be more rich
-      error_code = static_cast<int>(topic_baton.err());
+      error_code = static_cast<int>(topic_result.err());
 
       return info.GetReturnValue().Set(Nan::New<v8::Number>(error_code));
     }
 
-    RdKafka::Topic* rd_topic = topic_baton.data<RdKafka::Topic*>();
-
     Baton b = producer->Produce(message_buffer_data, message_buffer_length,
-     rd_topic, partition, key_buffer_data, key_buffer_length, opaque);
-
-    // Delete the topic when we are done.
-    delete rd_topic;
+     topic_result.data(), partition, key_buffer_data, key_buffer_length, opaque);
 
     error_code = static_cast<int>(b.err());
   }

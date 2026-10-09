@@ -16,6 +16,7 @@
 #include "rdkafkacpp.h"
 
 #include "src/config.h"
+#include "src/kafka-operation-result.h"
 
 namespace NodeKafka {
 
@@ -24,7 +25,7 @@ class Topic : public Nan::ObjectWrap {
   static void Init(v8::Local<v8::Object>);
   static v8::Local<v8::Object> NewInstance(v8::Local<v8::Value> arg);
 
-  Baton toRDKafkaTopic(Connection *handle);
+  KafkaOperationResult<RdKafka::Topic> toRDKafkaTopic(Connection *handle);
 
  protected:
   static Nan::Persistent<v8::Function> constructor;

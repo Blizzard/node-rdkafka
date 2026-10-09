@@ -21,6 +21,7 @@
 #include "src/errors.h"
 #include "src/config.h"
 #include "src/callbacks.h"
+#include "src/kafka-operation-result.h"
 
 namespace NodeKafka {
 
@@ -56,8 +57,8 @@ public:
   bool IsClosing();
 
   // Baton<RdKafka::Topic*>
-  Baton CreateTopic(std::string);
-  Baton CreateTopic(std::string, RdKafka::Conf*);
+  KafkaOperationResult<RdKafka::Topic> CreateTopic(std::string);
+  KafkaOperationResult<RdKafka::Topic> CreateTopic(std::string, RdKafka::Conf*);
   Baton GetMetadata(bool, std::string, int);
   Baton QueryWatermarkOffsets(std::string, int32_t, int64_t*, int64_t*, int);
   Baton OffsetsForTimes(std::vector<RdKafka::TopicPartition*> &, int);
