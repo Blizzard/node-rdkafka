@@ -54,6 +54,18 @@ __NOTE:__ From the `librdkafka` docs
 
 > WARNING: Due to a bug in Apache Kafka 0.9.0.x, the ApiVersionRequest (as sent by the client when connecting to the broker) will be silently ignored by the broker causing the request to time out after 10 seconds. This causes client-broker connections to stall for 10 seconds during connection-setup before librdkafka falls back on the `broker.version.fallback` protocol features. The workaround is to explicitly configure `api.version.request` to `false` on clients communicating with <=0.9.0.x brokers.
 
+### Mac OS High Sequoia
+OpenSSL path again got changed in `Sequoia`, you need to tell the linker where to find it:
+
+
+```sh
+export CPPFLAGS=-I/opt/homebrew/Cellar/openssl@3/3.4.0/include
+export LDFLAGS=-L/opt/homebrew/Cellar/openssl@3/3.4.0/lib
+```
+
+Then you can run `npm install` on your application to get it to build correctly.
+
+
 ### Alpine
 
 Using Alpine Linux? Check out the [docs](https://github.com/Blizzard/node-rdkafka/blob/master/examples/docker-alpine.md).
