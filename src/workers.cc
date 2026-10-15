@@ -7,6 +7,8 @@
  * of the MIT license.  See the LICENSE.txt file for details.
  */
 
+#include <algorithm>
+#include <chrono>
 #include <string>
 #include <vector>
 
@@ -810,6 +812,7 @@ void KafkaConsumerConsumeNum::Execute() {
   bool looping = true;
   int timeout_ms = m_timeout_ms;
   std::size_t eof_event_count = 0;
+  const auto end = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_ms);
 
   while (m_messages.size() - eof_event_count < max && looping) {
     // Get a message
@@ -838,6 +841,8 @@ void KafkaConsumerConsumeNum::Execute() {
           break;
         case RdKafka::ERR_NO_ERROR:
           m_messages.push_back(b.data<RdKafka::Message*>());
+          timeout_ms = std::max(0, static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(
+            end - std::chrono::steady_clock::now()).count()));
           break;
         default:
           // Set the error for any other errors and break
