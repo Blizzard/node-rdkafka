@@ -8,3 +8,14 @@ deps/librdkafka/config.h
 build
 .github
 .vscode
+.editorconfig
+.jshintignore
+.jshintrc
+bench/*
+ci/*
+docker-compose.yml
+e2e/*
+examples/*
+make_docs.sh
+run_docker.sh
+test/*
