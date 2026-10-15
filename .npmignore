@@ -1,10 +1,6 @@
-deps/*
-!deps/librdkafka.gyp
-!deps/librdkafka
-!deps/windows-install.*
+deps/
 .gitmodules
 Dockerfile
-deps/librdkafka/config.h
 build
 .github
 .vscode
