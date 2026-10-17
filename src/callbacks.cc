@@ -63,8 +63,13 @@ Dispatcher::~Dispatcher() {
   uv_mutex_destroy(&async_lock);
 }
 
+// Serialize handle publication, sends and close. Native callbacks can Execute
+// while the loop thread activates a dispatcher; publishing before uv_async_init
+// finishes lets libuv access uninitialized state. A send must also finish before
+// uv_close starts waiting for its sender bookkeeping.
 // Only run this if we aren't already listening
 void Dispatcher::Activate() {
+  scoped_mutex_lock lock(async_lock);
   if (!async) {
     async = new uv_async_t;
     uv_async_init(uv_default_loop(), async, AsyncMessage_);
@@ -75,6 +80,7 @@ void Dispatcher::Activate() {
 
 // Should be able to run this regardless of whether it is active or not
 void Dispatcher::Deactivate() {
+  scoped_mutex_lock lock(async_lock);
   if (async) {
     uv_close(reinterpret_cast<uv_handle_t*>(async), NULL);
     async = NULL;
@@ -86,6 +92,7 @@ bool Dispatcher::HasCallbacks() {
 }
 
 void Dispatcher::Execute() {
+  scoped_mutex_lock lock(async_lock);
   if (async) {
     uv_async_send(async);
   }
