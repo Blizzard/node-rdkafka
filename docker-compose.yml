@@ -3,7 +3,7 @@ services:
     build:
       context: .
       args:
-        NODE_VERSION: ${NODE_VERSION:-24.20}
+        NODE_VERSION: ${NODE_VERSION:-26.13.0}
     command: sh
     working_dir: /home/node/api
     user: node
@@ -14,7 +14,7 @@ services:
       context: .
       dockerfile: Dockerfile.debian
       args:
-        NODE_VERSION: ${NODE_VERSION:-24.20}
+        NODE_VERSION: ${NODE_VERSION:-26.13.0}
     command: bash
     working_dir: /home/node/api
     user: node

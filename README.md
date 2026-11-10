@@ -23,7 +23,7 @@ against that image's `libstdc++`, and loading it on Debian bookworm fails with
 On non-Linux platforms the legacy name `platform-<arch>-ABI-<abi>.tar.gz` is used. Installing on musl
 also falls back to that name, so archives predating the `<libc>` segment keep working.
 
-`<abi>` is `process.versions.modules` — it changes with every Node major (Node 22 is `127`, Node 24 is `137`),
+`<abi>` is `process.versions.modules` — it changes with every Node major (Node 22 is `127`, Node 24 is `137`, Node 26 is `147`),
 so each supported Node major needs its own set of archives.
 
 ### Rebuilding
@@ -69,13 +69,20 @@ platform-x64-glibc-ABI-137.tar.gz
 platform-x64-musl-ABI-137.tar.gz
 ```
 
+Node 26 (ABI `147`) ships glibc archives only, because every consumer runs it on Debian:
+
+```
+platform-arm64-glibc-ABI-147.tar.gz
+platform-x64-glibc-ABI-147.tar.gz
+```
+
 ### Bumping Node
 
 The Node version is a build argument, so no file has to be edited to build against a different one:
 
 ```bash
-NODE_VERSION=26.7 docker compose build api-debian
-NODE_VERSION=26.7 docker compose run --rm --no-deps api-debian bash -lc 'rm -rf build && npm run prebuild'
+NODE_VERSION=28.0 docker compose build api-debian
+NODE_VERSION=28.0 docker compose run --rm --no-deps api-debian bash -lc 'rm -rf build && npm run prebuild'
 ```
 
 The `ARG NODE_VERSION` defaults in `Dockerfile` and `Dockerfile.debian` only say which version an
