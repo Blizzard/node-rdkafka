@@ -343,6 +343,26 @@ describe('Consumer', function() {
       });
     });
 
+    it('should not wait for a consume in progress', function(cb) {
+      var consumeTimeout = 60000;
+      var consumer = new KafkaConsumer(gcfg, { 'auto.offset.reset': 'latest' });
+
+      consumer.setDefaultConsumeTimeout(consumeTimeout);
+
+      consumer.connect({ timeout: 2000 }, function(err, info) {
+        t.ifError(err);
+
+        consumer.subscribe([topic]);
+        consumer.consume(1, function() {});
+
+        var start = Date.now();
+        consumer.disconnect(function() {
+          t.ok(Date.now() - start < consumeTimeout, 'disconnect waited for the consume timeout');
+          cb();
+        });
+      });
+    });
+
   });
 
   describe('rebalance protocol', function () {
