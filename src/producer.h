@@ -14,8 +14,9 @@
 #include <node.h>
 #include <node_buffer.h>
 #include <string>
+#include <vector>
 
-#include "rdkafkacpp.h"
+#include "rdkafkacpp.h"  // NOLINT(build/include_subdir)
 
 #include "src/common.h"
 #include "src/connection.h"
@@ -80,7 +81,9 @@ class Producer : public Connection {
   void ActivateDispatchers();
   void DeactivateDispatchers();
 
-  void ConfigureCallback(const std::string &string_key, const v8::Local<v8::Function> &cb, bool add) override;
+  void ConfigureCallback(const std::string &string_key,
+                         const v8::Local<v8::Function> &cb,
+                         bool add) override;
 
   Baton InitTransactions(int32_t timeout_ms);
   Baton BeginTransaction();
@@ -89,8 +92,7 @@ class Producer : public Connection {
   Baton SendOffsetsToTransaction(
     std::vector<RdKafka::TopicPartition*> &offsets,
     NodeKafka::KafkaConsumer* consumer,
-    int timeout_ms
-  );
+    int timeout_ms);
 
  protected:
   static Nan::Persistent<v8::Function> constructor;

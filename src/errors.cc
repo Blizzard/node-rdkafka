@@ -31,8 +31,9 @@ v8::Local<v8::Object> RdKafkaError(const RdKafka::ErrorCode &err) {
   return RdKafkaError(err, RdKafka::err2str(err));
 }
 
-v8::Local<v8::Object> RdKafkaError(const RdKafka::ErrorCode &err, std::string errstr,
-      bool isFatal, bool isRetriable, bool isTxnRequiresAbort) {
+v8::Local<v8::Object> RdKafkaError(const RdKafka::ErrorCode &err,
+      std::string errstr, bool isFatal, bool isRetriable,
+      bool isTxnRequiresAbort) {
   v8::Local<v8::Object> ret = RdKafkaError(err, errstr);
 
   Nan::Set(ret, Nan::New("isFatal").ToLocalChecked(),
@@ -78,7 +79,8 @@ v8::Local<v8::Object> Baton::ToObject() {
 }
 
 v8::Local<v8::Object> Baton::ToTxnObject() {
-  return RdKafkaError(m_err, m_errstr, m_isFatal, m_isRetriable, m_isTxnRequiresAbort);
+  return RdKafkaError(m_err, m_errstr, m_isFatal, m_isRetriable,
+                      m_isTxnRequiresAbort);
 }
 
 RdKafka::ErrorCode Baton::err() {

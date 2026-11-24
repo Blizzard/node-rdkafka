@@ -7,6 +7,7 @@
  * of the MIT license.  See the LICENSE.txt file for details.
  */
 
+#include <list>
 #include <string>
 #include <vector>
 
@@ -88,7 +89,8 @@ void Producer::Init(v8::Local<v8::Object> exports) {
   Nan::SetPrototypeMethod(tpl, "beginTransaction", NodeBeginTransaction);
   Nan::SetPrototypeMethod(tpl, "commitTransaction", NodeCommitTransaction);
   Nan::SetPrototypeMethod(tpl, "abortTransaction", NodeAbortTransaction);
-  Nan::SetPrototypeMethod(tpl, "sendOffsetsToTransaction", NodeSendOffsetsToTransaction);
+  Nan::SetPrototypeMethod(tpl, "sendOffsetsToTransaction",
+    NodeSendOffsetsToTransaction);
 
     // connect. disconnect. resume. pause. get meta data
   constructor.Reset((tpl->GetFunction(Nan::GetCurrentContext()))
@@ -347,11 +349,13 @@ void Producer::Poll() {
   m_client->poll(0);
 }
 
-void Producer::ConfigureCallback(const std::string &string_key, const v8::Local<v8::Function> &cb, bool add) {
+void Producer::ConfigureCallback(const std::string &string_key,
+                                 const v8::Local<v8::Function> &cb, bool add) {
   if (string_key.compare("delivery_cb") == 0) {
     if (add) {
       bool dr_msg_cb = false;
-      v8::Local<v8::String> dr_msg_cb_key = Nan::New("dr_msg_cb").ToLocalChecked();
+      v8::Local<v8::String> dr_msg_cb_key =
+        Nan::New("dr_msg_cb").ToLocalChecked();
       if (Nan::Has(cb, dr_msg_cb_key).FromMaybe(false)) {
         v8::Local<v8::Value> v = Nan::Get(cb, dr_msg_cb_key).ToLocalChecked();
         if (v->IsBoolean()) {
@@ -422,10 +426,12 @@ Baton Producer::SendOffsetsToTransaction(
     return Baton(RdKafka::ERR__STATE);
   }
 
-  RdKafka::ConsumerGroupMetadata* group_metadata = dynamic_cast<RdKafka::KafkaConsumer*>(consumer->m_client)->groupMetadata();
+  RdKafka::ConsumerGroupMetadata* group_metadata =
+    dynamic_cast<RdKafka::KafkaConsumer*>(consumer->m_client)->groupMetadata();
 
   RdKafka::Producer* producer = dynamic_cast<RdKafka::Producer*>(m_client);
-  RdKafka::Error* error = producer->send_offsets_to_transaction(offsets, group_metadata, timeout_ms);
+  RdKafka::Error* error = producer->send_offsets_to_transaction(offsets,
+    group_metadata, timeout_ms);
   delete group_metadata;
 
   return rdkafkaErrorToBaton( error);
@@ -497,9 +503,12 @@ NAN_METHOD(Producer::NodeProduce) {
     message_buffer_data = node::Buffer::Data(message_buffer_object);
     if (message_buffer_data == NULL) {
       // empty string message buffer should not end up as null message
-      v8::Local<v8::Object> message_buffer_object_emptystring = Nan::NewBuffer(new char[0], 0).ToLocalChecked();
-      message_buffer_length = node::Buffer::Length(message_buffer_object_emptystring);
-      message_buffer_data = node::Buffer::Data(message_buffer_object_emptystring);
+      v8::Local<v8::Object> message_buffer_object_emptystring =
+        Nan::NewBuffer(new char[0], 0).ToLocalChecked();
+      message_buffer_length =
+        node::Buffer::Length(message_buffer_object_emptystring);
+      message_buffer_data =
+        node::Buffer::Data(message_buffer_object_emptystring);
     }
   }
 
@@ -527,9 +536,10 @@ NAN_METHOD(Producer::NodeProduce) {
     key_buffer_data = node::Buffer::Data(key_buffer_object);
     if (key_buffer_data == NULL) {
       // empty string key buffer should not end up as null key
-        v8::Local<v8::Object> key_buffer_object_emptystring = Nan::NewBuffer(new char[0], 0).ToLocalChecked();
-        key_buffer_length = node::Buffer::Length(key_buffer_object_emptystring);
-        key_buffer_data = node::Buffer::Data(key_buffer_object_emptystring);
+      v8::Local<v8::Object> key_buffer_object_emptystring =
+        Nan::NewBuffer(new char[0], 0).ToLocalChecked();
+      key_buffer_length = node::Buffer::Length(key_buffer_object_emptystring);
+      key_buffer_data = node::Buffer::Data(key_buffer_object_emptystring);
     }
   } else {
     // If it was a string just use the utf8 value.
@@ -769,7 +779,8 @@ NAN_METHOD(Producer::NodeInitTransactions) {
   Nan::Callback *callback = new Nan::Callback(cb);
 
   Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
-  Nan::AsyncQueueWorker(new Workers::ProducerInitTransactions(callback, producer, timeout_ms));
+  Nan::AsyncQueueWorker(
+    new Workers::ProducerInitTransactions(callback, producer, timeout_ms));
 
   info.GetReturnValue().Set(Nan::Null());
 }
@@ -785,7 +796,8 @@ NAN_METHOD(Producer::NodeBeginTransaction) {
   Nan::Callback *callback = new Nan::Callback(cb);
 
   Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
-  Nan::AsyncQueueWorker(new Workers::ProducerBeginTransaction(callback, producer));
+  Nan::AsyncQueueWorker(
+    new Workers::ProducerBeginTransaction(callback, producer));
 
   info.GetReturnValue().Set(Nan::Null());
 }
@@ -803,7 +815,8 @@ NAN_METHOD(Producer::NodeCommitTransaction) {
   Nan::Callback *callback = new Nan::Callback(cb);
 
   Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
-  Nan::AsyncQueueWorker(new Workers::ProducerCommitTransaction(callback, producer, timeout_ms));
+  Nan::AsyncQueueWorker(
+    new Workers::ProducerCommitTransaction(callback, producer, timeout_ms));
 
   info.GetReturnValue().Set(Nan::Null());
 }
@@ -821,7 +834,8 @@ NAN_METHOD(Producer::NodeAbortTransaction) {
   Nan::Callback *callback = new Nan::Callback(cb);
 
   Producer* producer = ObjectWrap::Unwrap<Producer>(info.This());
-  Nan::AsyncQueueWorker(new Workers::ProducerAbortTransaction(callback, producer, timeout_ms));
+  Nan::AsyncQueueWorker(
+    new Workers::ProducerAbortTransaction(callback, producer, timeout_ms));
 
   info.GetReturnValue().Set(Nan::Null());
 }
@@ -830,10 +844,12 @@ NAN_METHOD(Producer::NodeSendOffsetsToTransaction) {
   Nan::HandleScope scope;
 
   if (info.Length() < 4) {
-    return Nan::ThrowError("Need to specify offsets, consumer, timeout for 'send offsets to transaction', and callback");
+    return Nan::ThrowError("Need to specify offsets, consumer, timeout for "
+                           "'send offsets to transaction', and callback");
   }
   if (!info[0]->IsArray()) {
-    return Nan::ThrowError("First argument to 'send offsets to transaction' has to be a consumer object");
+    return Nan::ThrowError("First argument to 'send offsets to transaction' "
+                           "has to be a consumer object");
   }
   if (!info[1]->IsObject()) {
     Nan::ThrowError("Kafka consumer must be provided");
@@ -859,8 +875,7 @@ NAN_METHOD(Producer::NodeSendOffsetsToTransaction) {
     producer,
     toppars,
     consumer,
-    timeout_ms
-  ));
+    timeout_ms));
 
   info.GetReturnValue().Set(Nan::Null());
 }

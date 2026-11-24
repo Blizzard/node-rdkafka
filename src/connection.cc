@@ -8,6 +8,8 @@
  */
 
 #include <limits>
+#include <list>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -69,10 +71,9 @@ Connection::~Connection() {
 }
 
 Baton Connection::rdkafkaErrorToBaton(RdKafka::Error* error) {
-  if ( NULL == error) {
+  if (NULL == error) {
     return Baton(RdKafka::ERR_NO_ERROR);
-  }
-  else {
+  } else {
     Baton result(error->code(), error->str(), error->is_fatal(),
                  error->is_retriable(), error->txn_requires_abort());
     delete error;
@@ -228,7 +229,9 @@ Baton Connection::GetMetadata(
   }
 }
 
-void Connection::ConfigureCallback(const std::string &string_key, const v8::Local<v8::Function> &cb, bool add) {
+void Connection::ConfigureCallback(const std::string &string_key,
+                                   const v8::Local<v8::Function> &cb,
+                                   bool add) {
   if (string_key.compare("event_cb") == 0) {
     if (add) {
       this->m_event_cb.dispatcher.AddCallback(cb);
@@ -239,8 +242,7 @@ void Connection::ConfigureCallback(const std::string &string_key, const v8::Loca
 }
 
 // NAN METHODS
-NAN_METHOD(Connection::NodeSetToken)
-{
+NAN_METHOD(Connection::NodeSetToken) {
   if (info.Length() < 1 || !info[0]->IsString()) {
     Nan::ThrowError("Token argument must be a string");
     return;
@@ -248,9 +250,9 @@ NAN_METHOD(Connection::NodeSetToken)
 
   Nan::Utf8String tk(info[0]);
   std::string token = *tk;
-  // we always set expiry to maximum value in ms, as we don't use refresh callback,
-  // rdkafka continues sending a token even if it expired. Client code must
-  // handle token refreshing by calling 'setToken' again when needed.
+  // we always set expiry to maximum value in ms, as we don't use refresh
+  // callback, rdkafka continues sending a token even if it expired. Client
+  // code must handle token refreshing by calling 'setToken' again when needed.
   int64_t expiry = (std::numeric_limits<int64_t>::max)() / 100000;
   Connection* obj = ObjectWrap::Unwrap<Connection>(info.This());
   RdKafka::Handle* handle = obj->m_client;
@@ -403,14 +405,18 @@ NAN_METHOD(Connection::NodeConfigureCallbacks) {
   Connection* obj = ObjectWrap::Unwrap<Connection>(info.This());
 
   const bool add = Nan::To<bool>(info[0]).ToChecked();
-  v8::Local<v8::Object> configs_object = info[1]->ToObject(context).ToLocalChecked();
-  v8::Local<v8::Array> configs_property_names = configs_object->GetOwnPropertyNames(context).ToLocalChecked();
+  v8::Local<v8::Object> configs_object =
+    info[1]->ToObject(context).ToLocalChecked();
+  v8::Local<v8::Array> configs_property_names =
+    configs_object->GetOwnPropertyNames(context).ToLocalChecked();
 
   for (unsigned int j = 0; j < configs_property_names->Length(); ++j) {
     std::string configs_string_key;
 
-    v8::Local<v8::Value> configs_key = Nan::Get(configs_property_names, j).ToLocalChecked();
-    v8::Local<v8::Value> configs_value = Nan::Get(configs_object, configs_key).ToLocalChecked();
+    v8::Local<v8::Value> configs_key =
+      Nan::Get(configs_property_names, j).ToLocalChecked();
+    v8::Local<v8::Value> configs_value =
+      Nan::Get(configs_object, configs_key).ToLocalChecked();
 
     int config_type = 0;
     if (configs_value->IsObject() && configs_key->IsString()) {
@@ -429,8 +435,10 @@ NAN_METHOD(Connection::NodeConfigureCallbacks) {
       continue;
     }
 
-    v8::Local<v8::Object> object = configs_value->ToObject(context).ToLocalChecked();
-    v8::Local<v8::Array> property_names = object->GetOwnPropertyNames(context).ToLocalChecked();
+    v8::Local<v8::Object> object =
+      configs_value->ToObject(context).ToLocalChecked();
+    v8::Local<v8::Array> property_names =
+      object->GetOwnPropertyNames(context).ToLocalChecked();
 
     for (unsigned int i = 0; i < property_names->Length(); ++i) {
       std::string errstr;

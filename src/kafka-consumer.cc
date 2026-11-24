@@ -7,6 +7,8 @@
  * of the MIT license.  See the LICENSE.txt file for details.
  */
 
+#include <iostream>
+#include <list>
 #include <string>
 #include <vector>
 
@@ -219,7 +221,8 @@ Baton KafkaConsumer::Unassign() {
   return Baton(RdKafka::ERR_NO_ERROR);
 }
 
-Baton KafkaConsumer::IncrementalAssign(std::vector<RdKafka::TopicPartition*> partitions) {
+Baton KafkaConsumer::IncrementalAssign(
+    std::vector<RdKafka::TopicPartition*> partitions) {
   if (!IsConnected()) {
     return Baton(RdKafka::ERR__STATE, "KafkaConsumer is disconnected");
   }
@@ -231,7 +234,8 @@ Baton KafkaConsumer::IncrementalAssign(std::vector<RdKafka::TopicPartition*> par
 
   if (error == NULL) {
     m_partition_cnt += partitions.size();
-    m_partitions.insert(m_partitions.end(), partitions.begin(), partitions.end());
+    m_partitions.insert(m_partitions.end(), partitions.begin(),
+                        partitions.end());
   } else {
     RdKafka::TopicPartition::destroy(partitions);
   }
@@ -239,7 +243,8 @@ Baton KafkaConsumer::IncrementalAssign(std::vector<RdKafka::TopicPartition*> par
   return rdkafkaErrorToBaton(error);
 }
 
-Baton KafkaConsumer::IncrementalUnassign(std::vector<RdKafka::TopicPartition*> partitions) {
+Baton KafkaConsumer::IncrementalUnassign(
+    std::vector<RdKafka::TopicPartition*> partitions) {
   if (!IsClosing() && !IsConnected()) {
     return Baton(RdKafka::ERR__STATE);
   }
@@ -1298,7 +1303,8 @@ NAN_METHOD(KafkaConsumer::NodeConsumeLoop) {
 
   Nan::Callback *callback = new Nan::Callback(cb);
 
-  consumer->m_consume_loop = new Workers::KafkaConsumerConsumeLoop(callback, consumer, timeout_ms, timeout_sleep_delay_ms);
+  consumer->m_consume_loop = new Workers::KafkaConsumerConsumeLoop(
+    callback, consumer, timeout_ms, timeout_sleep_delay_ms);
 
   info.GetReturnValue().Set(Nan::Null());
 }
@@ -1387,7 +1393,8 @@ NAN_METHOD(KafkaConsumer::NodeDisconnect) {
   Nan::Callback *callback = new Nan::Callback(cb);
   KafkaConsumer* consumer = ObjectWrap::Unwrap<KafkaConsumer>(info.This());
 
-  Workers::KafkaConsumerConsumeLoop* consumeLoop = (Workers::KafkaConsumerConsumeLoop*)consumer->m_consume_loop;
+  Workers::KafkaConsumerConsumeLoop* consumeLoop =
+    static_cast<Workers::KafkaConsumerConsumeLoop*>(consumer->m_consume_loop);
   if (consumeLoop != nullptr) {
     // stop the consume loop
     consumeLoop->Close();
@@ -1395,7 +1402,7 @@ NAN_METHOD(KafkaConsumer::NodeDisconnect) {
     // cleanup the async worker
     consumeLoop->WorkComplete();
     consumeLoop->Destroy();
-  
+
     consumer->m_consume_loop = nullptr;
   }
 

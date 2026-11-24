@@ -7,6 +7,7 @@
  * of the MIT license.  See the LICENSE.txt file for details.
  */
 
+#include <iostream>
 #include <string>
 #include <vector>
 #include <list>
@@ -98,7 +99,9 @@ Conf * Conf::create(RdKafka::Conf::ConfType type, v8::Local<v8::Object> object, 
   return rdconf;
 }
 
-void Conf::ConfigureCallback(const std::string &string_key, const v8::Local<v8::Function> &cb, bool add, std::string &errstr) {
+void Conf::ConfigureCallback(const std::string &string_key,
+                             const v8::Local<v8::Function> &cb,
+                             bool add, std::string &errstr) {
   if (string_key.compare("rebalance_cb") == 0) {
     if (add) {
       if (this->m_rebalance_cb == NULL) {

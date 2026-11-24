@@ -12,10 +12,11 @@
 
 #include <nan.h>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
-#include "rdkafkacpp.h"
+#include "rdkafkacpp.h"  // NOLINT(build/include_subdir)
 
 #include "src/common.h"
 #include "src/errors.h"
@@ -45,13 +46,12 @@ namespace NodeKafka {
  */
 
 class Connection : public Nan::ObjectWrap {
-  struct OauthBearerToken
-  {
+  struct OauthBearerToken {
     std::string token;
     int64_t expiry;
   };
 
-public:
+ public:
   bool IsConnected();
   bool IsClosing();
 
@@ -72,7 +72,8 @@ public:
   virtual void ActivateDispatchers() = 0;
   virtual void DeactivateDispatchers() = 0;
 
-  virtual void ConfigureCallback(const std::string &string_key, const v8::Local<v8::Function> &cb, bool add);
+  virtual void ConfigureCallback(const std::string &string_key,
+                                 const v8::Local<v8::Function> &cb, bool add);
 
  protected:
   Connection(Conf*, Conf*);

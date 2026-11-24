@@ -16,7 +16,7 @@
 #include <list>
 #include <string>
 
-#include "rdkafkacpp.h"
+#include "rdkafkacpp.h"  // NOLINT(build/include_subdir)
 #include "src/common.h"
 #include "src/callbacks.h"
 
@@ -32,7 +32,9 @@ class Conf : public RdKafka::Conf {
   void listen();
   void stop();
 
-  void ConfigureCallback(const std::string &string_key, const v8::Local<v8::Function> &cb, bool add, std::string &errstr);
+  void ConfigureCallback(const std::string &string_key,
+                         const v8::Local<v8::Function> &cb,
+                         bool add, std::string &errstr);
  protected:
   NodeKafka::Callbacks::Rebalance * m_rebalance_cb = NULL;
   NodeKafka::Callbacks::OffsetCommit * m_offset_commit_cb = NULL;

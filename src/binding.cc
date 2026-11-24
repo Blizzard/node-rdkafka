@@ -8,6 +8,8 @@
  */
 
 #include <iostream>
+#include <string>
+
 #include "src/binding.h"
 
 using NodeKafka::Producer;
