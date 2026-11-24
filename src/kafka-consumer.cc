@@ -99,6 +99,14 @@ Baton KafkaConsumer::Disconnect() {
   if (IsConnected()) {
     m_is_closing = true;
     {
+      scoped_shared_read_lock lock(m_connection_lock);
+      rd_kafka_queue_t* queue = rd_kafka_queue_get_consumer(m_client->c_ptr());
+      if (queue) {
+        rd_kafka_queue_yield(queue);
+        rd_kafka_queue_destroy(queue);
+      }
+    }
+    {
       scoped_shared_write_lock lock(m_connection_lock);
 
       RdKafka::KafkaConsumer* consumer =
