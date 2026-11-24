@@ -355,10 +355,9 @@ describe('Consumer', function() {
 
     Object.keys(strategies).forEach(function (strategy) {
       it('should return ' + strategies[strategy] + ' for ' + strategy, function(done) {
-        var consumer = new KafkaConsumer({
-          ...gcfg,
-          ...(strategy !== 'undefined' && { 'partition.assignment.strategy': strategy })
-        }, {});
+        var consumer = new KafkaConsumer(Object.assign({}, gcfg,
+          strategy !== 'undefined' ? { 'partition.assignment.strategy': strategy } : {}
+        ), {});
 
         t.equal(consumer.rebalanceProtocol(), 'NONE');
   
