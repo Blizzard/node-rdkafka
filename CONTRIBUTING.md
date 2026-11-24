@@ -131,7 +131,8 @@ In short:
 ### Specs Styleguide
 
 * Write all JavaScript tests by using the `mocha` testing framework.
-* All `mocha` tests should use exports syntax.
+* Unit tests in `test/` use the exports syntax; e2e specs in `e2e/` use
+  `describe`/`it`.
 * All `mocha` test files should be suffixed with `.spec.js` instead of `.js`.
 * Unit tests should mirror the JavaScript files they test (for example,
   `lib/client.js` is tested in `test/client.spec.js`).
