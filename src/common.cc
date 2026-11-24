@@ -7,6 +7,7 @@
  * of the MIT license.  See the LICENSE.txt file for details.
  */
 
+#include <iostream>
 #include <string>
 #include <vector>
 

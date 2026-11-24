@@ -13,7 +13,7 @@
 #include <nan.h>
 #include <string>
 
-#include "rdkafkacpp.h"
+#include "rdkafkacpp.h"  // NOLINT(build/include_subdir)
 
 #include "src/config.h"
 

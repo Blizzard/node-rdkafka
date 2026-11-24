@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <utility>
 
 #include "src/callbacks.h"
 #include "src/kafka-consumer.h"

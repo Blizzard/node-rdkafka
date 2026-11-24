@@ -16,7 +16,7 @@
 #include <string>
 #include <vector>
 
-#include "rdkafkacpp.h"
+#include "rdkafkacpp.h"  // NOLINT(build/include_subdir)
 #include "rdkafka.h"  // NOLINT
 
 #include "src/common.h"

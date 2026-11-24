@@ -126,7 +126,7 @@ In short:
 
 * Class member variables should be prefixed with `m_`.
 * Use a comment when pointer ownership has changed hands.
-* Your C++ should properly pass the `cpplint.py` in the `make lint` test.
+* Your C++ should properly pass `cpplint` (`pip install cpplint`) in the `make lint` test.
 
 ### Specs Styleguide
 
